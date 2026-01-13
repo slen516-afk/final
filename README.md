@@ -1,6 +1,6 @@
 # 開發環境 Setup
 
-大家直接用 VS Code 的 Dev Containers 開這個專案。
+大家直接用 VS Code 的 Dev Containers 開這個專案。往後有甚麼需要自己改動的再麻煩各位自己弄。
 
 **步驟：**
 1. 確保 Docker 有開。
