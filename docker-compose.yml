@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # 1. 後端 (Python) - 通用環境
+  backend:
+    image: python:3.10-slim  # 直接用官方純淨映像檔，不讀 Dockerfile
+    command: sleep infinity  # 讓容器發呆，等你進去操作
+    volumes:
+      - ./backend:/app       # 把你的程式碼掛載進去
+    working_dir: /app
+    ports:
+      - "8000:8000"          # 預留給 Django/FastAPI/Flask
+    networks:
+      - default
+
+  # 2. 前端 
+  frontend:
+    image: ubuntu:22.04    
+    command: sleep infinity  # 讓容器發呆
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    ports:
+      - "3000:3000"         
+    networks:
+      - default
+
+  # 3. AI 服務 (Python) - 通用環境
+  ml_service:
+    image: python:3.10-slim
+    command: sleep infinity
+    volumes:
+      - ./ml_service:/app
+    working_dir: /app
+    ports:
+      - "5001:5000"          
+    networks:
+      - default
+
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: myapp
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3307:3306"          # 外部用 3307，內部用 3306 (解決 Port 衝突)
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+    networks:
+      - default
+
+volumes:
+  mysql_data:
+
+networks:
+  default:
