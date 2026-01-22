@@ -150,7 +150,6 @@
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
 | template_id | 模板識別碼 | Template ID | INT | 使用的模板 | FOREIGN KEY |
 | resume_type | 履歷類型 | Resume Type | VARCHAR(50) | 履歷類型 (uploaded/generated) | NOT NULL |
-| file_path | 檔案儲存路徑 | File Path | VARCHAR(255) | 檔案儲存路徑 | - |
 | structured_data | 結構化資料 | Structured Data | JSON | 結構化履歷資料 | - |
 | normalized_data | 標準化資料 | Normalized Data | JSON | 標準化後資料 | - |
 | is_primary | 主要履歷標記 | Is Primary | BOOLEAN | 是否為主要履歷 | DEFAULT FALSE |
@@ -175,9 +174,10 @@
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
-| version_id | 版本識別碼 | Version ID | INT | 版本識別碼 | PRIMARY KEY |
+| version_id | 版本識別碼 | Version ID | INT | 版本識別碼(全域唯一主鍵) | PRIMARY KEY |
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
-| version_number | 版本號碼 | Version Number | INT | 版本號碼 | NOT NULL |
+| version_number | 版本號碼 | Version Number | INT | 邏輯版本序號(第幾次修改,允許同一序號對應不同職缺) | NOT NULL |
+| file_path | 檔案儲存路徑 | File Path | VARCHAR(255) | 該版本的檔案儲存路徑 | - |
 | content | 版本內容 | Content | JSON | 版本完整內容 | - |
 | optimization_target | 優化目標職位 | Optimization Target | VARCHAR(100) | 優化目標職位 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
@@ -185,10 +185,12 @@
 **設計說明**:
 - 對應流程圖右側「動作: 用戶確認履歷修改」→「動作: 確認履歷並生成職缺名列表」
 - **版本識別碼 vs 版本號碼**:
-  - 現階段這兩個值相同
-  - 未來如果開發「依個別職缺/公司生成」功能,兩者會不同
-  - `version_id` 是資料庫主鍵(全域唯一)
-  - `version_number` 是同一份履歷內的版本序號(1, 2, 3...)
+  - `version_id`: 每個版本的唯一編號，不會重複 (像身份證字號)
+  - `version_number`: 第幾次修改，可以重複 (像第 1 版、第 2 版、第 3 版)
+  - **為什麼會不同？**
+    - 使用者第 2 次修改履歷時，可能同時針對「Google 職缺」和「Microsoft 職缺」各產生一個版本
+    - 這兩個版本的 `version_id` 不同，但 `version_number` 都是 2
+  - **資料約束**: `UNIQUE (resume_id, version_number, optimization_target)` 避免重複
 
 ---
 
@@ -486,7 +488,7 @@
 | application_id | 投遞識別碼 | Application ID | INT | 投遞識別碼 | PRIMARY KEY |
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
 | job_id | 職缺識別碼 | Job ID | INT | 關聯職缺 | FOREIGN KEY |
-| resume_id | 履歷識別碼 | Resume ID | INT | 使用的履歷版本 | FOREIGN KEY |
+| version_id | 版本識別碼 | Version ID | INT | 使用的履歷版本 | FOREIGN KEY |
 | application_status | 投遞狀態 | Application Status | VARCHAR(50) | 投遞狀態 (applied/viewed/interview/rejected/accepted) | DEFAULT 'applied' |
 | applied_at | 投遞時間 | Applied At | DATETIME | 投遞時間 | NOT NULL |
 | status_updated_at | 狀態更新時間 | Status Updated At | DATETIME | 狀態更新時間 | - |
@@ -496,6 +498,9 @@
 **設計說明**:
 - 對應 Work Flow 的「Step4: 履歷投遞」與「Step5: 投遞進度追蹤」
 - 支援 Release 2 的「使用者回報投遞結果」功能
+- **version_id 說明**:
+  - 指向 `RESUME_VERSION.version_id`，精確記錄投遞時使用的履歷版本
+  - 可追蹤不同版本對應的投遞結果，支援針對不同職缺使用不同版本履歷
 - **application_status 狀態流**:
   - `applied`:已投遞
   - `viewed`:已讀取
@@ -597,6 +602,7 @@
 | USER | User | APPLICATION_RECORD | Application Record | 一位使用者可投遞多個職缺 |
 | USER | User | UPLOAD_EVENT | Upload Event | 一位使用者可上傳多個檔案 |
 | RESUME | Resume | RESUME_VERSION | Resume Version | 一份履歷可有多個版本 |
+| RESUME_VERSION | Resume Version | APPLICATION_RECORD | Application Record | 一個履歷版本可被多次投遞 |
 | CAREER_SURVEY | Career Survey | CAREER_ANALYSIS_REPORT | Career Analysis Report | 一份問卷可生成多次分析報告 |
 | CAREER_ANALYSIS_REPORT | Career Analysis Report | SKILL_GAP | Skill Gap | 一份報告可識別多個技能落差 |
 | SKILL_GAP | Skill Gap | SIDE_PROJECT_RECOMMENDATION | Side Project Recommendation | 一個技能落差可推薦多個專案 |

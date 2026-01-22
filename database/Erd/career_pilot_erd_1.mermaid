@@ -20,6 +20,8 @@ erDiagram
     RESUME ||--o{ JOB_MATCHING : participates_in
     RESUME }o--|| OCR_RESULT : parsed_by
     
+    RESUME_VERSION ||--o{ APPLICATION_RECORD : used_in
+    
     UPLOAD_EVENT ||--|| OCR_RESULT : produces
     
     %% ========================================
@@ -93,7 +95,6 @@ erDiagram
         int user_id FK
         int template_id FK
         string resume_type
-        string file_path
         json structured_data
         json normalized_data
         text resume_vector "⚡ 需向量化"
@@ -106,6 +107,7 @@ erDiagram
         int version_id PK "🔵 履歷生成"
         int resume_id FK
         int version_number
+        string file_path
         json content
         string optimization_target
         datetime created_at
@@ -225,7 +227,7 @@ erDiagram
         int application_id PK "🟢 職缺推薦"
         int user_id FK
         int job_id FK
-        int resume_id FK
+        int version_id FK
         string application_status
         datetime applied_at
         datetime status_updated_at
