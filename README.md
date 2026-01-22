@@ -9,7 +9,6 @@
 
 **重點設定：**
 * **目前環境是空的**：進去後自己 pip install 需要的東西。
-* **資料庫 (MySQL)**：Port 是 **3307** (不是 3306)，帳密 `user`/`password`。
 * **匯入資料**：把舊的 sql/csv 丟進 `database` 資料夾就會自動匯入。
 * Erd圖位置: 在database 資料夾內, 有含說明文件。
 
