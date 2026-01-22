@@ -1,0 +1,19 @@
+# --- 核心框架 ---
+langchain
+langchain-core
+langchain-community
+
+# --- Google Gemini 模型整合 ---
+langchain-google-genai
+
+# --- 向量資料庫 (RAG 用) ---
+faiss-cpu
+sentence-transformers
+
+# --- 網頁服務 (讓 Backend 可以呼叫它) ---
+fastapi
+uvicorn
+python-multipart
+
+# --- 環境變數管理 (取代 google.colab.userdata) ---
+python-dotenv

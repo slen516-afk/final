@@ -55,6 +55,19 @@ services:
       - "5001:5000"  # 外部 5001 -> 內部 5000
     networks:
       - default
+  llm_service:
+    image: python:3.10-slim
+    command: sleep infinity
+    volumes:
+      - ./llm_service:/app
+    working_dir: /app
+    ports:
+      - "5002:5000"  # 外部 5002 -> 內部 5000 (避開 OCR 的 5001)
+    # 如果你有用 .env 存 API Key，記得把下面這兩行註解打開
+    # env_file:
+    #   - .env
+    networks:
+      - default
 
   # # 3. AI 服務 (Python) - 通用環境
   # ml_service:

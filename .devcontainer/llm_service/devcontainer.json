@@ -1,0 +1,19 @@
+{
+    "name": "LLM Service (LangChain)",
+    "dockerComposeFile": "../../docker-compose.yml",
+    "service": "llm_service", // ★一定要跟 docker-compose.yml 裡的服務名稱一樣
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-toolsai.jupyter" // 測試 LLM 時常用 Notebook，建議保留
+            ]
+        }
+    },
+    // ↓↓↓ 關鍵指令 ↓↓↓
+    // 1. apt-get update: 更新清單
+    // 2. install libgomp1: ★這是 FAISS 運算需要的底層函式庫，沒裝會報錯
+    // 3. pip install: 安裝 requirements.txt 裡的 LangChain 套件
+    "postCreateCommand": "apt-get update && apt-get install -y libgomp1 && pip install -r requirements.txt || echo 'Setup skipped'"
+}
