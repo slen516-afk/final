@@ -1,0 +1,270 @@
+erDiagram
+    %% ========================================
+    %% 使用者認證與基本資料 (灰色)
+    %% ========================================
+    USER ||--o{ CAREER_SURVEY : completes
+    USER ||--|| USER_PROFILE : has
+    USER ||--o{ RESUME : creates
+    USER ||--o{ APPLICATION_RECORD : submits
+    USER ||--o{ UPLOAD_EVENT : triggers
+    
+    USER_PROFILE ||--o{ USER_SKILL : contains
+    
+    %% ========================================
+    %% 履歷生成相關 (藍色) - 需要向量化
+    %% ========================================
+    CAREER_SURVEY ||--o{ RESUME : guides
+    
+    RESUME ||--o{ RESUME_VERSION : has
+    RESUME ||--|| RESUME_TEMPLATE : uses
+    RESUME ||--o{ JOB_MATCHING : participates_in
+    RESUME }o--|| OCR_RESULT : parsed_by
+    
+    RESUME_VERSION ||--o{ APPLICATION_RECORD : used_in
+    
+    UPLOAD_EVENT ||--|| OCR_RESULT : produces
+    
+    %% ========================================
+    %% 職缺推薦相關 (綠色) - 需要向量化
+    %% ========================================
+    JOB_POSTING ||--o{ JOB_MATCHING : matches_with
+    JOB_POSTING ||--o{ APPLICATION_RECORD : receives
+    JOB_POSTING }o--o{ JOB_SKILL_REQUIREMENT : requires
+    JOB_POSTING }o--|| COMPANY_INFO : belongs_to
+    
+    JOB_MATCHING ||--|| MATCH_SCORE : has
+    
+    %% ========================================
+    %% 職能分析報告相關 (橘色)
+    %% ========================================
+    CAREER_SURVEY ||--o{ CAREER_ANALYSIS_REPORT : generates
+    RESUME ||--o{ CAREER_ANALYSIS_REPORT : analyzes
+    
+    CAREER_ANALYSIS_REPORT ||--o{ SKILL_GAP : identifies
+    SKILL_GAP ||--o{ SIDE_PROJECT_RECOMMENDATION : suggests
+    
+    %% ========================================
+    %% 技能主檔 (共用)
+    %% ========================================
+    SKILL_MASTER ||--o{ JOB_SKILL_REQUIREMENT : defines
+    SKILL_MASTER ||--o{ USER_SKILL : defines
+    SKILL_MASTER ||--o{ SKILL_GAP : identifies
+
+    %% ========================================
+    %% 資料表定義
+    %% ========================================
+    
+    USER {
+        int user_id PK
+        string email UK
+        string password_hash
+        string auth_provider
+        datetime created_at
+        datetime last_login
+        boolean is_active
+    }
+    
+    USER_PROFILE {
+        int profile_id PK
+        int user_id FK
+        string full_name
+        string location
+        int years_of_experience
+        string current_position
+        text education_background
+        json privacy_settings
+        datetime updated_at
+    }
+    
+    CAREER_SURVEY {
+        int survey_id PK
+        int user_id FK
+        json career_preference
+        json skill_self_assessment
+        int salary_min
+        int salary_max
+        string location_preference
+        string remote_preference
+        json career_motivation
+        datetime completed_at
+        datetime updated_at
+    }
+    
+    RESUME {
+        int resume_id PK "🔵 履歷生成"
+        int user_id FK
+        int template_id FK
+        string resume_type
+        json structured_data
+        json normalized_data
+        text resume_vector "⚡ 需向量化"
+        boolean is_primary
+        datetime created_at
+        datetime updated_at
+    }
+    
+    RESUME_VERSION {
+        int version_id PK "🔵 履歷生成"
+        int resume_id FK
+        int version_number
+        string file_path
+        json content
+        string optimization_target
+        datetime created_at
+    }
+    
+    RESUME_TEMPLATE {
+        int template_id PK "🔵 履歷生成"
+        string template_name
+        string template_type
+        json template_structure
+        boolean is_ats_optimized
+        datetime created_at
+    }
+    
+    UPLOAD_EVENT {
+        int event_id PK "🔵 履歷生成"
+        int user_id FK
+        string file_name
+        string file_path
+        string upload_type
+        string status
+        datetime uploaded_at
+        json metadata
+    }
+    
+    OCR_RESULT {
+        int ocr_id PK "🔵 履歷生成"
+        int event_id FK
+        int resume_id FK
+        text raw_text
+        json extracted_data
+        float confidence_score
+        string ocr_status
+        datetime processed_at
+    }
+    
+    JOB_POSTING {
+        int job_id PK "🟢 職缺推薦"
+        int company_id FK
+        string job_title
+        text job_description
+        text requirements
+        int salary_min
+        int salary_max
+        string location
+        string remote_option
+        string source_platform
+        string source_url
+        text job_vector "⚡ 需向量化"
+        datetime posted_date
+        datetime scraped_at
+        boolean is_active
+    }
+    
+    COMPANY_INFO {
+        int company_id PK "🟢 職缺推薦"
+        string company_name
+        string industry
+        text company_description
+        json culture_tags
+        string website
+        datetime updated_at
+    }
+    
+    JOB_SKILL_REQUIREMENT {
+        int requirement_id PK "🟢 職缺推薦"
+        int job_id FK
+        int skill_id FK
+        string skill_level
+        boolean is_required
+        int weight
+    }
+    
+    SKILL_MASTER {
+        int skill_id PK
+        string skill_name UK
+        string skill_category
+        string skill_type
+        json market_demand_data
+        datetime updated_at
+    }
+    
+    USER_SKILL {
+        int user_skill_id PK
+        int profile_id FK
+        int skill_id FK
+        int proficiency_level
+        int confidence_score
+        string evidence_type
+        datetime acquired_date
+        datetime updated_at
+    }
+    
+    JOB_MATCHING {
+        int matching_id PK "🟢 職缺推薦"
+        int resume_id FK
+        int job_id FK
+        datetime matched_at
+        boolean user_viewed
+        string matching_status
+    }
+    
+    MATCH_SCORE {
+        int score_id PK "🟢 職缺推薦"
+        int matching_id FK
+        float overall_score
+        float skill_match_score
+        float experience_match_score
+        float culture_fit_score
+        float growth_potential_score
+        json score_breakdown
+        json improvement_suggestions
+        datetime calculated_at
+    }
+    
+    APPLICATION_RECORD {
+        int application_id PK "🟢 職缺推薦"
+        int user_id FK
+        int job_id FK
+        int version_id FK
+        string application_status
+        datetime applied_at
+        datetime status_updated_at
+        int days_since_application
+        json user_feedback
+    }
+    
+    CAREER_ANALYSIS_REPORT {
+        int report_id PK "🟠 職能分析"
+        int survey_id FK
+        int resume_id FK
+        json skill_gap_analysis
+        json career_path_suggestions
+        json market_insights
+        float career_readiness_score
+        datetime generated_at
+    }
+    
+    SKILL_GAP {
+        int gap_id PK "🟠 職能分析"
+        int report_id FK
+        int skill_id FK
+        int current_level
+        int target_level
+        int priority_rank
+        float time_investment_hours
+        float skill_roi_score
+    }
+    
+    SIDE_PROJECT_RECOMMENDATION {
+        int recommendation_id PK "🟠 職能分析"
+        int gap_id FK
+        string project_name
+        text project_description
+        json required_skills
+        string difficulty_level
+        int estimated_hours
+        string project_url
+        datetime created_at
+    }
