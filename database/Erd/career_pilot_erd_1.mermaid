@@ -118,7 +118,6 @@ erDiagram
         string template_name
         string template_type
         json template_structure
-        boolean is_ats_optimized
         datetime created_at
     }
     
@@ -140,6 +139,7 @@ erDiagram
         text raw_text
         json extracted_data
         float confidence_score
+        boolean is_manual_review_needed
         string ocr_status
         datetime processed_at
     }

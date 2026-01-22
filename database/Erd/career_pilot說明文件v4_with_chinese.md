@@ -190,7 +190,7 @@
   - **為什麼會不同？**
     - 使用者第 2 次修改履歷時，可能同時針對「Google 職缺」和「Microsoft 職缺」各產生一個版本
     - 這兩個版本的 `version_id` 不同，但 `version_number` 都是 2
-  - **資料約束**: `UNIQUE (resume_id, version_number, optimization_target)` 避免重複
+  - **資料約束**: `UNIQUE (resume_id, version_number, optimization_target)`  組成唯一鍵 同一份履歷、同一版本號、針對同一個職位，只能有一個記錄
 
 ---
 
@@ -204,7 +204,6 @@
 | template_name | 模板名稱 | Template Name | VARCHAR(100) | 模板名稱 | NOT NULL |
 | template_type | 模板類型 | Template Type | VARCHAR(50) | 模板類型 (ATS/Creative/Standard) | - |
 | template_structure | 模板結構 | Template Structure | JSON | 模板結構定義 | - |
-| is_ats_optimized | ATS 最佳化標記 | Is ATS Optimized | BOOLEAN | 是否 ATS 最佳化 | DEFAULT TRUE |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
 
 **設計說明**:
@@ -243,12 +242,23 @@
 
 **設計說明**:
 - 對應流程圖「儲存原始檔案 & 發出 UploadEvent」
-- 檔案實體儲存於 Blob Store (Azure Blob Storage)
-- 事件訊息發送至 Event Bus (Kafka/Azure Event Hubs)
+- **檔案儲存架構**:
+  - 實際檔案 (PDF/Word) 儲存在 Blob Store (Supabase Storage)
+  - 此表只記錄檔案路徑、名稱、狀態等中繼資料
+  - 不在 PostgreSQL 資料庫存放大型二進位檔案（避免拖累查詢速度）
+- **非同步處理流程**:
+  - 檔案上傳 → 存入 Blob Store + 在此表記錄 → 發出事件
+  - 後端服務監聽事件 → 執行 OCR 處理（用戶無需等待）
+  - OCR 完成 → 更新 status 為 'completed'
 - **為什麼需要 UPLOAD_EVENT**:
   - 非同步處理:OCR 可能需要數秒,不能阻塞使用者操作
   - 錯誤追蹤:記錄失敗的上傳事件,方便重試
   - 審計日誌:記錄所有檔案操作歷史
+
+**架構說明**:
+- PostgreSQL (Supabase): 結構化數據 (500MB 免費額度)
+- Supabase Storage: 檔案儲存 (1GB 免費額度)
+- Qdrant: 向量存儲 (履歷相似度搜尋)
 
 ---
 
@@ -263,13 +273,18 @@
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
 | raw_text | 原始文字 | Raw Text | TEXT | OCR 原始文字 | - |
 | extracted_data | 結構化萃取資料 | Extracted Data | JSON | 結構化萃取資料 | - |
-| confidence_score | 辨識信心分數 | Confidence Score | FLOAT | 辨識信心分數 (0-1) | - |
+| confidence_score | 辨識信心分數 | Confidence Score | FLOAT | 辨識信心分數 (0-1)。IF confidence_score < 0.7: → 標記為需要人工審核 → 提醒用戶重新上傳清晰版本 | - |
+| is_manual_review_needed | 是否需人工審核 | Is Manual Review Needed | BOOLEAN | 是否需人工審核。當 confidence_score < 0.7 時自動設為 TRUE | DEFAULT FALSE |
 | ocr_status | OCR 狀態 | OCR Status | VARCHAR(50) | OCR 狀態 (success/failed/partial) | - |
 | processed_at | 處理時間 | Processed At | DATETIME | 處理時間 | - |
 
 **設計說明**:
 - 對應流程圖「OCR Worker 觸發文件解析」
 - 使用 Azure Document Intelligence 或 Tesseract OCR
+- **confidence_score 處理邏輯**:
+  - 當 `confidence_score < 0.7` 時，自動將 `is_manual_review_needed` 設為 `TRUE`
+  - 系統會提醒用戶重新上傳清晰版本的檔案
+  - 人工審核完成後，可手動將 `is_manual_review_needed` 設為 `FALSE`
 - **extracted_data 範例**:
   ```json
   {
