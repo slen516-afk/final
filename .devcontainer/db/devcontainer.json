@@ -1,0 +1,13 @@
+{
+    "name": "Database (MySQL)",
+    "dockerComposeFile": "../../docker-compose.yml",
+    "service": "db",
+    "workspaceFolder": "/",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "cweijan.vscode-mysql-client2"
+            ]
+        }
+    }
+}

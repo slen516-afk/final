@@ -1,0 +1,14 @@
+{
+    "name": "ML Service (Python)",
+    "dockerComposeFile": "../../docker-compose.yml",
+    "service": "ml_service",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-toolsai.jupyter"
+            ]
+        }
+    }
+}

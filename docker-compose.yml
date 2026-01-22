@@ -69,21 +69,21 @@ services:
   #     - default
 
 
-  db:
-    image: mysql:8.0
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: myapp
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-    ports:
-      - "3307:3306"          # 外部用 3307，內部用 3306 (解決 Port 衝突)
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database:/docker-entrypoint-initdb.d
-    networks:
-      - default
+  # db:
+  #   image: mysql:8.0
+  #   restart: always
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: password
+  #     MYSQL_DATABASE: myapp
+  #     MYSQL_USER: user
+  #     MYSQL_PASSWORD: password
+  #   ports:
+  #     - "3307:3306"          # 外部用 3307，內部用 3306 (解決 Port 衝突)
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #     - ./database:/docker-entrypoint-initdb.d
+  #   networks:
+  #     - default
 
 volumes:
   mysql_data:
