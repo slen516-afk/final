@@ -1,0 +1,34 @@
+# --- Python (Backend & ML) ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+
+# --- Jupyter Notebook (ML Service) ---
+.ipynb_checkpoints/
+
+# --- Web Frontend (預防有人裝 Node.js) ---
+node_modules/
+dist/
+build/
+.npm/
+
+# --- 環境變數與密碼 ---
+.env
+.env.local
+
+# --- 作業系統垃圾檔 ---
+.DS_Store
+Thumbs.db
+
+# --- Docker ---
+# 忽略所有 docker-compose 產生的 log 檔
+docker-compose.override.yml
+
+# --- VS Code (個人設定不傳) ---
+.vscode/

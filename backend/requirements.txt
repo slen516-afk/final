@@ -1,0 +1,13 @@
+Flask
+flask-cors
+python-dotenv  
+requests       
+openai         
+google-generativeai
+pillow
+torch
+transformers
+accelerate
+bitsandbytes
+qwen_vl_utils
+torchvision
