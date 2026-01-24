@@ -153,6 +153,7 @@ erDiagram
         int salary_min
         int salary_max
         string location
+        json job_details
         string remote_option
         string source_platform
         string source_url
@@ -205,9 +206,9 @@ erDiagram
         int matching_id PK "🟢 職缺推薦"
         int resume_id FK
         int job_id FK
-        datetime matched_at
-        boolean user_viewed
-        string matching_status
+        datetime matched_at "NOT NULL"
+        boolean user_viewed "DEFAULT FALSE"
+        string matching_status "DEFAULT 'active'"
     }
     
     MATCH_SCORE {
@@ -216,7 +217,6 @@ erDiagram
         float overall_score
         float skill_match_score
         float experience_match_score
-        float culture_fit_score
         float growth_potential_score
         json score_breakdown
         json improvement_suggestions
