@@ -152,6 +152,8 @@
 | resume_type | 履歷類型 | Resume Type | VARCHAR(50) | 履歷類型 (uploaded/generated) | NOT NULL |
 | structured_data | 結構化資料 | Structured Data | JSON | 結構化履歷資料 | - |
 | normalized_data | 標準化資料 | Normalized Data | JSON | 標準化後資料 | - |
+| vector_id | 向量識別碼 | Vector ID | UUID | 對應 Qdrant 中的 Point ID | - |
+| is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 是否已完成向量化 | DEFAULT FALSE |
 | is_primary | 主要履歷標記 | Is Primary | BOOLEAN | 是否為主要履歷 | DEFAULT FALSE |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
 | updated_at | 更新時間 | Updated At | DATETIME | 更新時間 | - |
@@ -328,25 +330,25 @@
 
 **功能說明**:儲存職缺詳細資訊,需進行向量化處理以支援語意匹配
 
-| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
-|---------|---------|-----|---------|------|---------|
-| job_id | 職缺識別碼 | Job ID | INT | 職缺識別碼 | PRIMARY KEY |
-| company_id | 公司識別碼 | Company ID | INT | 關聯公司 | FOREIGN KEY |
-| job_title | 職缺標題 | Job Title | VARCHAR(200) | 職缺標題 | NOT NULL |
-| job_description | 職缺描述 | Job Description | TEXT | 職缺描述 | - |
-| requirements | 職缺要求 | Requirements | TEXT | 職缺要求 | - |
-| salary_min | 最低薪資 | Minimum Salary | INT | 最低薪資 | - |
-| salary_max | 最高薪資 | Maximum Salary | INT | 最高薪資 | - |
-| location | 工作地點 | Location | VARCHAR(200) | 工作地點 | - |
-| job_details | 職缺詳細資訊 | Job Details | JSON | 職缺詳細資訊（福利、休假、工作時間等） | - |
-| remote_option | 遠端工作選項 | Remote Option | VARCHAR(50) | 遠端工作選項 (on-site/hybrid/remote) | - |
-| employment_type | 僱用類型 | Employment Type | VARCHAR(50) | 僱用類型 (full-time/part-time/contract) | - |
-| experience_level | 經驗要求 | Experience Level | VARCHAR(50) | 經驗要求 (entry/mid/senior/whatever) | - |
-| posted_date | 發布日期 | Posted Date | DATE | 發布日期 | - |
-| deadline | 截止日期 | Deadline | DATE | 截止日期 | - |
-| source_url | 來源網址 | Source URL | VARCHAR(500) | 來源網址 | - |
-| is_active | 職缺啟用狀態 | Is Active | BOOLEAN | 職缺啟用狀態 | DEFAULT TRUE |
-| created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
+| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 |
+|---------|---------|-----|---------|------|
+| job_id | 職缺識別碼 | Job ID | INT | 職缺識別碼 |PRIMARY KEY|
+| company_id | 公司識別碼 | Company ID | INT | 關聯公司 |
+| job_title | 職位名稱 | Job Title | VARCHAR(200) | 職位名稱 |
+| job_description | 職缺描述 | Job Description | TEXT | 職缺描述 |
+| requirements | 職缺要求 | Requirements | TEXT | 職缺要求 |
+| vector_id | 向量識別碼 | Vector ID | UUID | 對應 Qdrant 中的 Point ID |
+| is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 預設為 FALSE，代表是否已完成向量化 |
+| salary_min | 最低薪資 | Minimum Salary | INT | 最低薪資 |
+| salary_max | 最高薪資 | Maximum Salary | INT | 最高薪資 |
+| location | 工作地點 | Location | VARCHAR(100) | 工作地點 |
+| remote_option | 遠端選項 | Remote Option | VARCHAR(50) | 遠端選項 |
+| job_details | 詳細資訊 | Job Details | JSON | 詳細資訊（福利、學歷、工時等） |
+| source_platform | 來源平台 | Source Platform | VARCHAR(50) | 來源平台 |
+| source_url | 來源網址 | Source URL | VARCHAR(500) | 來源網址 |
+| posted_date | 發布日期 | Posted Date | DATE | 發布日期 |
+| scraped_at | 爬取時間 | Scraped At | DATETIME | 爬取時間 |
+| is_active | 是否有效 | Is Active | BOOLEAN | 是否有效 |
 
 **設計說明**:
 - 對應流程圖右側「動作: 確認履歷並生成職缺名列表」
@@ -355,31 +357,16 @@
   - `on-site`:需到辦公室
   - `hybrid`:混合辦公
   - `remote`:完全遠端
-- **experience_level 說明**:
-  - `entry`:新鮮人/1-3 年
-  - `mid`:中階/3-7 年
-  - `senior`:資深/7+ 年
-- **job_details 說明**:
-  - 儲存彈性職缺資訊，包含：福利、休假制度、工作時間、學歷要求、經驗要求、其他雜項（穿著、停車、餐費等）
-  - **優點**:
-    - ✅ 最彈性：可儲存各種不確定的資訊
-    - ✅ 爬蟲最簡單：直接將爬取的資料存入 JSON，無需額外解析
-    - ✅ 不確定的資訊都能塞：避免因欄位不足而遺失資訊
-  - **job_details 範例**:
-    ```json
-    {
-      "benefits": ["年終獎金", "三節獎金", "員工旅遊"],
-      "vacation_system": "週休二日，特休依年資",
-      "working_hours": "09:00-18:00",
-      "education_requirement": "大學以上",
-      "experience_requirement": "2年以上相關經驗",
-      "others": {
-        "dress_code": "商務休閒",
-        "parking": "提供停車位",
-        "meal_allowance": "提供午餐"
-      }
-    }
-    ```
+- **✅ 最終建議 (MVP)**:只新增一個 JSON 欄位 `job_details`，把非固定欄位資訊集中存放
+  - 欄位建議包含:福利、休假制度、工作時間、學歷要求、經驗要求、其他雜項(穿著、停車、餐費等)
+  - 優點:✅ 最彈性 ✅ 爬蟲最簡單 ✅ 不確定的資訊都能塞
+  - 未來:等資料穩定後，再視需要拆出重要欄位
+  - `remote_option` 可保留；雇用類型/經驗要求等放入 `job_details`
+
+```sql
+ALTER TABLE JOB_POSTING 
+ADD COLUMN job_details JSON;
+```
 
 ---
 
