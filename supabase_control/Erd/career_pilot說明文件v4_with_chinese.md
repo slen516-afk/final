@@ -457,16 +457,14 @@ ADD COLUMN job_details JSON;
 | matching_id | 媒合識別碼 | Matching ID | INT | 媒合識別碼 | PRIMARY KEY |
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
 | job_id | 職缺識別碼 | Job ID | INT | 關聯職缺 | FOREIGN KEY |
-| overall_match_score | 總體配適度分數 | Overall Match Score | FLOAT | 總體配適度分數 (0-100) | - |
-| matching_algorithm | 媒合演算法 | Matching Algorithm | VARCHAR(50) | 媒合演算法 (vector/rule-based/hybrid) | - |
-| matched_at | 媒合時間 | Matched At | DATETIME | 媒合時間 | - |
+| matched_at | 媒合時間 | Matched At | DATETIME | 媒合時間 | NOT NULL |
+| user_viewed | 使用者已查看 | User Viewed | BOOLEAN | 使用者是否已查看此媒合結果 | DEFAULT FALSE |
+| matching_status | 媒合狀態 | Matching Status | VARCHAR(50) | 媒合狀態 (active/inactive) | DEFAULT 'active' |
 
 **設計說明**:
 - 對應流程圖右側「RAG Worker 向量檢索」→「計算 Match Score」
-- **matching_algorithm 說明**:
-  - `vector`:純向量相似度(餘弦相似度)
-  - `rule-based`:基於規則(技能數量、薪資、地點)
-  - `hybrid`:混合演算法(向量 + 規則加權)
+- **分數細節**:所有配適度分數細節都儲存在 MATCH_SCORE 表中
+- **演算法**:使用 Hybrid 混合演算法(向量 + 規則加權)，演算法細節在程式碼中實作，不記錄在資料庫
 
 ---
 

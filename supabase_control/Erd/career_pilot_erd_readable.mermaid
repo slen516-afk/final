@@ -158,6 +158,13 @@ erDiagram
         string source_platform "VARCHAR(50)"
         string source_url "VARCHAR(500)"
         date posted_date
+        string location
+        json job_details
+        string remote_option
+        string source_platform
+        string source_url
+        text job_vector "⚡ 需向量化"
+        datetime posted_date
         datetime scraped_at
         boolean is_active
     }
@@ -195,6 +202,9 @@ erDiagram
         float overall_match_score
         string matching_algorithm "VARCHAR(50)"
         datetime matched_at
+        datetime matched_at "NOT NULL"
+        boolean user_viewed "DEFAULT FALSE"
+        string matching_status "DEFAULT 'active'"
     }
 
     MATCH_SCORE {
@@ -204,6 +214,7 @@ erDiagram
         float experience_match_score
         float salary_match_score
         float location_match_score
+        float growth_potential_score
         json score_breakdown
         datetime created_at
     }
