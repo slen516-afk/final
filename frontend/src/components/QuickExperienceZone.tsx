@@ -109,7 +109,7 @@ export function QuickExperienceZone() {
 
     try {
       // 呼叫後端 API (確認你的後端跑在 5000 port)
-      const response = await fetch('http://localhost:5000/api/upload-resume', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/upload-resume`, {
         method: 'POST',
         body: formData,
       });

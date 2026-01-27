@@ -48,7 +48,7 @@ def extract_text_from_image(image_path):
         return "錯誤：找不到圖片檔案"
 
     try:
-        image = Image.open(image_path).convert("RGB")
+        image = Image.open(image_path).convert("RGB") 
         
         messages = [{
             "role": "user",

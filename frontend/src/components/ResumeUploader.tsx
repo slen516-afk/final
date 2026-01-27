@@ -56,7 +56,8 @@ const ResumeUploader = () => {
 
         try {
             // 呼叫後端 API
-            const response = await fetch('http://localhost:5000/api/upload-resume', {
+            // 請確認是使用反引號 ` 和 ${} 語法
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/upload-resume`, {
                 method: 'POST',
                 body: formData,
             });
