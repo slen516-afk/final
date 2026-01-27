@@ -1,2 +1,6 @@
 # 請在此列出 Supabase 控制需要的套件
 # 系統啟動時會自動安裝
+pandas
+numpy
+supabase
+python-dotenv
