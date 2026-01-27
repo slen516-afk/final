@@ -9,4 +9,7 @@
 
 **重點設定：**
 * Erd圖位置: 在 資料夾內, 有含說明文件。
+* 連線 supabase 需 copy .env_example 成 .env 檔案 
+    然後手動輸入 project_url =    - > 哪裡找 : SUPABASE首頁專案裡面 最左邊 project settings  -> Data API -> Project_URL
+                service_role_key =  - > 哪裡找 : SUPABASE首頁專案裡面 最左邊 project settings  -> API Keys -> Secret_keys
 
