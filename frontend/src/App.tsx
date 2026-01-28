@@ -1,3 +1,4 @@
+import SideProjectGenerator from "./pages/SideProjectGenerator";
 import { Toaster } from "@/components/ui/toaster";
 import CourseRecommendation from './CourseRecommendation';
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -31,6 +32,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/dashboard/side-projects" element={<SideProjectGenerator />} />
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
           <Route path="/contact" element={<Contact />} />

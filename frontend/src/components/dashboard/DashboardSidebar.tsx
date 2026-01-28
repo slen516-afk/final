@@ -12,14 +12,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Star,
+  Rocket, // 👈 1. 新增 Rocket 圖示引入
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 /**
  * Dashboard Sidebar Navigation
- * 
- * Supabase fields required:
+ * * Supabase fields required:
  * - user_id: UUID (from auth.users)
  * - subscription_tier: TEXT (free/premium for feature gating)
  * - preferred_language: TEXT (user's language preference)
@@ -32,6 +32,13 @@ const navItems = [
     url: "/dashboard", 
     icon: LayoutDashboard 
   },
+  // 👇👇👇 2. 新增這個「AI 專案推薦」按鈕
+  { 
+    title: "AI 專案推薦", 
+    titleEn: "Project Ideas",
+    url: "/dashboard/side-projects", 
+    icon: Rocket 
+  },
   { 
     title: "歷史分析", 
     titleEn: "Historical Analysis",
@@ -40,7 +47,7 @@ const navItems = [
   },
   { 
     title: "職涯推薦", 
-    titleEn: "Recommendations",
+    titleEn: "Job Recommendations",
     url: "/dashboard/recommendations", 
     icon: Compass 
   },

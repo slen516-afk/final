@@ -166,7 +166,7 @@ export default function Dashboard() {
                 value={jdContent}
                 onChange={(e) => setJdContent(e.target.value)}
                 className="h-32 text-sm resize-none border-2 border-slate-300 bg-white p-3 focus:border-indigo-500"
-                placeholder="👉 試試看！輸入：'需要熟悉 Python 和 AI 相關技術'..."
+                placeholder="試試看！輸入：'需要熟悉 Python 和 AI 相關技術'..."
               />
             </div>
           </div>
