@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react"; // ✅ 加入 useEffect
-import { useLocation } from "react-router-dom"; // ✅ 加入 useLocation
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import CourseCard from "@/components/ui/CourseCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 
-// 定義 Course 型別 (如果你是 .tsx)
+// 定義資料介面
 interface Course {
   title: string;
   description: string;
@@ -22,48 +22,82 @@ const CourseRecommendation = () => {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   
-  const location = useLocation(); // ✅ 取得導航帶來的狀態
+  const location = useLocation();
 
-  // 將搜尋邏輯抽取出來，以便手動與自動都能呼叫
-  const performSearch = async (searchQuery: string) => {
-    if (!searchQuery.trim()) return;
-    
-    setLoading(true);
-    setHasSearched(true);
-    setCourses([]);
-
+  // 抽出單一搜尋邏輯
+  const fetchCourses = async (keyword: string) => {
     try {
       const response = await fetch(`${API_BASE}/api/learning/recommendations`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_interest: searchQuery }),
+        body: JSON.stringify({ user_interest: keyword }),
       });
-
       const data = await response.json();
-      if (data.status === "success") {
-        setCourses(data.data);
-      }
+      return data.status === "success" ? data.data : [];
     } catch (error) {
-      console.error("API Error:", error);
-    } finally {
-      setLoading(false);
+      console.error(`搜尋 ${keyword} 失敗:`, error);
+      return [];
     }
   };
 
-  // 1. 手動搜尋觸發
-  const handleSearch = () => performSearch(query);
+  // 1. 手動搜尋 (只搜一個)
+  const handleManualSearch = async () => {
+    if (!query.trim()) return;
+    setLoading(true);
+    setHasSearched(true);
+    setCourses([]); 
 
-  // 2. ✅ 自動搜尋觸發：當頁面載入時檢查是否有行李
+    const results = await fetchCourses(query);
+    setCourses(results);
+    setLoading(false);
+  };
+
+  // 2. 🔥 自動搜尋 (支援多關鍵字陣列)
   useEffect(() => {
-    const autoSearchKey = location.state?.autoSearch;
-    if (autoSearchKey) {
-      setQuery(autoSearchKey); // 把關鍵字填入輸入框
-      performSearch(autoSearchKey); // 直接發動搜尋
-    }
-  }, [location.state]); // 監聽導航狀態變化
+    const initAutoSearch = async () => {
+      // 👇 這裡改了：優先讀取 autoSearchKeywords (陣列)，其次才是 autoSearch (單字串)
+      const incoming = location.state?.autoSearchKeywords || location.state?.autoSearch;
+
+      if (incoming) {
+        setLoading(true);
+        setHasSearched(true);
+        setCourses([]); 
+
+        let keywords: string[] = [];
+        
+        // 判斷是單一字串還是陣列
+        if (Array.isArray(incoming)) {
+          keywords = incoming; // 是陣列 (從 Dashboard 傳來的)
+          setQuery(keywords.join(", ")); // 搜尋框顯示所有關鍵字
+        } else {
+          keywords = [incoming]; // 是單一字串
+          setQuery(incoming);
+        }
+
+        console.log("🚀 準備搜尋多個關鍵字:", keywords);
+
+        try {
+          // 🔥 使用 Promise.all 同時發送多個請求
+          const tasks = keywords.map(k => fetchCourses(k));
+          const resultsArray = await Promise.all(tasks);
+
+          // 合併所有結果
+          const mergedCourses = resultsArray.flat();
+          
+          setCourses(mergedCourses);
+        } catch (e) {
+          console.error("自動搜尋出錯:", e);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    initAutoSearch();
+  }, [location.state]); // 監聽導航狀態
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleSearch();
+    if (e.key === "Enter") handleManualSearch();
   };
 
   return (
@@ -83,7 +117,7 @@ const CourseRecommendation = () => {
               onKeyDown={handleKeyDown}
               className="h-12 text-lg bg-background"
             />
-            <Button size="lg" className="h-12 px-6" onClick={handleSearch} disabled={loading}>
+            <Button size="lg" className="h-12 px-6" onClick={handleManualSearch} disabled={loading}>
               {loading ? <Loader2 className="animate-spin" /> : <Search />}
               <span className="ml-2 hidden sm:inline">搜尋</span>
             </Button>
@@ -94,12 +128,13 @@ const CourseRecommendation = () => {
           {loading ? (
              <div className="text-center text-muted-foreground py-12">
                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-               <p>AI 正在根據你的需求分析最佳資源...</p>
+               <p>AI 正在同時為您尋找多個技能的課程資源...</p>
              </div>
           ) : courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {courses.map((course, index) => (
-                <CourseCard key={index} course={course} />
+                // 加上 index 當 key 避免重複資料報錯
+                <CourseCard key={`${course.url}-${index}`} course={course} />
               ))}
             </div>
           ) : hasSearched ? (

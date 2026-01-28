@@ -209,36 +209,42 @@ export default function Dashboard() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    {/* 🟥 缺少技能 - 真實資料 */}
-                    <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-sm font-medium text-red-700">
-                          {isAnalyzing ? "分析中..." : "缺少的技能"}
-                        </h4>
-                        
-                        {/* 只有當有缺少技能時才顯示按鈕 */}
-                        {analysisResult.missing.length > 0 && (
-                          <button 
-                            onClick={() => navigate("/course-search", { state: { autoSearch: analysisResult.missing[0] } })}
-                            className="text-xs flex items-center gap-1 text-red-600 hover:underline font-medium"
-                          >
-                            <GraduationCap className="w-3 h-3" /> 去補強
-                          </button>
-                        )}
-                      </div>
+                    {/* 🟥 缺少技能 - 修改後的按鈕邏輯 */}
+                  <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="text-sm font-medium text-red-700">
+                        {isAnalyzing ? "分析中..." : "缺少的技能"}
+                      </h4>
                       
-                      {isAnalyzing ? (
-                        <div className="flex justify-center py-2"><Loader2 className="w-4 h-4 animate-spin text-red-400"/></div>
-                      ) : (
-                        <ul className="text-xs space-y-1 text-red-600">
-                          {analysisResult.missing.length > 0 ? (
-                            analysisResult.missing.map(skill => <li key={skill} className="capitalize">• {skill}</li>)
-                          ) : (
-                            <li>沒有缺少的技能！</li>
-                          )}
-                        </ul>
+                      {/* 👇 修改這裡：一次傳送所有缺少的技能 (限制最多前 3 個，避免請求過多) */}
+                      {analysisResult.missing.length > 0 && (
+                        <button 
+                          onClick={() => navigate("/course-search", { 
+                            state: { 
+                              // 這裡不拿 [0]，而是拿整個陣列，但為了效能我們取前 3 個
+                              autoSearchKeywords: analysisResult.missing.slice(0, 3) 
+                            } 
+                          })}
+                          className="text-xs flex items-center gap-1 text-red-600 hover:underline font-medium"
+                        >
+                          <GraduationCap className="w-3 h-3" /> 去補強
+                        </button>
                       )}
                     </div>
+                    
+                    {/* 下面的列表顯示保持不變 */}
+                    {isAnalyzing ? (
+                      <div className="flex justify-center py-2"><Loader2 className="w-4 h-4 animate-spin text-red-400"/></div>
+                    ) : (
+                      <ul className="text-xs space-y-1 text-red-600">
+                        {analysisResult.missing.length > 0 ? (
+                          analysisResult.missing.map(skill => <li key={skill} className="capitalize">• {skill}</li>)
+                        ) : (
+                          <li>沒有缺少的技能！</li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
 
                     {/* 🟩 匹配技能 - 真實資料 */}
                     <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200">
