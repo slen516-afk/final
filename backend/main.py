@@ -4,23 +4,30 @@ import os
 import sys
 import time
 from dotenv import load_dotenv
+from course_service import CourseService
+# ❌ [刪除] 原本在這裡的 import services... 會導致找不到檔案
 
 # 1. 載入環境變數
 load_dotenv()
 
-# 2. 路徑修正 (確保找得到 ocr_service)
+# 2. 路徑修正 (這段執行完，Python 才能看到根目錄的資料夾)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.append(parent_dir)
 
 # 引入 OCR 和 LLM 服務
 from ocr_service.ocr_service import extract_text_from_image, load_model
-# 👇👇👇【修改這裡】記得引入新的函式 generate_project_suggestions_from_skills
 from llm_service.llm_optimize import generate_resume_advice, generate_project_suggestions_from_skills
+
+# ✅ [修正] 把它搬到這裡！(在 sys.path.append 之後)
+# 這樣無論你的 services 資料夾是在 backend 還是根目錄，Python 都找得到
+from services.analysis_service import analyze_gap
 
 app = Flask(__name__)
 # 允許所有網域來源連線
 CORS(app, resources={r"/*": {"origins": "*"}})
+
+course_service = CourseService()
 
 # =================設定區=================
 UPLOAD_FOLDER = os.path.join(current_dir, 'resumes')
@@ -107,8 +114,7 @@ def suggest_projects():
         
         print(f"📡 [F-03] 收到專案建議請求 - 技能: {skills}, 興趣: {interests}")
 
-        # 2. 👇👇👇【修改重點】真正呼叫 AI 進行分析 👇👇👇
-        # 不再回傳假資料，而是把參數丟給 Gemini
+        # 2. 真正呼叫 AI 進行分析
         result = generate_project_suggestions_from_skills(skills, interests)
         
         return jsonify(result)
@@ -118,25 +124,25 @@ def suggest_projects():
         return jsonify({"error": str(e)}), 500
 
 # ----------------------------------------------------------
-# F-04: 學習資源推薦 (目前仍是模擬資料，可依樣畫葫蘆改成 AI)
+# F-04: 學習資源推薦 (已串接 YouTube API 與 Sunny 推薦邏輯)
 # ----------------------------------------------------------
 @app.route('/api/learning/recommendations', methods=['POST'])
 def recommend_learning_resources():
     incoming_data = request.get_json() or {}
     print(f"📡 [F-04] 收到學習推薦請求: {incoming_data}")
 
-    interest = incoming_data.get('user_interest', '').lower()
-    
-    recommendations = [
-        {"title": "全端工程師路線圖", "url": "https://roadmap.sh/full-stack", "type": "article"},
-        {"title": "Google 機器學習速成", "url": "https://developers.google.com/machine-learning/crash-course", "type": "course"}
-    ]
+    # 1. 取得使用者興趣
+    user_input = incoming_data.get('user_interest') or incoming_data.get('keywords') or ""
 
-    if 'python' in interest:
-        recommendations.insert(0, {"title": "Python 官方文件", "url": "https://docs.python.org/3/", "type": "doc"})
+    if not user_input:
+        return jsonify({"status": "error", "message": "請提供 user_interest 或 keywords"}), 400
+
+    # 2. 呼叫服務層處理
+    recommendations = course_service.get_recommendations(user_input)
 
     return jsonify({
         "status": "success",
+        "query": user_input,
         "data": recommendations
     })
 
@@ -145,7 +151,6 @@ def recommend_learning_resources():
 # ----------------------------------------------------------
 @app.route('/api/resumes/upload', methods=['POST'])
 def upload_resume_async():
-    # ... (保留你原本的模擬程式碼)
     if 'file' not in request.files: return jsonify({"error": "No file part"}), 400
     file = request.files['file']
     filename = file.filename
@@ -154,9 +159,25 @@ def upload_resume_async():
 
 @app.route('/api/resumes/<resume_id>/status', methods=['GET'])
 def check_resume_status(resume_id):
-    # ... (保留你原本的模擬程式碼)
     return jsonify({"id": resume_id, "status": "completed", "progress": 100})
 
+# ----------------------------------------------------------
+# 🔥🔥🔥 新增的分析 API 🔥🔥🔥
+# ----------------------------------------------------------
+@app.route('/api/analyze', methods=['POST'])
+def analyze_resume_gap():
+    print("收到分析請求...") # 加個 log 方便除錯
+    data = request.json
+    resume_text = data.get('resume_content', '')
+    jd_text = data.get('jd_content', '')
+    
+    # 呼叫 analysis_service 裡的邏輯
+    result = analyze_gap(resume_text, jd_text)
+    
+    return jsonify({
+        "status": "success",
+        "data": result
+    })
 
 if __name__ == '__main__':
     print("--- 目前所有的 API 路徑 ---")

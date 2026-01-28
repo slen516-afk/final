@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import CourseRecommendation from './CourseRecommendation';
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -47,6 +48,15 @@ const App = () => (
           <Route path="/resume-upload" element={
             <div className="flex justify-center items-center min-h-screen bg-gray-50">
               <ResumeUploader />
+            </div>
+          } />
+          {/* 👇👇👇 2. 新增這一段：課程搜尋測試頁 */}
+          <Route path="/course-search" element={
+            <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
+              {/* 這裡使用了元件，上面的 import 就會亮起來了 */}
+              <div className="w-full max-w-4xl bg-white p-6 rounded-lg shadow-md">
+                 <CourseRecommendation />
+              </div>
             </div>
           } />
 
