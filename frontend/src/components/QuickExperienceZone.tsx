@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, FileText, Plus, X, Sparkles, Loader2, Link as LinkIcon, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { 
+    Upload, FileText, Plus, X, Sparkles, Loader2, Link as LinkIcon, 
+    Image as ImageIcon, CheckCircle2, AlertCircle,
+    Trophy, Briefcase, Code, BookOpen, Target
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils"; // 記得確認你的專案有這個 utils
 
 interface JobDescription {
   id: number;
@@ -23,24 +28,20 @@ export function QuickExperienceZone() {
     { id: 1, content: "", url: "", image: null, isUrlValid: true },
   ]);
   
-  // 1. 新增：用來存後端回傳結果的 State
   const [result, setResult] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isLoggedIn] = useState(false);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
   
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 這裡暫時允許 pdf, png, jpg 以便測試 (後端目前支援圖片)
-      // if (file.type !== "application/pdf") { ... } 
       if (file.size > MAX_FILE_SIZE) {
         toast.error("檔案大小不能超過 5MB");
         return;
       }
       setResumeFile(file);
-      setResult(null); // 重選檔案清空結果
+      setResult(null); 
       toast.success("履歷上傳成功");
     }
   };
@@ -93,7 +94,6 @@ export function QuickExperienceZone() {
     }
   };
 
-  // 2. 修改：這是真正的後端串接邏輯
   const handleAnalyze = async () => {
     if (!resumeFile) {
       toast.error("請先上傳您的履歷");
@@ -101,26 +101,26 @@ export function QuickExperienceZone() {
     }
     
     setIsAnalyzing(true);
-    setResult(null); // 清空上次結果
+    setResult(null);
 
-    // 準備要寄給後端的包裹
     const formData = new FormData();
     formData.append('file', resumeFile);
 
     try {
-      // 呼叫後端 API (確認你的後端跑在 5000 port)
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/upload-resume`, {
         method: 'POST',
+        headers: {
+            'Bypass-Tunnel-Reminder': 'true',
+        },
         body: formData,
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setResult(data); // 成功拿到資料！
+        setResult(data);
         toast.success("分析完成！");
 
-        // 自動捲動到結果區
         setTimeout(() => {
             if (reportSectionRef.current) {
                 reportSectionRef.current.scrollIntoView({ 
@@ -130,14 +130,220 @@ export function QuickExperienceZone() {
             }
         }, 100);
       } else {
+        // 即使失敗，也要把錯誤訊息存起來顯示，不要讓畫面壞掉
+        setResult({ suggestion: { error: data.error || "未知錯誤" } });
         toast.error("分析失敗: " + (data.error || "未知錯誤"));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("連線錯誤:", error);
-      toast.error("無法連接後端，請確認 backend/main.py 有沒有在跑！");
+      setResult({ suggestion: { error: "無法連接後端: " + error.message } });
+      toast.error("無法連接後端");
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  // 核心渲染邏輯 (把 JSON 變成漂亮卡片)
+  const renderSuggestionContent = () => {
+    if (!result?.suggestion) return null;
+
+    // 1. 攔截錯誤
+    if (result.suggestion.error) {
+         return (
+            <div className="p-6 bg-red-50 text-red-600 rounded-xl border border-red-200 flex items-start gap-3">
+                <AlertCircle className="w-6 h-6 flex-shrink-0 mt-0.5" />
+                <div>
+                    <h4 className="font-bold text-lg mb-1">分析過程發生錯誤</h4>
+                    <p className="text-sm opacity-90">{result.suggestion.error}</p>
+                </div>
+            </div>
+        );
+    }
+
+    // 2. 攔截純字串
+    if (typeof result.suggestion === 'string') {
+        return (
+            <div className="p-6 bg-yellow-50 text-yellow-800 rounded-xl whitespace-pre-wrap border border-yellow-200">
+                <h4 className="font-bold mb-2 flex items-center gap-2">
+                    <AlertCircle className="w-5 h-5"/> 原始回應 (非結構化數據)
+                </h4>
+                {result.suggestion}
+            </div>
+        );
+    }
+
+    // 3. 正常結構化資料
+    const { 
+        analysis = {}, 
+        job_recommendations = [], 
+        project_recommendations = [], 
+        learning_path = [] 
+    } = result.suggestion || {};
+
+    return (
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            
+            {/* A. 綜合評分區 */}
+            <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-green-100 shadow-lg">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-yellow-100 rounded-lg">
+                            <Trophy className="w-6 h-6 text-yellow-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800">履歷健檢分數</h3>
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                        <span className={cn(
+                            "text-4xl font-black",
+                            (analysis?.score || 0) >= 80 ? "text-green-600" : 
+                            (analysis?.score || 0) >= 60 ? "text-orange-500" : "text-red-500"
+                        )}>
+                            {analysis?.score || 0}
+                        </span>
+                        <span className="text-gray-400 font-medium">/ 100</span>
+                    </div>
+                </div>
+                
+                <p className="text-slate-600 italic border-l-4 border-primary pl-4 py-1 mb-6 bg-slate-50 rounded-r-lg">
+                    {analysis?.overall_comment || "暫無評語"}
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-green-50/80 p-4 rounded-xl border border-green-100">
+                        <h4 className="font-bold text-green-800 mb-3 flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4"/> 優勢亮點
+                        </h4>
+                        <ul className="space-y-2">
+                            {analysis?.strengths?.length > 0 
+                                ? analysis.strengths.map((s: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm text-green-700">
+                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0"/>
+                                        {s}
+                                    </li>
+                                ))
+                                : <li className="text-gray-400 text-sm">未偵測到明顯優勢</li>}
+                        </ul>
+                    </div>
+                    <div className="bg-red-50/80 p-4 rounded-xl border border-red-100">
+                        <h4 className="font-bold text-red-800 mb-3 flex items-center gap-2">
+                            <AlertCircle className="w-4 h-4"/> 待加強
+                        </h4>
+                        <ul className="space-y-2">
+                            {analysis?.weaknesses?.length > 0
+                                ? analysis.weaknesses.map((w: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm text-red-700">
+                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0"/>
+                                        {w}
+                                    </li>
+                                ))
+                                : <li className="text-gray-400 text-sm">未偵測到明顯弱點</li>}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* B. 職缺推薦區 */}
+            {job_recommendations?.length > 0 && (
+                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-blue-100 shadow-lg">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                            <Briefcase className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-800">推薦職位方向</h3>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                        {job_recommendations.map((job: any, i: number) => (
+                            <div key={i} className="p-5 border border-slate-200 rounded-xl hover:shadow-md hover:border-blue-200 transition-all bg-white group">
+                                <div className="flex justify-between items-start mb-2">
+                                    <h4 className="font-bold text-lg text-slate-800 group-hover:text-blue-600 transition-colors">
+                                        {job.title || "未知職稱"}
+                                    </h4>
+                                </div>
+                                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                                    {job.reason || "無推薦理由"}
+                                </p>
+                                {job.missing_skills?.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+                                        <span className="text-[10px] font-bold text-red-500 uppercase tracking-wider mt-0.5">Missing:</span>
+                                        {job.missing_skills.map((skill: string, idx: number) => (
+                                            <span key={idx} className="px-2 py-0.5 bg-red-50 text-red-600 text-xs rounded-full font-medium">
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* C. Side Project & Learning */}
+            <div className="grid md:grid-cols-2 gap-6">
+                {/* Side Projects */}
+                {project_recommendations?.length > 0 && (
+                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-purple-100 shadow-lg h-full">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-purple-100 rounded-lg">
+                                <Code className="w-6 h-6 text-purple-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">練功專案</h3>
+                        </div>
+                        <div className="space-y-4">
+                            {project_recommendations.map((proj: any, i: number) => (
+                                <div key={i} className="p-4 bg-purple-50/50 rounded-xl border border-purple-100">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h4 className="font-bold text-slate-800">{proj.name}</h4>
+                                        <span className="text-xs px-2 py-1 bg-white border border-purple-200 rounded-full text-purple-700 font-medium shadow-sm">
+                                            {proj.difficulty}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs font-mono text-purple-600 mb-2 bg-purple-100/50 inline-block px-2 py-0.5 rounded">
+                                        {proj.tech_stack}
+                                    </p>
+                                    <p className="text-sm text-slate-600 leading-relaxed">
+                                        {proj.description}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Learning Path */}
+                {learning_path?.length > 0 && (
+                    <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-cyan-100 shadow-lg h-full">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-cyan-100 rounded-lg">
+                                <BookOpen className="w-6 h-6 text-cyan-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">學習資源</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {learning_path.map((item: any, i: number) => (
+                                <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-cyan-50 transition-colors group">
+                                    <div className={cn(
+                                        "w-2 h-2 rounded-full flex-shrink-0",
+                                        item.priority === "高" ? "bg-red-500" :
+                                        item.priority === "中" ? "bg-yellow-500" : "bg-green-500"
+                                    )} />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-slate-800 truncate">{item.topic}</div>
+                                        <a href="#" className="text-xs text-cyan-600 hover:underline truncate block">
+                                            {item.resource}
+                                        </a>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 font-medium px-2 py-1 bg-slate-100 rounded">
+                                        {item.priority}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
   };
   
   return (
@@ -209,14 +415,14 @@ export function QuickExperienceZone() {
                   <input
                     id="resume-upload"
                     type="file"
-                    accept=".pdf,.png,.jpg,.jpeg" // 放寬格式方便你測試
+                    accept=".pdf,.png,.jpg,.jpeg"
                     onChange={handleFileUpload}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                 </label>
               </div>
 
-              {/* Job Descriptions */}
+              {/* Job Descriptions (Optional) */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
@@ -250,7 +456,6 @@ export function QuickExperienceZone() {
                         <Textarea
                           placeholder={`職缺描述 ${index + 1}...`}
                           value={jd.content}
-                          // 修正：補上 "content" 參數
                           onChange={(e) => updateJobDescription(jd.id, "content", e.target.value)}
                           className="min-h-[80px] pr-8 resize-none rounded-xl bg-background/50 border-border/50 focus:border-primary"
                         />
@@ -289,7 +494,7 @@ export function QuickExperienceZone() {
         </div>
       </section>
 
-      {/* 3. 新增：分析結果顯示區 (Result Section) */}
+      {/* 分析結果顯示區 (Result Section) */}
       <div ref={reportSectionRef} id="file-search-anchor" className="scroll-mt-20 container mx-auto px-4 pb-20">
         <AnimatePresence>
             {result && (
@@ -298,36 +503,32 @@ export function QuickExperienceZone() {
                     animate={{ opacity: 1, y: 0 }}
                     className="max-w-4xl mx-auto"
                 >
-                    <div className="rounded-3xl p-8 border border-green-200 bg-green-50/50 backdrop-blur-sm shadow-xl">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <div className="mb-6 flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shadow-sm">
                                 <CheckCircle2 className="w-6 h-6 text-green-600" />
                             </div>
-                            <h3 className="text-2xl font-bold text-green-800">分析報告完成</h3>
+                            <h3 className="text-2xl font-bold text-slate-800">分析報告完成</h3>
                         </div>
-                        
-                        <div className="grid md:grid-cols-2 gap-6">
-                            {/* 左邊：辨識結果 */}
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold text-green-700 uppercase tracking-wider flex items-center gap-2">
-                                    <FileText className="w-4 h-4" /> 履歷辨識內容
-                                </label>
-                                <div className="bg-white/80 p-5 rounded-2xl text-sm text-slate-700 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto border border-green-100 shadow-sm">
-                                    {result.text || "無法辨識文字內容"}
-                                </div>
-                            </div>
-                            
-                            {/* 右邊：AI 建議 */}
-                            <div className="space-y-3">
-                                <label className="text-xs font-bold text-green-700 uppercase tracking-wider flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4" /> AI 優化建議
-                                </label>
-                                <div className="bg-white/80 p-5 rounded-2xl text-sm text-slate-700 leading-relaxed whitespace-pre-wrap max-h-[400px] overflow-y-auto border border-green-100 shadow-sm">
-                                    {result.suggestion || "暫無建議"}
-                                </div>
-                            </div>
-                        </div>
+                        <Button variant="outline" size="sm" onClick={() => setResult(null)}>
+                            清空結果
+                        </Button>
                     </div>
+
+                    {/* 呼叫渲染函式 */}
+                    {renderSuggestionContent()}
+
+                    {/* 除錯用：顯示原始辨識文字 (可選) */}
+                    {result.text && (
+                        <div className="mt-8 text-center">
+                            <details className="text-xs text-gray-400 cursor-pointer inline-block">
+                                <summary className="hover:text-gray-600 transition-colors">查看 OCR 原始文字 (Debug)</summary>
+                                <div className="mt-4 p-4 bg-slate-50 rounded-xl text-left border border-slate-100 max-h-60 overflow-y-auto font-mono">
+                                    {result.text}
+                                </div>
+                            </details>
+                        </div>
+                    )}
                 </motion.div>
             )}
         </AnimatePresence>

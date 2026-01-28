@@ -6,9 +6,9 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: true, // 這是關鍵！允許從 Docker 外部 (你的本機瀏覽器) 訪問
+    host: "0.0.0.0", // 允許外部連線 (跟 host: true 意思一樣，但寫 IP 更明確)
     port: 5173,
-    // 如果你想設定代理，避免 CORS 問題，也可以在這裡加 proxy (但我們先用 flask-cors 解決了)
+    allowedHosts: true, // 👈【關鍵修改】這行就是解決 "Blocked request" 的解藥！
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
