@@ -98,30 +98,35 @@ def upload_resume():
 # ----------------------------------------------------------
 @app.route('/api/projects/suggestions', methods=['POST'])
 def suggest_projects():
-    try:
-        # 1. 嘗試讀取 JSON (Postman 請選 Raw -> JSON)
-        data = request.get_json()
-        
-        # 防呆：如果使用者還是用 Form-data 上傳檔案，這裡會是 None
-        if not data:
-            return jsonify({
-                "error": "格式錯誤：請使用 application/json 格式，並提供 skills 欄位",
-                "hint": "在 Postman 中請選擇 Body -> Raw -> JSON"
-            }), 415 # 415 Unsupported Media Type
+    if 'file' not in request.files:
+        return jsonify({"error": "沒有上傳檔案"}), 400
+    
+    file = request.files['file'] # 這裡的 'file' 對應前端 formData.append('file', ...) 的名字
+    
+    if file.filename == '':
+        return jsonify({"error": "檔案名稱為空"}), 400
 
-        skills = data.get('skills', [])
-        interests = data.get('interests', "")
-        
-        print(f"📡 [F-03] 收到專案建議請求 - 技能: {skills}, 興趣: {interests}")
+    # 1. 這裡先做 OCR (模擬)
+    # text_content = your_ocr_function(file) 
+    # 暫時用假資料測試，讓你先跑通流程
+    print(f"收到檔案: {file.filename}")
+    resume_text = "模擬的 OCR 文字內容：熟悉 Python, React, Flask..." 
 
-        # 2. 真正呼叫 AI 進行分析
-        result = generate_project_suggestions_from_skills(skills, interests)
-        
-        return jsonify(result)
+    # 2. 這裡呼叫 AI (把你原本的 AI 邏輯接回來)
+    # suggestions = call_gemini_or_gpt(resume_text)
 
-    except Exception as e:
-        print(f"❌ [F-03] 錯誤: {e}")
-        return jsonify({"error": str(e)}), 500
+    # 3. 回傳格式 (保持跟前端對接的格式一致)
+    return jsonify({
+        "suggestions": [
+            {
+                "title": "測試專案 A (來自檔案)",
+                "difficulty": "入門",
+                "description": f"我們收到了你的檔案 {file.filename}，這是測試回傳。",
+                "tech_keywords": ["Python", "OCR"]
+            },
+            # ... 其他建議
+        ]
+    })
 
 # ----------------------------------------------------------
 # F-04: 學習資源推薦 (已串接 YouTube API 與 Sunny 推薦邏輯)
