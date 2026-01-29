@@ -158,7 +158,9 @@
 | is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 預設為 FALSE，代表是否已完成向量化 |
 | salary_min | 最低薪資 | Minimum Salary | INT | 最低薪資 |
 | salary_max | 最高薪資 | Maximum Salary | INT | 最高薪資 |
-| location | 工作地點 | Location | VARCHAR(100) | 工作地點 |
+| full_address | 完整地址 | Full Address | VARCHAR(200) | 職缺完整地址資訊 |
+| city | 城市 | City | VARCHAR(50) | 城市名稱，用於職缺硬篩選 |
+| district | 地區 | District | VARCHAR(50) | 行政區名稱，用於職缺硬篩選 |
 | remote_option | 遠端選項 | Remote Option | VARCHAR(50) | 遠端選項 |
 | job_details | 詳細資訊 | Job Details | JSON | 詳細資訊（福利、學歷、工時等） |
 | source_platform | 來源平台 | Source Platform | VARCHAR(50) | 來源平台 |

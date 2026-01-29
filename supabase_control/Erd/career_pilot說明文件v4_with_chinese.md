@@ -341,7 +341,9 @@
 | is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 預設為 FALSE，代表是否已完成向量化 |
 | salary_min | 最低薪資 | Minimum Salary | INT | 最低薪資 |
 | salary_max | 最高薪資 | Maximum Salary | INT | 最高薪資 |
-| location | 工作地點 | Location | VARCHAR(100) | 工作地點 |
+| full_address | 完整地址 | Full Address | VARCHAR(200) | 職缺完整地址資訊 |
+| city | 城市 | City | VARCHAR(50) | 城市名稱，用於職缺硬篩選 |
+| district | 地區 | District | VARCHAR(50) | 行政區名稱，用於職缺硬篩選 |
 | remote_option | 遠端選項 | Remote Option | VARCHAR(50) | 遠端選項 |
 | job_details | 詳細資訊 | Job Details | JSON | 詳細資訊（福利、學歷、工時等） |
 | source_platform | 來源平台 | Source Platform | VARCHAR(50) | 來源平台 |
@@ -353,6 +355,10 @@
 **設計說明**:
 - 對應流程圖右側「動作: 確認履歷並生成職缺名列表」
 - **⚡ 需要向量化**:`job_description + requirements` 會轉換為向量存入 Qdrant
+- **地址欄位說明**:
+  - `full_address`:儲存職缺完整地址資訊（例如：「台北市信義區信義路五段7號」），用於顯示詳細位置
+  - `city`:城市名稱（例如：「台北市」、「新北市」），用於職缺硬篩選功能，支援快速篩選特定城市的職缺
+  - `district`:行政區名稱（例如：「信義區」、「板橋區」），用於職缺硬篩選功能，支援精確篩選特定行政區的職缺
 - **remote_option 說明**:
   - `on-site`:需到辦公室
   - `hybrid`:混合辦公
