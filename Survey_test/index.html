@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>職涯分析問卷 - Software Career Advisor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>軟體工程師職涯分析問卷</h1>
+        <p class="intro">本問卷旨在協助 AI 進行您的職涯落點分析。請誠實作答。</p>
+
+        <form id="careerForm">
+
+            <div class="module-section">
+                <h2>模組 A：硬實力盤點 (Skill Inventory)</h2>
+
+                <div class="question-block" id="q1-container">
+                    <label class="q-title">Q1. [核心語言] 請填寫您最擅長的 1-3 種程式語言，並標註熟練度 (1-5分)：</label>
+                    <div class="skill-row">
+                        <input type="text" placeholder="語言 1 (例如 Python)" class="lang-input">
+                        <select class="score-input">
+                            <option value="" disabled selected>熟練度</option>
+                            <option value="1">1 - 不熟悉</option>
+                            <option value="2">2 - 基礎了解</option>
+                            <option value="3">3 - 能獨立開發</option>
+                            <option value="4">4 - 能優化與除錯</option>
+                            <option value="5">5 - 精通/指導他人</option>
+                        </select>
+                    </div>
+                    <div class="skill-row">
+                        <input type="text" placeholder="語言 2" class="lang-input">
+                        <select class="score-input">
+                            <option value="" disabled selected>熟練度</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <div class="skill-row">
+                        <input type="text" placeholder="語言 3" class="lang-input">
+                        <select class="score-input">
+                            <option value="" disabled selected>熟練度</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="question-block" data-qid="Q2">
+                    <p class="q-title">Q2. [前端開發] 針對前端領域，您的掌握程度最接近以下哪項描述？</p>
+                    <label><input type="radio" name="q2" value="A"> A. 不熟悉/無經驗</label>
+                    <label><input type="radio" name="q2" value="B"> B. 熟悉 HTML/CSS/Vanilla JS，能切版與製作簡單互動</label>
+                    <label><input type="radio" name="q2" value="C"> C. 熟悉 React/Vue/Angular 其中一種框架，能串接 API 開發
+                        SPA</label>
+                    <label><input type="radio" name="q2" value="D"> D. 精通前端效能優化、State Management 與 SSR</label>
+                    <label><input type="radio" name="q2" value="E"> E. 能設計前端架構 (Micro-frontends)、設計 System
+                        Design</label>
+                </div>
+
+                <div class="question-block" data-qid="Q3">
+                    <p class="q-title">Q3. [後端開發] 針對後端領域，您的掌握程度最接近以下哪項描述？</p>
+                    <label><input type="radio" name="q3" value="A"> A. 不熟悉 / 無後端相關開發經驗</label>
+                    <label><input type="radio" name="q3" value="B"> B. 基礎應用：能使用框架撰寫 CRUD API，理解 RESTful</label>
+                    <label><input type="radio" name="q3" value="C"> C. 核心進階：熟悉資料庫設計、Auth、單元測試</label>
+                    <label><input type="radio" name="q3" value="D"> D. 架構優化：具備高併發處理經驗 (Redis/Kafka)</label>
+                    <label><input type="radio" name="q3" value="E"> E. 系統工程：能設計大型分散式系統 (HA/CAP)</label>
+                </div>
+
+                <div class="question-block" data-qid="Q4">
+                    <p class="q-title">Q4. [資料庫與儲存] 您在資料庫方面的經驗包含 (可複選)：</p>
+                    <label><input type="checkbox" name="q4" value="A"> A. 關聯式資料庫 (MySQL, PostgreSQL, MS SQL)</label>
+                    <label><input type="checkbox" name="q4" value="B"> B. NoSQL 文件型 (MongoDB, Firestore)</label>
+                    <label><input type="checkbox" name="q4" value="C"> C. Key-Value/Cache (Redis, Memcached)</label>
+                    <label><input type="checkbox" name="q4" value="D"> D. 搜尋引擎 (Elasticsearch, Meilisearch)</label>
+                    <label><input type="checkbox" name="q4" value="E"> E. 向量資料庫 (Pinecone, Milvus, Chroma)</label>
+                    <label><input type="checkbox" name="q4" value="F"> F. 圖形資料庫 (Neo4j)</label>
+                    <label><input type="checkbox" name="q4" value="G"> G. 資料倉儲/湖 (BigQuery, Snowflake)</label>
+                </div>
+
+                <div class="question-block" data-qid="Q5">
+                    <p class="q-title">Q5. [DevOps 與雲端] 您的部署與維運經驗最接近以下哪項？</p>
+                    <label><input type="radio" name="q5" value="A"> A. 平台依賴：僅使用 PaaS (Heroku, Vercel) 自動部署</label>
+                    <label><input type="radio" name="q5" value="B"> B. 容器基礎：熟悉 Docker，能撰寫 Dockerfile</label>
+                    <label><input type="radio" name="q5" value="C"> C. 雲端管理：熟悉 AWS/GCP 核心服務，能手動配置</label>
+                    <label><input type="radio" name="q5" value="D"> D. 自動化編排：熟悉 K8s 與 CI/CD 流水線</label>
+                    <label><input type="radio" name="q5" value="E"> E. IaC：能使用 Terraform/Ansible 與監控系統</label>
+                </div>
+
+                <div class="question-block" data-qid="Q6">
+                    <p class="q-title">Q6. [AI 與數據] 您的 AI/Data 技能包含：</p>
+                    <label><input type="radio" name="q6" value="A"> A. 僅止於呼叫 OpenAI/Gemini API</label>
+                    <label><input type="radio" name="q6" value="B"> B. 熟悉 Pandas/NumPy 進行資料清洗與分析</label>
+                    <label><input type="radio" name="q6" value="C"> C. 熟悉 Scikit-learn/TensorFlow/PyTorch 模型訓練</label>
+                    <label><input type="radio" name="q6" value="D"> D. 熟悉 RAG 應用開發與 LangChain</label>
+                    <label><input type="radio" name="q6" value="E"> E. 熟悉 MLOps 與模型部署</label>
+                </div>
+
+                <div class="question-block" data-qid="Q7">
+                    <p class="q-title">Q7. [資安意識] 您對資訊安全的掌握度為何？</p>
+                    <label><input type="radio" name="q7" value="A"> A. 不熟悉，依賴框架預設保護</label>
+                    <label><input type="radio" name="q7" value="B"> B. 知道基本的 OWASP Top 10 並會避免</label>
+                    <label><input type="radio" name="q7" value="C"> C. 熟悉身分驗證與授權機制 (OAuth2, RBAC)</label>
+                    <label><input type="radio" name="q7" value="D"> D. 能進行 Code Audit 並整合 DevSecOps</label>
+                </div>
+
+                <div class="question-block" data-qid="Q8">
+                    <label class="q-title">Q8. [領域專精] 除了 coding，您在哪個領域有額外 Domain Knowledge？(例如：金融、電商、醫療)</label>
+                    <textarea id="q8-input" rows="3" placeholder="請簡述您的領域知識..."></textarea>
+                </div>
+            </div>
+
+            <div class="module-section">
+                <h2>模組 B：軟實力與職級評估 (Situational Judgment)</h2>
+
+                <div class="question-block" data-qid="Q9">
+                    <p class="q-title">Q9. [問題解決] Production 出現緊急 Bug 且原因不明，直覺反應？</p>
+                    <label><input type="radio" name="q9" value="A"> A. 立即重啟伺服器 (Restart)</label>
+                    <label><input type="radio" name="q9" value="B"> B. 撈 Log 複製錯誤訊息去查 Google/GPT</label>
+                    <label><input type="radio" name="q9" value="C"> C. 先 Rollback 到上一版穩定程式碼</label>
+                    <label><input type="radio" name="q9" value="D"> D. 通知 Stakeholders，啟動 Incident Response 並分析
+                        Metrics</label>
+                </div>
+
+                <div class="question-block" data-qid="Q10">
+                    <p class="q-title">Q10. [技術決策] 開發新功能選技術框架時，優先考慮？</p>
+                    <label><input type="radio" name="q10" value="A"> A. 最近剛學會的新技術</label>
+                    <label><input type="radio" name="q10" value="B"> B. 社群最熱門、星星數最多的技術</label>
+                    <label><input type="radio" name="q10" value="C"> C. 團隊現有成員最熟悉的技術</label>
+                    <label><input type="radio" name="q10" value="D"> D. 基於維護性、擴展性與業務需求的 Trade-off 分析</label>
+                </div>
+
+                <div class="question-block" data-qid="Q11">
+                    <p class="q-title">Q11. [溝通協作] 當 PM 提出技術上不可行或不合理的需求？</p>
+                    <label><input type="radio" name="q11" value="A"> A. 雖然覺得爛但照做</label>
+                    <label><input type="radio" name="q11" value="B"> B. 直接說做不到，請他改需求</label>
+                    <label><input type="radio" name="q11" value="C"> C. 解釋限制，提出替代方案 (Alternative Solution)</label>
+                    <label><input type="radio" name="q11" value="D"> D. 評估商業價值，若夠高則重新調配架構實現</label>
+                </div>
+
+                <div class="question-block" data-qid="Q12">
+                    <p class="q-title">Q12. [程式碼品質] 對 Code Review 的態度？</p>
+                    <label><input type="radio" name="q12" value="A"> A. 形式主義，功能會動就好</label>
+                    <label><input type="radio" name="q12" value="B"> B. 主要檢查縮排、命名等 Coding Style</label>
+                    <label><input type="radio" name="q12" value="C"> C. 檢查邏輯錯誤、潛在 Bug 與邊界情況</label>
+                    <label><input type="radio" name="q12" value="D"> D. 關注架構設計、可維護性及 SOLID 原則</label>
+                </div>
+
+                <div class="question-block" data-qid="Q13">
+                    <p class="q-title">Q13. [學習心態] 面對快速變化的軟體技術，學習習慣是？</p>
+                    <label><input type="radio" name="q13" value="A"> A. 等到專案要用了才學</label>
+                    <label><input type="radio" name="q13" value="B"> B. 買了一堆課程但很少看完</label>
+                    <label><input type="radio" name="q13" value="C"> C. 固定每週閱讀技術文章或做 Side Project</label>
+                    <label><input type="radio" name="q13" value="D"> D. 深入研究底層原理並進行 Tech Sharing</label>
+                </div>
+
+                <div class="question-block" data-qid="Q14">
+                    <p class="q-title">Q14. [開發流程] 熟悉的軟體開發方法論？</p>
+                    <label><input type="radio" name="q14" value="A"> A. 瀑布式或沒特定流程</label>
+                    <label><input type="radio" name="q14" value="B"> B. 熟悉 Agile/Scrum (Standup, Sprint)</label>
+                    <label><input type="radio" name="q14" value="C"> C. 熟悉 Kanban 與 Jira/Trello</label>
+                    <label><input type="radio" name="q14" value="D"> D. 能帶領團隊進行 Retrospective 優化流程</label>
+                </div>
+
+                <div class="question-block" data-qid="Q15">
+                    <p class="q-title">Q15. [英語能力] 英文技術閱讀與溝通能力？</p>
+                    <label><input type="radio" name="q15" value="A"> A. 依賴翻譯工具</label>
+                    <label><input type="radio" name="q15" value="B"> B. 緩慢閱讀英文文件，偏好中文</label>
+                    <label><input type="radio" name="q15" value="C"> C. 流暢閱讀英文文件、技術影片</label>
+                    <label><input type="radio" name="q15" value="D"> D. 能用英文 Code Review 與跨國溝通</label>
+                </div>
+            </div>
+
+            <div class="module-section">
+                <h2>模組 C：職涯定位與期待 (Career Positioning)</h2>
+
+                <div class="question-block" data-qid="Q16">
+                    <p class="q-title">Q16. [目前狀態] 如何定義自己目前的職涯階段？</p>
+                    <label><input type="radio" name="q16" value="A"> A. 轉職中/學習中 (Entry Level)</label>
+                    <label><input type="radio" name="q16" value="B"> B. 初階工程師 (Junior, 0-2年)</label>
+                    <label><input type="radio" name="q16" value="C"> C. 中階工程師 (Mid-Level, 2-5年)</label>
+                    <label><input type="radio" name="q16" value="D"> D. 資深工程師 (Senior, 5年以上)</label>
+                    <label><input type="radio" name="q16" value="E"> E. 技術主管/架構師</label>
+                </div>
+
+                <div class="question-block" data-qid="Q17">
+                    <p class="q-title">Q17. [目標職位] 未來 1-3 年內最想擔任的角色？</p>
+                    <label><input type="radio" name="q17" value="A"> A. 前端工程師</label>
+                    <label><input type="radio" name="q17" value="B"> B. 後端工程師</label>
+                    <label><input type="radio" name="q17" value="C"> C. 全端工程師</label>
+                    <label><input type="radio" name="q17" value="D"> D. 資料科學家/分析師</label>
+                    <label><input type="radio" name="q17" value="E"> E. AI/演算法工程師</label>
+                    <label><input type="radio" name="q17" value="F"> F. DevOps/SRE 工程師</label>
+                </div>
+
+                <div class="question-block" data-qid="Q18">
+                    <p class="q-title">Q18. [產業偏好] 最希望進入哪種類型的公司？</p>
+                    <label><input type="radio" name="q18" value="A"> A. 新創公司 (Startup)</label>
+                    <label><input type="radio" name="q18" value="B"> B. 科技巨頭 (Big Tech/FAANG)</label>
+                    <label><input type="radio" name="q18" value="C"> C. 傳統產業數位轉型</label>
+                    <label><input type="radio" name="q18" value="D"> D. 接案公司 (Software House)</label>
+                    <label><input type="radio" name="q18" value="E"> E. 自有產品公司 (Product Company)</label>
+                </div>
+
+                <div class="question-block" data-qid="Q19">
+                    <p class="q-title">Q19. [求職狀態] 您目前的求職急迫度與規劃？</p>
+                    <label><input type="radio" name="q19" value="A"> A. 積極求職中 (1個月內)</label>
+                    <label><input type="radio" name="q19" value="B"> B. 觀望中 (3-6個月內)</label>
+                    <label><input type="radio" name="q19" value="C"> C. 純粹了解市場行情</label>
+                    <label><input type="radio" name="q19" value="D"> D. 學生/培訓中</label>
+                </div>
+            </div>
+
+            <div class="module-section">
+                <h2>模組 D：職涯錨點與價值觀 (Career Anchors)</h2>
+
+                <div class="question-block" data-qid="Q20">
+                    <p class="q-title">Q20. [價值觀排序] 請依照重要性選出前三名：</p>
+
+                    <label>第一順位 (最重要的)：</label>
+                    <select class="rank-select" id="q20-1">
+                        <option value="" disabled selected>請選擇...</option>
+                        <option value="Financial">高薪資與獎金</option>
+                        <option value="Technical">技術挑戰與成長</option>
+                        <option value="WLB">工作與生活平衡 (WLB)</option>
+                        <option value="Status">公司名氣與品牌</option>
+                        <option value="Culture">團隊氣氛與文化</option>
+                        <option value="Cause">產品的社會影響力</option>
+                    </select>
+
+                    <label style="margin-top:10px; display:block;">第二順位：</label>
+                    <select class="rank-select" id="q20-2">
+                        <option value="" disabled selected>請選擇...</option>
+                        <option value="Financial">高薪資與獎金</option>
+                        <option value="Technical">技術挑戰與成長</option>
+                        <option value="WLB">工作與生活平衡 (WLB)</option>
+                        <option value="Status">公司名氣與品牌</option>
+                        <option value="Culture">團隊氣氛與文化</option>
+                        <option value="Cause">產品的社會影響力</option>
+                    </select>
+
+                    <label style="margin-top:10px; display:block;">第三順位：</label>
+                    <select class="rank-select" id="q20-3">
+                        <option value="" disabled selected>請選擇...</option>
+                        <option value="Financial">高薪資與獎金</option>
+                        <option value="Technical">技術挑戰與成長</option>
+                        <option value="WLB">工作與生活平衡 (WLB)</option>
+                        <option value="Status">公司名氣與品牌</option>
+                        <option value="Culture">團隊氣氛與文化</option>
+                        <option value="Cause">產品的社會影響力</option>
+                    </select>
+                </div>
+
+                <div class="question-block" data-qid="Q21">
+                    <p class="q-title">Q21. [穩定 vs 挑戰] 高出 20% 薪水但常加班且壓力大？</p>
+                    <label><input type="radio" name="q21" value="A"> A. 毫不猶豫接受</label>
+                    <label><input type="radio" name="q21" value="B"> B. 考慮接受，短期衝刺存錢</label>
+                    <label><input type="radio" name="q21" value="C"> C. 傾向拒絕，健康重要</label>
+                    <label><input type="radio" name="q21" value="D"> D. 絕對拒絕</label>
+                </div>
+
+                <div class="question-block" data-qid="Q22">
+                    <p class="q-title">Q22. [專才 vs 通才] 你更傾向成為？</p>
+                    <label><input type="radio" name="q22" value="A"> A. 技術專才 (Specialist)</label>
+                    <label><input type="radio" name="q22" value="B"> B. 技術通才 (Generalist)</label>
+                    <label><input type="radio" name="q22" value="C"> C. 管理職 (Manager)</label>
+                </div>
+
+                <div class="question-block" data-qid="Q23">
+                    <p class="q-title">Q23. [學習偏好] 學習新技術的偏好方式 (可複選)？</p>
+                    <label><input type="checkbox" name="q23" value="A"> A. 官方文件與技術手冊</label>
+                    <label><input type="checkbox" name="q23" value="B"> B. 影音課程 (Udemy, YouTube)</label>
+                    <label><input type="checkbox" name="q23" value="C"> C. 實作專案做中學</label>
+                    <label><input type="checkbox" name="q23" value="D"> D. 閱讀技術書籍或電子書</label>
+                    <label><input type="checkbox" name="q23" value="E"> E. 請教導師或參加社群</label>
+                </div>
+            </div>
+
+            <button type="button" id="submitBtn">送出問卷並產生 JSON</button>
+        </form>
+
+        <div id="result-area" style="display:none; margin-top:30px;">
+            <h3>生成的 JSON 資料 (可直接複製給 LLM)：</h3>
+            <textarea id="json-output" rows="20" style="width:100%; font-family:monospace;"></textarea>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
