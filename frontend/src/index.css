@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 140 20% 98%;
+    --foreground: 150 30% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 30% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 30% 15%;
+
+    --primary: 145 63% 42%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 145 40% 94%;
+    --secondary-foreground: 145 63% 32%;
+
+    --muted: 140 20% 94%;
+    --muted-foreground: 150 10% 45%;
+
+    --accent: 145 50% 88%;
+    --accent-foreground: 145 63% 28%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 145 20% 88%;
+    --input: 145 20% 88%;
+    --ring: 145 63% 42%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --mint-50: 145 60% 96%;
+    --mint-100: 145 55% 90%;
+    --mint-200: 145 50% 80%;
+    --mint-300: 145 50% 65%;
+    --mint-400: 145 55% 50%;
+    --mint-500: 145 63% 42%;
+    --mint-600: 145 65% 35%;
+    --mint-700: 145 70% 28%;
+    --mint-800: 145 75% 20%;
+    --mint-900: 145 80% 12%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(145 63% 42% / 0.1) 0%, hsl(145 55% 90% / 0.5) 50%, hsl(180 60% 95% / 0.3) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(145 40% 98%) 100%);
+    --gradient-cta: linear-gradient(135deg, hsl(145 63% 42%) 0%, hsl(145 55% 50%) 100%);
+
+    --shadow-soft: 0 4px 20px -4px hsl(145 30% 30% / 0.12);
+    --shadow-elevated: 0 8px 40px -8px hsl(145 30% 30% / 0.18);
+    --shadow-glow: 0 0 40px hsl(145 63% 42% / 0.25);
+
+    --sidebar-background: 145 30% 98%;
+    --sidebar-foreground: 150 30% 20%;
+    --sidebar-primary: 145 63% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 145 40% 92%;
+    --sidebar-accent-foreground: 145 63% 32%;
+    --sidebar-border: 145 20% 90%;
+    --sidebar-ring: 145 63% 42%;
+  }
+
+  .dark {
+    --background: 150 30% 8%;
+    --foreground: 140 20% 95%;
+
+    --card: 150 25% 12%;
+    --card-foreground: 140 20% 95%;
+
+    --popover: 150 25% 10%;
+    --popover-foreground: 140 20% 95%;
+
+    --primary: 145 55% 50%;
+    --primary-foreground: 150 30% 8%;
+
+    --secondary: 150 20% 18%;
+    --secondary-foreground: 145 40% 80%;
+
+    --muted: 150 20% 18%;
+    --muted-foreground: 140 15% 60%;
+
+    --accent: 150 25% 20%;
+    --accent-foreground: 145 50% 75%;
+
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 150 20% 20%;
+    --input: 150 20% 20%;
+    --ring: 145 55% 50%;
+
+    --sidebar-background: 150 25% 10%;
+    --sidebar-foreground: 140 20% 90%;
+    --sidebar-primary: 145 55% 50%;
+    --sidebar-primary-foreground: 150 30% 8%;
+    --sidebar-accent: 150 20% 16%;
+    --sidebar-accent-foreground: 145 40% 80%;
+    --sidebar-border: 150 20% 18%;
+    --sidebar-ring: 145 55% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-mint-400;
+  }
+
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+  }
+
+  .glass-strong {
+    @apply bg-card/90 backdrop-blur-2xl border border-border/60;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-soft {
+    animation: pulse-soft 3s ease-in-out infinite;
+  }
+
+  .animate-bounce-gentle {
+    animation: bounce-gentle 2s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse-soft {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes bounce-gentle {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}

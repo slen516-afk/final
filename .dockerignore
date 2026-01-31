@@ -1,0 +1,18 @@
+# 忽略後端的虛擬環境
+backend/venv
+backend/__pycache__
+*.pyc
+*.pyo
+
+# 忽略前端的巨大套件庫 (Docker 會自己重新裝)
+frontend/node_modules
+frontend/dist
+
+# 忽略 Git 紀錄
+.git
+.gitignore
+
+# 忽略 Docker 相關
+Dockerfile
+docker-compose.yml
+.dockerignore

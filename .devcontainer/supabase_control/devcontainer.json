@@ -1,0 +1,15 @@
+{
+    "name": "Supabase Control",
+    "dockerComposeFile": "../../docker-compose.yml",
+    "service": "supabase_control",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python"
+            ]
+        }
+    },
+    // ↓↓↓ 加入這一行 ↓↓↓
+    "postCreateCommand": "pip install -r requirements.txt || echo 'Requirements installation skipped'"
+}
