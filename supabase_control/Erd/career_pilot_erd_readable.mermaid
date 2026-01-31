@@ -145,6 +145,7 @@ erDiagram
     JOB_POSTING {
         int job_id PK "🟢 職缺推薦"
         int company_id FK
+        string job_category "VARCHAR(100)"
         string job_title "VARCHAR(200)"
         text job_description "⚡ 需向量化"
         text requirements "⚡ 需向量化"

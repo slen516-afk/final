@@ -151,6 +151,7 @@
 |---------|---------|-----|---------|------|
 | job_id | 職缺識別碼 | Job ID | INT | 職缺識別碼 | PRIMARY KEY |
 | company_id | 公司識別碼 | Company ID | INT | 關聯公司 |
+| job_category | 職缺類別 | Job Category | VARCHAR(100) | 職缺類別 | - |
 | job_title | 職位名稱 | Job Title | VARCHAR(200) | 職位名稱 |
 | job_description | 職缺描述 | Job Description | TEXT | 職缺描述 |
 | requirements | 職缺要求 | Requirements | TEXT | 職缺要求 |

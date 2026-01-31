@@ -1,9 +1,9 @@
 # 職缺資料清理與寫入 Supabase 完整步驟
 
 > **建立日期**: 2026-01-26  
-> **更新日期**: 2026-01-29 (新增階段九：技能提取)  
-> **資料來源**: `clear_data_rows.csv` (10,934 筆職缺資料)  
-> **目標資料表**: `COMPANY_INFO`, `JOB_POSTING`, `JOB_SKILL_REQUIREMENT`
+> **更新日期**: 2026-01-31 (對應 clear.ipynb 變更：Upsert 模式、job_category、資料來源)  
+> **資料來源**: `jobs_rows.csv`（104 爬蟲資料）  
+> **目標資料表**: `company_info`, `job_posting`, `job_skill_requirement`
 
 ---
 
@@ -18,7 +18,7 @@
 7. [階段六：準備 Supabase 連線](#階段六準備-supabase-連線)
 8. [階段七：寫入 Supabase 資料庫](#階段七寫入-supabase-資料庫)
 9. [階段八：匯出清理後的資料（備份）](#階段八匯出清理後的資料備份)
-10. [階段九：提取技能需求 (JOB_SKILL_REQUIREMENT)](#階段九提取技能需求-job_skill_requirement)
+10. [階段九：提取技能需求 (job_skill_requirement)](#階段九提取技能需求-job_skill_requirement)
 11. [後續步驟](#後續步驟)
 
 ---
@@ -99,9 +99,10 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
    - 清理文字：移除多餘空白、換行符、特殊字元
    - 處理 None/NaN 值
 
-2. **`extract_industry(company_name)`**
-   - 從 **公司名稱** 推斷產業類別（較 job_category 不易錯亂）
-   - 對應到：資訊科技、服務業、商業、行銷、設計、管理、製造業等
+2. **`extract_industry(company_name)`** 與 **`infer_industry_from_job_category(job_categories_text)`**
+   - 從 **公司名稱** 推斷產業類別
+   - 若公司名稱無匹配，fallback 從 **job_category 彙總字串** 推斷
+   - 對應到：資訊科技、服務業、商業、行銷、設計、管理、製造業、醫療、金融業等
 
 3. **`standardize_location(city, district, location)`**
    - 輸出三個欄位：`(full_address, city, district)`
@@ -141,13 +142,16 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 1. **建立公司主檔**
    - 根據 `company_name` 分組
+   - 彙總 `job_category`（使用 `_agg_job_cats`：去重、以 ` | ` 串接）
    - 從多筆職缺中提取公司資訊（取最常見的值）
 
 2. **清理公司名稱**
    - 使用 `clean_text()` 清理公司名稱
 
 3. **推斷產業類別**
-   - 使用 `extract_industry(company_name)` 從 **公司名稱** 推斷
+   - 依序：**公司名稱** → **job_category fallback** → **未分類**
+   - 使用 `extract_industry(company_name)` 從公司名稱推斷
+   - 若無匹配，使用 `infer_industry_from_job_category(job_categories)` 從職缺類別推斷
 
 4. **公司規模與地點**
    - **company_size**、**location** 皆先設為 **NULL**
@@ -161,6 +165,7 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
      - `location` (VARCHAR(200)) — 目前 NULL
      - `website` (VARCHAR(500)) - 如果沒有資料設為 NULL
      - `description` (TEXT) - 如果沒有資料設為 NULL
+   - **注意**：`job_category` 保留於 df_company 供顯示/驗證，**不寫入** `company_info` 表
 
 6. **去重**
    - 根據 `company_name` 去重
@@ -211,8 +216,9 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 10. **建立最終職缺資料表**
     - 對應 ERD 欄位：
-      - `company_id` (INT, FOREIGN KEY) - 稍後從 COMPANY_INFO 取得
+      - `company_id` (INT, FOREIGN KEY) - 稍後從 company_info 取得
       - `job_title` (VARCHAR(200))
+      - **`job_category`** (TEXT) - 職缺類別，例如：「軟體工程師、系統分析師、Internet程式設計師」
       - `job_description` (TEXT)
       - `requirements` (TEXT)
       - `salary_min` (INT)
@@ -230,13 +236,18 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
       - `is_embedded` (BOOLEAN) - 設為 FALSE
       - `vector_id` (UUID) - 設為 NULL（稍後向量化時填入）
 
-11. **去重**（與寫入時重複判定邏輯對齊）
-    - **有 `source_url` 時**：依 **`(source_url, job_title)`** 去重
-    - **無 `source_url` 時**：依 **`(company_name, job_title, full_address)`** 去重
-    - 保留最新的資料（`keep='last'`）
+11. **去重**（Upsert 模式，與寫入邏輯對齊）
+    - **有 `source_url` 時**：
+      - 先依 **`update_date`（posted_date）降序** 排序（較新的在前）
+      - 依 **`source_url`** 去重，`keep='first'` 即保留**最新一筆**
+      - 目的：爬蟲可能抓取同一職缺多次（職缺更新過），需保留 update_date 較新的資料
+    - **無 `source_url` 時**：依 **`(company_name, job_title, full_address)`** 去重，`keep='last'`
 
 12. **移除關鍵欄位為空的資料**
     - 移除 `company_name`, `job_title`, `job_description` 為空的資料
+
+13. **保留 job_category**
+    - 從原始 `job_category` 欄位清理後保留，寫入 `job_posting` 表
 
 ### 預期輸出
 - 清理後的職缺資料 DataFrame
@@ -322,47 +333,46 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ⚠️ **重要**：必須按照以下順序寫入，因為有外鍵關聯
 
-### 步驟 1：寫入 COMPANY_INFO
+### 步驟 1：寫入 company_info
 
 1. **遍歷清理後的公司資料**
 2. **檢查公司是否已存在**
-   - 使用 `company_name` 查詢
+   - 使用 `company_name` 查詢（需 `.limit(10000)` 避免 Supabase 預設 1000 筆限制）
 3. **如果不存在，插入新公司**
-   - 插入所有欄位
-   - 取得返回的 `company_id`
+   - 插入欄位：`company_name`, `industry`, `company_size`, `location`, `website`, `description`
+   - **不寫入** `job_category`（僅存於 job_posting）
 4. **如果已存在，取得現有的 `company_id`**
 5. **建立 `company_name` → `company_id` 對應表**
+6. **重新查詢資料庫取得完整總數**（使用 `count="exact"`）
 
 **注意事項**：
 - 使用 `service_role key` 才能寫入資料
+- 查詢時加 `.limit(10000)` 避免只取回 1000 筆
 - 處理可能的錯誤（如重複鍵、格式錯誤等）
-- 記錄成功和失敗的數量
 
-### 步驟 2：寫入 JOB_POSTING
+### 步驟 2：寫入 job_posting（**Upsert 模式**）
 
 1. **遍歷清理後的職缺資料**
 2. **取得對應的 `company_id`**
    - 從步驟 1 建立的對應表中查找
-3. **確認資料庫是否有重複職缺（重複判定邏輯）**
-   - **有 `source_url` 時**（新爬資料通常有 URL）：以 **`source_url` + `job_title`** 混和對照
-     - 查詢 DB 是否已有相同 `(source_url, job_title)` 的職缺
-     - 同平台同一連結 = 同一職缺，最精準，適合增量爬取
-   - **無 `source_url` 時**（NULL）：改以 **`(company_id, job_title, full_address)`** 查詢
-   - 若查得到 → 視為重複，**跳過或更新**（根據需求決定）；若查不到 → 插入
-4. **若判定為不重複，插入新職缺**
-   - 插入所有欄位
-   - 確保 `company_id` 正確關聯
-5. **若判定為重複**
-   - 跳過，或依需求改為更新該筆（例如更新 `posted_date`、`is_active` 等）
+   - 若找不到 → 跳過該職缺（記錄 `job_skip_no_company`）
+3. **重複判定與寫入邏輯**：
+   - **有 `source_url` 時**：**不跳過**，一律加入 payload
+     - 使用 **Upsert**（`on_conflict="source_url"`）
+     - 已存在則**更新**為較新資料（依 update_date 排序後已保留最新）
+     - 目的：職缺更新過時，以新資料覆蓋舊資料
+   - **無 `source_url` 時**：以 **`(company_id, job_title, full_address)`** 查詢
+     - 若已存在 → 跳過
+     - 若不存在 → 加入 payload，使用 Upsert（null source_url 不會衝突，會 INSERT）
+4. **批量 Upsert**
+   - `supabase.table("job_posting").upsert(batch_data, on_conflict="source_url", ignore_duplicates=False)`
+   - 每批 500 筆
 
 **注意事項**：
-- 確保 `company_id` 存在（外鍵約束）
-- 寫入時務必帶入 `source_url`（有則填，無則 NULL），以便重複判定與後續增量爬取
-- 處理日期格式（轉換為 ISO 格式）
-- 處理 JSON 欄位（`job_details`）
-- 處理 NULL 值
-- 批次處理時注意速率限制
-- 記錄進度（每 100 筆顯示一次）
+- 資料庫 `job_posting.source_url` 有 UNIQUE 約束
+- 確保 `company_name_to_id` 完整（否則職缺會因找不到公司而被跳過）
+- 查詢現有職缺時加 `.limit(10000)`
+- 寫入時帶入 `job_category` 欄位
 
 ### 預期輸出
 - 成功寫入的公司數量
@@ -393,29 +403,29 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ---
 
-## 階段九：提取技能需求 (JOB_SKILL_REQUIREMENT)
+## 階段九：提取技能需求 (job_skill_requirement)
 
 ### 目的
 從職缺的 `skills`、`tools` 欄位提取技能，建立職缺與技能的多對多關聯
 
 ### 前置條件
-- ✅ SKILL_MASTER 表已建立並填入核心技能（約 50-100 個）
-- ✅ JOB_POSTING 已寫入資料庫
+- ✅ `skill_master` 表已建立並填入核心技能（約 50-100 個）
+- ✅ `job_posting` 已寫入資料庫
 - ✅ 已取得 job_id 與 skill_id 的對應關係
 
 ---
 
 ### 步驟 1：建立技能映射表
 
-**目的**：從 SKILL_MASTER 建立「技能名稱 → skill_id」的查找表，支援同義詞匹配
+**目的**：從 skill_master 建立「技能名稱 → skill_id」的查找表，支援同義詞匹配
 
 ```python
 from supabase import create_client
 import json
 import pandas as pd
 
-# 1. 從 Supabase 讀取 SKILL_MASTER
-response = supabase.table('SKILL_MASTER').select('skill_id, skill_name, synonyms').execute()
+# 1. 從 Supabase 讀取 skill_master
+response = supabase.table('skill_master').select('skill_id, skill_name, synonyms').execute()
 skill_master_df = pd.DataFrame(response.data)
 
 print(f"✅ 讀取了 {len(skill_master_df)} 個技能")
@@ -456,8 +466,9 @@ print(f"✅ 建立了 {len(synonym_to_skill_id)} 個技能映射（含同義詞�
 - `tools` 欄位（工具技能，如："Git, Docker, AWS"）
 
 ```python
-# 1. 讀取原始資料（假設已清理好的 DataFrame）
-raw_df = pd.read_csv('clear_data_rows.csv')
+# 1. 讀取原始資料（使用 jobs_rows.csv 或 jobs_cleaned.csv）
+# 建議使用 jobs_cleaned.csv（階段八匯出的清理後資料），或 jobs_rows.csv
+raw_df = pd.read_csv('jobs_cleaned.csv')  # 或 'jobs_rows.csv'
 
 print(f"✅ 讀取了 {len(raw_df)} 筆原始職缺資料")
 
@@ -510,14 +521,15 @@ print(f"📊 平均每個職缺有 {avg_skills:.1f} 個技能")
 - 未匹配的技能記錄下來，供後續補充
 
 ```python
-# 1. 從 Supabase 讀取 JOB_POSTING（取得 job_id）
-print("讀取 JOB_POSTING 資料...")
-job_response = supabase.table('JOB_POSTING').select('job_id, company_id, job_title').execute()
+# 1. 從 Supabase 讀取 job_posting（取得 job_id）
+# 注意：若資料量大，需加 .limit(10000) 或分頁
+print("讀取 job_posting 資料...")
+job_response = supabase.table('job_posting').select('job_id, company_id, job_title').limit(20000).execute()
 job_posting_df = pd.DataFrame(job_response.data)
 
-# 2. 讀取 COMPANY_INFO（取得 company_name）
-print("讀取 COMPANY_INFO 資料...")
-company_response = supabase.table('COMPANY_INFO').select('company_id, company_name').execute()
+# 2. 讀取 company_info（取得 company_name）
+print("讀取 company_info 資料...")
+company_response = supabase.table('company_info').select('company_id, company_name').limit(10000).execute()
 company_df = pd.DataFrame(company_response.data)
 
 # 3. 合併以取得 (company_name, job_title) → job_id 的映射
@@ -536,7 +548,8 @@ unmatched_jobs = 0
 
 for _, row in raw_df.iterrows():
     company_name = row['company_name']
-    job_title = row['job_name']  # 注意：原始資料用 job_name
+    # jobs_cleaned.csv 使用 job_title；jobs_rows.csv 使用 job_name
+    job_title = row.get('job_title') or row.get('job_name')
     
     # 取得對應的 job_id
     job_id = job_mapping.get((company_name, job_title))
@@ -574,7 +587,7 @@ if unmatched_skills:
 
 ---
 
-### 步驟 4：去重並寫入 JOB_SKILL_REQUIREMENT
+### 步驟 4：去重並寫入 job_skill_requirement
 
 **去重邏輯**：同一職缺不應有重複技能
 
@@ -598,7 +611,7 @@ else:
         batch = job_skill_df.iloc[i:i+BATCH_SIZE].to_dict('records')
         
         try:
-            response = supabase.table('JOB_SKILL_REQUIREMENT').insert(batch).execute()
+            response = supabase.table('job_skill_requirement').insert(batch).execute()
             total_inserted += len(batch)
             print(f"進度：{total_inserted}/{len(job_skill_df)} ({total_inserted/len(job_skill_df)*100:.1f}%)")
         except Exception as e:
@@ -612,9 +625,9 @@ else:
 
 ---
 
-### 步驟 5：處理未匹配技能（補充 SKILL_MASTER）
+### 步驟 5：處理未匹配技能（補充 skill_master）
 
-**未匹配技能**：原始資料中有，但 SKILL_MASTER 沒有的技能
+**未匹配技能**：原始資料中有，但 skill_master 沒有的技能
 
 ```python
 # 1. 匯出未匹配技能清單
@@ -632,9 +645,9 @@ if unmatched_skills:
     print("📝 處理建議：")
     print("   1. 檢查拼寫錯誤（如 'Pyhton' → 'Python'）")
     print("   2. 檢查同義詞（如 'JS' → 應加入 JavaScript 的 synonyms）")
-    print("   3. 確認是否為新技能（需新增到 SKILL_MASTER）")
+    print("   3. 確認是否為新技能（需新增到 skill_master）")
     print("   4. 過濾無意義文字（如 '等'、'相關經驗'）")
-    print("\n請手動分類後補充到 SKILL_MASTER，然後重新執行步驟 3-4")
+    print("\n請手動分類後補充到 skill_master，然後重新執行步驟 3-4")
 else:
     print("✅ 所有技能都已匹配，無需補充")
 ```
@@ -648,36 +661,36 @@ else:
 ```sql
 -- 1. 檢查技能需求總數
 SELECT COUNT(*) as total_requirements 
-FROM JOB_SKILL_REQUIREMENT;
+FROM job_skill_requirement;
 
 -- 2. 檢查每個職缺平均有多少技能
 SELECT AVG(skill_count) as avg_skills_per_job
 FROM (
     SELECT job_id, COUNT(*) as skill_count
-    FROM JOB_SKILL_REQUIREMENT
+    FROM job_skill_requirement
     GROUP BY job_id
 ) sub;
 
 -- 3. 檢查最常見的技能（前 20 名）
 SELECT sm.skill_name, sm.skill_category, COUNT(*) as job_count
-FROM JOB_SKILL_REQUIREMENT jsr
-JOIN SKILL_MASTER sm ON jsr.skill_id = sm.skill_id
+FROM job_skill_requirement jsr
+JOIN skill_master sm ON jsr.skill_id = sm.skill_id
 GROUP BY sm.skill_name, sm.skill_category
 ORDER BY job_count DESC
 LIMIT 20;
 
 -- 4. 檢查是否有孤立的技能（沒有任何職缺需求）
 SELECT skill_name, skill_category
-FROM SKILL_MASTER
+FROM skill_master
 WHERE skill_id NOT IN (
     SELECT DISTINCT skill_id 
-    FROM JOB_SKILL_REQUIREMENT
+    FROM job_skill_requirement
 );
 
 -- 5. 檢查技能需求分布（按類別統計）
 SELECT sm.skill_category, COUNT(*) as requirement_count
-FROM JOB_SKILL_REQUIREMENT jsr
-JOIN SKILL_MASTER sm ON jsr.skill_id = sm.skill_id
+FROM job_skill_requirement jsr
+JOIN skill_master sm ON jsr.skill_id = sm.skill_id
 GROUP BY sm.skill_category
 ORDER BY requirement_count DESC;
 ```
@@ -691,7 +704,7 @@ print("驗證統計")
 print("="*50)
 
 # 總數
-total_req = supabase.table('JOB_SKILL_REQUIREMENT').select('*', count='exact').execute()
+total_req = supabase.table('job_skill_requirement').select('*', count='exact').execute()
 print(f"✅ 技能需求總數：{total_req.count}")
 
 # 最常見技能（需要手動執行 SQL 或用 pandas 處理）
@@ -707,7 +720,7 @@ print("\n✅ 驗證完成")
 ### 預期輸出
 
 1. **成功寫入的技能需求數量**
-   - 範例：9,876 筆 JOB_SKILL_REQUIREMENT 記錄
+   - 範例：9,876 筆 job_skill_requirement 記錄
 
 2. **未匹配技能清單**
    - CSV 檔案：`unmatched_skills.csv`
@@ -718,7 +731,7 @@ print("\n✅ 驗證完成")
    ✅ 匹配成功：8,600 筆技能需求
    ✅ 匹配率：87.3%
    ⚠️ 未匹配職缺：12 筆（可能是公司名稱不一致）
-   ⚠️ 未匹配技能：156 個（需補充 SKILL_MASTER）
+   ⚠️ 未匹配技能：156 個（需補充 skill_master）
    📊 平均每個職缺：5.2 個技能
    ```
 
@@ -739,6 +752,7 @@ print("\n✅ 驗證完成")
   1. 先處理出現次數 > 10 的技能（高頻技能優先）
   2. 使用 LLM 輔助分類（批次處理）
   3. 建立同義詞規則（如 "JS" → "JavaScript"）
+  4. 補充到 skill_master 表
 - 範例代碼：
   ```python
   # 統計未匹配技能的出現頻率
@@ -761,22 +775,22 @@ print("\n✅ 驗證完成")
   # 刪除特定職缺的技能需求
   job_ids_to_update = [123, 456, 789]
   for job_id in job_ids_to_update:
-      supabase.table('JOB_SKILL_REQUIREMENT')\
+      supabase.table('job_skill_requirement')\
              .delete()\
              .eq('job_id', job_id)\
              .execute()
   ```
 - 重新執行步驟 3-4
 
-**Q4：如何批次補充 SKILL_MASTER？**
+**Q4：如何批次補充 skill_master？**
 ```python
 # 假設已手動分類好 unmatched_skills.csv
 new_skills_df = pd.read_csv('unmatched_skills_classified.csv')
 
 # 批次插入
 new_skills = new_skills_df.to_dict('records')
-response = supabase.table('SKILL_MASTER').insert(new_skills).execute()
-print(f"✅ 新增了 {len(new_skills)} 個技能到 SKILL_MASTER")
+response = supabase.table('skill_master').insert(new_skills).execute()
+print(f"✅ 新增了 {len(new_skills)} 個技能到 skill_master")
 
 # 重新執行步驟 1-4
 ```
@@ -843,7 +857,7 @@ print(f"✅ 新增了 {len(new_skills)} 個技能到 SKILL_MASTER")
 
 3. **補充遺漏技能**
    - 處理 `unmatched_skills.csv`
-   - 更新 SKILL_MASTER
+   - 更新 skill_master
    - 重新執行階段九的步驟 3-4
 
 ---
@@ -856,8 +870,8 @@ print(f"✅ 新增了 {len(new_skills)} 個技能到 SKILL_MASTER")
 - [ ] 已取得 Supabase 連線資訊
 - [ ] 已備份原始 CSV 檔案
 - [ ] 已了解 ERD 設計（`career_pilot_ERD_欄位對齊總表.md`）
-- [ ] 已確認資料庫表結構已建立（包含 SKILL_MASTER）
-- [ ] 已填入 SKILL_MASTER 基礎資料（50-100 個核心技能）
+- [ ] 已確認資料庫表結構已建立（包含 skill_master、job_skill_requirement）
+- [ ] 已填入 skill_master 基礎資料（50-100 個核心技能）
 
 ---
 
@@ -885,7 +899,7 @@ print(f"✅ 新增了 {len(new_skills)} 個技能到 SKILL_MASTER")
 
 6. **技能匹配率**
    - 目標匹配率：> 85%
-   - 如果匹配率過低（< 70%），檢查 SKILL_MASTER 是否缺少常見技能
+   - 如果匹配率過低（< 70%），檢查 skill_master 是否缺少常見技能
 
 ---
 
@@ -908,12 +922,12 @@ print(f"✅ 新增了 {len(new_skills)} 個技能到 SKILL_MASTER")
    - 檢查數值型別
 
 4. **重複鍵錯誤**
-   - 確認寫入前依 `source_url`+`job_title`（有 URL）或 `(company_id, job_title, full_address)`（無 URL）查詢是否已存在
-   - 檢查是否有唯一約束衝突
-   - JOB_SKILL_REQUIREMENT：確認 `(job_id, skill_id)` 組合唯一
+   - job_posting：使用 Upsert 模式，`on_conflict="source_url"` 會自動更新
+   - 無 source_url 的職缺：依 `(company_id, job_title, full_address)` 跳過重複
+   - job_skill_requirement：確認 `(job_id, skill_id)` 組合唯一
 
 5. **技能匹配問題**
-   - 檢查 SKILL_MASTER 是否有足夠的核心技能
+   - 檢查 skill_master 是否有足夠的核心技能
    - 檢查同義詞是否設定正確
    - 檢查技能名稱是否有多餘空白
 
