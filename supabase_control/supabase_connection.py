@@ -84,22 +84,14 @@ def connect_to_supabase(env_path=None, test_connection=True):
 
     load_dotenv(env_path)
 
-    # 4. 取得 Supabase 連線資訊
-    SUPABASE_URL = os.getenv('project_url')
-    SUPABASE_KEY = os.getenv('service_role_key')
-
-    # 也嘗試標準的環境變數名稱
-    if not SUPABASE_URL:
-        SUPABASE_URL = os.getenv('SUPABASE_URL')
-    if not SUPABASE_KEY:
-        SUPABASE_KEY = os.getenv('SUPABASE_KEY') or os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+    # 4. 取得 Supabase 連線資訊（官方變數命名）
+    SUPABASE_URL = os.getenv('SUPABASE_URL')
+    SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
 
     if not SUPABASE_URL or not SUPABASE_KEY:
         raise ValueError(
             f"無法從 {env_path} 檔案讀取 Supabase 連線資訊\n"
-            "請確認 .env 檔案包含以下任一組變數：\n"
-            "  - project_url 和 service_role_key\n"
-            "  - SUPABASE_URL 和 SUPABASE_KEY (或 SUPABASE_SERVICE_ROLE_KEY)"
+            "請確認 .env 檔案包含：SUPABASE_URL 和 SUPABASE_SERVICE_ROLE_KEY"
         )
 
     # 5. 建立 Supabase 客戶端
