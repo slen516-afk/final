@@ -3,22 +3,58 @@ import { Footer } from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+// 修正 1: 移除重複的 import，合併寫在一起
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Sparkles } from "lucide-react";
 
 const Login = () => {
+  // 修正 2: 新增這兩個 State 來儲存使用者輸入的資料
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+
+    try {
+      // 假設你的後端是 5000 port
+      const response = await fetch('http://localhost:5000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // 修正 3: 這裡不再是寫死的字串，而是傳入上面的 state 變數
+        body: JSON.stringify({
+          email: email,      // 對應 const [email...]
+          password: password // 對應 const [password...]
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('accessToken', data.access_token);
+        // 這裡可以選擇性存 email，看你之後要不要顯示 "Hi, xxx"
+        if (data.email) localStorage.setItem('userEmail', data.email);
+
+        toast.success("登入成功！");
+        navigate("/");
+      } else {
+        toast.error(data.message || "登入失敗，請檢查帳號密碼");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("連線錯誤，請確認後端是否有開，或網址是否正確");
+    } finally {
       setIsLoading(false);
-      toast.info("登入功能需要連接 Supabase");
-    }, 1000);
+    }
   };
 
   return (
@@ -52,11 +88,14 @@ const Login = () => {
                   <label className="block text-sm font-medium text-foreground mb-2">
                     電子郵件
                   </label>
+                  {/* 修正 4: 綁定 value 和 onChange，這樣輸入框打字才會有效 */}
                   <Input
                     type="email"
                     placeholder="your@email.com"
                     required
                     className="rounded-xl"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div>
@@ -64,11 +103,14 @@ const Login = () => {
                     密碼
                   </label>
                   <div className="relative">
+                    {/* 修正 5: 綁定密碼欄位的 value 和 onChange */}
                     <Input
                       type={showPassword ? "text" : "password"}
                       placeholder="請輸入密碼"
                       required
                       className="rounded-xl pr-10"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                     />
                     <button
                       type="button"
