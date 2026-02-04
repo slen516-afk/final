@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify, g
 from functools import wraps
 from datetime import datetime
-import supabase
+from core.supabase_client import supabase
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 

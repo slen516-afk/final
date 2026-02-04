@@ -3,3 +3,4 @@ flask-cors
 supabase
 python-dotenv
 functools
+marshmallow
