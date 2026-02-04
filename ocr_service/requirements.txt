@@ -3,4 +3,9 @@ uvicorn
 python-multipart
 Pillow
 pytesseract
+<<<<<<< HEAD
 numpy
+=======
+numpy
+PyMuPDF
+>>>>>>> gpu_testing_with_docker
