@@ -1,0 +1,13 @@
+{
+    "name": "Frontend (Blank OS)", // 改名字
+    "dockerComposeFile": "../../docker-compose.yml",
+    "service": "frontend",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // 什麼都不預裝，或是裝個 "ritwickdey.liveserver" (HTML 預覽)
+            ]
+        }
+    }
+}
