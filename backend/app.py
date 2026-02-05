@@ -22,11 +22,6 @@ app.register_blueprint(resume_bp, url_prefix='/api/resumes')
 app.register_blueprint(analysis_bp, url_prefix='/api/analysis')
 
 
-
-
-
-
-
 app.register_blueprint(resume_proc_bp, url_prefix='/api/resumes')
 app.register_blueprint(rec_bp, url_prefix='/api')
 
