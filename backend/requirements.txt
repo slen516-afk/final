@@ -2,8 +2,4 @@ flask
 flask-cors
 supabase
 python-dotenv
-<<<<<<< HEAD
-=======
-functools
->>>>>>> e1f26cfb8527b92eddf5af07bed097a7c5771656
 marshmallow
