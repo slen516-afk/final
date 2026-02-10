@@ -220,6 +220,8 @@
 | overall_match_score | 總體配適度分數 | Overall Match Score | FLOAT | 總體配適度分數 (0-100) | - |
 | matching_algorithm | 媒合演算法 | Matching Algorithm | VARCHAR(50) | 媒合演算法 (vector/rule-based/hybrid) | - |
 | matched_at | 媒合時間 | Matched At | DATETIME | 媒合時間 | - |
+| user_viewed | 使用者已查看 | User Viewed | BOOLEAN | 使用者是否已查看此媒合結果 | DEFAULT FALSE |
+| matching_status | 媒合狀態 | Matching Status | VARCHAR(50) | 媒合狀態 (active/inactive) | DEFAULT 'active' |
 
 ---
 

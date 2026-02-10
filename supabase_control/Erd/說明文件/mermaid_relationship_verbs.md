@@ -4,6 +4,11 @@
 
 ### 基本語法
 
+    USER ||--|| USER_PROFILE : "has (必須有且僅有一個)" 
+    UPLOAD_EVENT ||--o| OCR_RESULT : "produces (可能還沒有，若有則唯一)" 
+    USER ||--o{ RESUME : "creates (一個用戶多份履歷)"
+
+
 ```mermaid
 erDiagram
     TABLE_A ||--o{ TABLE_B : relationship_verb

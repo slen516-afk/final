@@ -13,14 +13,14 @@ erDiagram
     CAREER_SURVEY ||--o{ CAREER_ANALYSIS_REPORT : generates
 
     RESUME ||--o{ RESUME_VERSION : has
-    RESUME ||--|| RESUME_TEMPLATE : uses
+    RESUME }|--|| RESUME_TEMPLATE : uses
     RESUME ||--o{ JOB_MATCHING : participates_in
     RESUME ||--o{ CAREER_ANALYSIS_REPORT : analyzes
     RESUME ||--o| OCR_RESULT : parsed_by
 
     RESUME_VERSION ||--o{ APPLICATION_RECORD : used_in
 
-    UPLOAD_EVENT ||--o| OCR_RESULT : produces
+    UPLOAD_EVENT ||--|| OCR_RESULT : produces
 
     COMPANY_INFO ||--o{ JOB_POSTING : owns
     JOB_POSTING ||--o{ APPLICATION_RECORD : receives
@@ -197,7 +197,6 @@ erDiagram
         int job_id FK
         float overall_match_score
         string matching_algorithm "VARCHAR(50)"
-        datetime matched_at
         datetime matched_at "NOT NULL"
         boolean user_viewed "DEFAULT FALSE"
         string matching_status "DEFAULT 'active'"
@@ -210,7 +209,6 @@ erDiagram
         float experience_match_score
         float salary_match_score
         float location_match_score
-        float growth_potential_score
         json score_breakdown
         datetime created_at
     }
