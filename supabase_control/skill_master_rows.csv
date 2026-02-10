@@ -1,0 +1,41 @@
+skill_id,skill_name,skill_category,synonyms,created_at
+1,Python,Programming,"[""python"",""py""]",2026-01-29 02:26:28.199447+00
+2,JavaScript,Programming,"[""JS"",""js"",""javascript"",""ECMAScript""]",2026-01-29 02:26:28.199447+00
+3,Java,Programming,"[""java""]",2026-01-29 02:26:28.199447+00
+4,TypeScript,Programming,"[""TS"",""ts"",""typescript""]",2026-01-29 02:26:28.199447+00
+5,C++,Programming,"[""cpp"",""c plus plus""]",2026-01-29 02:26:28.199447+00
+6,Go,Programming,"[""Golang"",""golang""]",2026-01-29 02:26:28.199447+00
+7,Ruby,Programming,"[""ruby""]",2026-01-29 02:26:28.199447+00
+8,PHP,Programming,"[""php""]",2026-01-29 02:26:28.199447+00
+9,Swift,Programming,"[""swift""]",2026-01-29 02:26:28.199447+00
+10,Kotlin,Programming,"[""kotlin""]",2026-01-29 02:26:28.199447+00
+11,React,Framework,"[""React.js"",""ReactJS"",""react""]",2026-01-29 02:26:28.199447+00
+12,Vue,Framework,"[""Vue.js"",""VueJS"",""vue""]",2026-01-29 02:26:28.199447+00
+13,Angular,Framework,"[""Angular.js"",""AngularJS"",""angular""]",2026-01-29 02:26:28.199447+00
+14,Django,Framework,"[""django""]",2026-01-29 02:26:28.199447+00
+15,Flask,Framework,"[""flask""]",2026-01-29 02:26:28.199447+00
+16,Spring Boot,Framework,"[""SpringBoot"",""Spring""]",2026-01-29 02:26:28.199447+00
+17,Express,Framework,"[""Express.js"",""ExpressJS""]",2026-01-29 02:26:28.199447+00
+18,FastAPI,Framework,"[""fastapi""]",2026-01-29 02:26:28.199447+00
+19,Next.js,Framework,"[""NextJS"",""next""]",2026-01-29 02:26:28.199447+00
+20,Node.js,Framework,"[""NodeJS"",""node""]",2026-01-29 02:26:28.199447+00
+21,Git,Tool,"[""git"",""GitHub"",""GitLab""]",2026-01-29 02:26:28.199447+00
+22,Docker,Tool,"[""docker""]",2026-01-29 02:26:28.199447+00
+23,Kubernetes,Tool,"[""K8s"",""k8s"",""kubernetes""]",2026-01-29 02:26:28.199447+00
+24,AWS,Tool,"[""Amazon Web Services"",""aws""]",2026-01-29 02:26:28.199447+00
+25,Azure,Tool,"[""Microsoft Azure"",""azure""]",2026-01-29 02:26:28.199447+00
+26,GCP,Tool,"[""Google Cloud Platform"",""Google Cloud""]",2026-01-29 02:26:28.199447+00
+27,Jenkins,Tool,"[""jenkins""]",2026-01-29 02:26:28.199447+00
+28,Terraform,Tool,"[""terraform""]",2026-01-29 02:26:28.199447+00
+29,Ansible,Tool,"[""ansible""]",2026-01-29 02:26:28.199447+00
+30,Redis,Tool,"[""redis""]",2026-01-29 02:26:28.199447+00
+31,PostgreSQL,Tool,"[""Postgres"",""postgres"",""postgresql""]",2026-01-29 02:26:28.199447+00
+32,MySQL,Tool,"[""mysql"",""MariaDB""]",2026-01-29 02:26:28.199447+00
+33,MongoDB,Tool,"[""mongodb"",""mongo""]",2026-01-29 02:26:28.199447+00
+34,SQL Server,Tool,"[""MSSQL"",""mssql"",""Microsoft SQL Server""]",2026-01-29 02:26:28.199447+00
+35,Oracle,Tool,"[""Oracle DB"",""oracle""]",2026-01-29 02:26:28.199447+00
+36,Leadership,Soft,"[""領導力"",""Team Lead""]",2026-01-29 02:26:28.199447+00
+37,Communication,Soft,"[""溝通能力"",""協調能力""]",2026-01-29 02:26:28.199447+00
+38,Problem Solving,Soft,"[""問題解決"",""解決問題""]",2026-01-29 02:26:28.199447+00
+39,Project Management,Soft,"[""專案管理"",""PM""]",2026-01-29 02:26:28.199447+00
+40,Agile,Soft,"[""敏捷開發"",""Scrum""]",2026-01-29 02:26:28.199447+00

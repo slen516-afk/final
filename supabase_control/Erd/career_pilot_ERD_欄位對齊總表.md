@@ -152,6 +152,14 @@
 | job_id | 職缺識別碼 | Job ID | INT | 職缺識別碼 | PRIMARY KEY |
 | company_id | 公司識別碼 | Company ID | INT | 關聯公司 |
 | job_category | 職缺類別 | Job Category | VARCHAR(100) | 職缺類別 | - |
+| role_type | 職務類型 | Role Type | TEXT | 例如「前端工程師 / 後端工程師 / 全端」等職務大類 | - |
+| role_name | 職務名稱標籤 | Role Name | TEXT | 更細緻的職務名稱或角色標籤 | - |
+| d1_frontend | D1 前端工程 | D1 Frontend | NUMERIC | UI 實作、瀏覽器渲染、UX；分數 1~5（1=基本理解, 5=專家/架構） | - |
+| d2_backend | D2 後端工程 | D2 Backend | NUMERIC | API 設計、資料庫設計、高併發處理；分數 1~5 | - |
+| d3_devops | D3 雲端維運 | D3 DevOps/SRE | NUMERIC | Docker/K8s、CI/CD、雲端架構(AWS/GCP)；分數 1~5 | - |
+| d4_ai_data | D4 AI與數據 | D4 AI & Data | NUMERIC | ETL、Python 資料分析、RAG/LLM、ML 模型；分數 1~5 | - |
+| d5_quality | D5 品質與架構 | D5 Quality | NUMERIC | 單元測試、設計模式、SOLID、資安意識；Senior 關鍵向度；分數 1~5 | - |
+| d6_soft_skills | D6 軟實力 | D6 Soft Skills | NUMERIC | 溝通協作、Agile/Scrum、商業思維；分數 1~5 | - |
 | job_title | 職位名稱 | Job Title | VARCHAR(200) | 職位名稱 |
 | job_description | 職缺描述 | Job Description | TEXT | 職缺描述 |
 | requirements | 職缺要求 | Requirements | TEXT | 職缺要求 |

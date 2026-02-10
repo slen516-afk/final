@@ -335,6 +335,14 @@
 | job_id | 職缺識別碼 | Job ID | INT | 職缺識別碼 |PRIMARY KEY|
 | company_id | 公司識別碼 | Company ID | INT | 關聯公司 |
 | job_category | 職缺類別 | Job Category | VARCHAR(100) | 職缺類別 | - |
+| role_type | 職務類型 | Role Type | TEXT | 例如「前端工程師 / 後端工程師 / 全端」等職務大類 |
+| role_name | 職務名稱標籤 | Role Name | TEXT | 更細緻的職務名稱或角色標籤 |
+| d1_frontend | D1 前端工程 | D1 Frontend | NUMERIC | UI 實作、瀏覽器渲染、UX；分數 1~5 |
+| d2_backend | D2 後端工程 | D2 Backend | NUMERIC | API 設計、資料庫設計、高併發處理；分數 1~5 |
+| d3_devops | D3 雲端維運 | D3 DevOps/SRE | NUMERIC | Docker/K8s、CI/CD、雲端架構(AWS/GCP)；分數 1~5 |
+| d4_ai_data | D4 AI與數據 | D4 AI & Data | NUMERIC | ETL、Python 資料分析、RAG/LLM、ML 模型；分數 1~5 |
+| d5_quality | D5 品質與架構 | D5 Quality | NUMERIC | 單元測試、設計模式、SOLID、資安；Senior 關鍵向度；分數 1~5 |
+| d6_soft_skills | D6 軟實力 | D6 Soft Skills | NUMERIC | 溝通協作、Agile/Scrum、商業思維；分數 1~5 |
 | job_title | 職位名稱 | Job Title | VARCHAR(200) | 職位名稱 |
 | job_description | 職缺描述 | Job Description | TEXT | 職缺描述 |
 | requirements | 職缺要求 | Requirements | TEXT | 職缺要求 |
@@ -364,6 +372,13 @@
   - `on-site`:需到辦公室
   - `hybrid`:混合辦公
   - `remote`:完全遠端
+- **維度定義 (Dimensions Definitions)** — 六個職能向度，分數 1~5（1=基本理解，5=專家/架構）：
+  - **D1 前端工程**: UI 實作、瀏覽器渲染、UX；JD 若提及未列出的現代框架，依該框架在生態中的定位歸類。
+  - **D2 後端工程**: API 設計、資料庫設計、高併發處理。
+  - **D3 雲端維運**: Docker/K8s、CI/CD、雲端架構(AWS/GCP)。
+  - **D4 AI與數據**: ETL、Python 資料分析、RAG/LLM 應用、ML 模型。
+  - **D5 品質與架構**: 單元測試、設計模式、SOLID、資安意識；為區分 Senior 的關鍵向度，JD 強調「Clean Code」「Refactoring」時此項應給高分。
+  - **D6 軟實力**: 溝通協作、Agile/Scrum、商業思維。
 - **✅ 最終建議 (MVP)**:只新增一個 JSON 欄位 `job_details`，把非固定欄位資訊集中存放
   - 欄位建議包含:福利、休假制度、工作時間、學歷要求、經驗要求、其他雜項(穿著、停車、餐費等)
   - 優點:✅ 最彈性 ✅ 爬蟲最簡單 ✅ 不確定的資訊都能塞

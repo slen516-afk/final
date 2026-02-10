@@ -9,7 +9,7 @@
 ## 📊 資料庫概覽
 
 - **總表數**: 19 張
-- **總欄位數**: 161 個
+- **總欄位數**: 169 個
 - **外鍵關係**: 20 個
 - **唯一約束**: 6 個
 
@@ -17,7 +17,7 @@
 
 ## 📋 資料表清單
 
-1. **job_posting** (20 個欄位)
+1. **job_posting** (28 個欄位)
 2. **career_survey** (11 個欄位)
 3. **resume** (11 個欄位)
 4. **user_profile** (10 個欄位)
@@ -168,6 +168,14 @@
 | 19 | `district` | character varying | 50.0 | ✓ | - |  |  |  |
 | 20 | `full_address` | character varying | 255.0 | ✓ | - |  |  |  |
 | 21 | `job_category` | text | - | ✓ | - |  |  |  |
+| 22 | `role_type` | text | - | ✓ | - |  |  |  |
+| 23 | `role_name` | text | - | ✓ | - |  |  |  |
+| 24 | `d1_frontend` | numeric | - | ✓ | - |  |  |  |
+| 25 | `d2_backend` | numeric | - | ✓ | - |  |  |  |
+| 26 | `d3_devops` | numeric | - | ✓ | - |  |  |  |
+| 27 | `d4_ai_data` | numeric | - | ✓ | - |  |  |  |
+| 28 | `d5_quality` | numeric | - | ✓ | - |  |  |  |
+| 29 | `d6_soft_skills` | numeric | - | ✓ | - |  |  |  |
 
 **外鍵約束**:
 - `company_id` → `company_info.company_id` (DELETE: NO ACTION, UPDATE: NO ACTION)
@@ -423,6 +431,7 @@ erDiagram
 - `resume.is_embedded` (BOOLEAN): 是否已完成向量化
 - `job_posting.vector_id` (UUID): 職缺向量化 ID
 - `job_posting.is_embedded` (BOOLEAN): 是否已完成向量化
+  - **維度分數** `job_posting.d1_frontend`~`d6_soft_skills` (NUMERIC): 六個職能向度分數 1~5（1=基本理解，5=專家/架構）。D1 前端工程(UI/渲染/UX)、D2 後端工程(API/DB/高併發)、D3 雲端維運(Docker/K8s/CI-CD/雲端)、D4 AI與數據(ETL/RAG/LLM/ML)、D5 品質與架構(測試/設計模式/SOLID/資安)、D6 軟實力(溝通/Agile/商業思維)。用於職缺特徵與媒合。
 
 ### JSONB 欄位
 - `application_record.user_feedback`
@@ -518,6 +527,7 @@ ORDER BY tc.table_name;
 ### 最新更新（與說明書v4對照）
 - ✅ 19 張表完全符合
 - ✅ job_posting 新增 `job_category`, `city`, `district`, `full_address`
+- ✅ job_posting 新增職務維度分數欄位 `role_type`, `role_name`, `d1_frontend`~`d6_soft_skills`
 - ✅ 20 個外鍵關係完整
 - ✅ 所有唯一約束正確設定
 
