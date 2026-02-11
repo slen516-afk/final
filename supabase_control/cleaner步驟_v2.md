@@ -413,6 +413,9 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 - ✅ `job_posting` 已寫入資料庫
 - ✅ 已取得 job_id 與 skill_id 的對應關係
 
+**與 skill_master 寫入的關係**：  
+補充 `skill_master`（新增高頻技能）可由 **`skill_write_evaluation.ipynb`** 自動處理：該 Notebook 從 `jobs_rows.csv` 的 `tools` 欄位萃取技能、套用內建評估規則（WRITE_NEW + count 門檻），只寫入目前不在 `skill_master` 的技能，且寫入前會再從 Supabase 讀取現有 `skill_name` 避免重複。**建議**：若尚未跑過該 Notebook，可先執行以擴充 skill_master，再執行本階段九的步驟 1～4，可提高匹配率；本階段九的「步驟 5」則處理**其餘**未匹配技能（匯出 CSV 或手動補充）。
+
 ---
 
 ### 步驟 1：建立技能映射表
@@ -627,7 +630,11 @@ else:
 
 ### 步驟 5：處理未匹配技能（補充 skill_master）
 
-**未匹配技能**：原始資料中有，但 skill_master 沒有的技能
+**未匹配技能**：原始資料中有，但 skill_master 沒有的技能。
+
+**📌 補充方式二選一（或並用）**：  
+- **自動補充**：使用 **`skill_write_evaluation.ipynb`**。該 Notebook 從 `jobs_rows.csv` 的 `tools` 依出現次數與內建評估表，將建議新增的技能寫入 `skill_master`（僅寫入尚不存在的名稱，不與本階段九衝突）。適合先跑一次以減少未匹配數量。  
+- **手動補充**：以下程式將未匹配技能匯出為 `unmatched_skills.csv`，手動分類後再寫入 `skill_master`，或將高頻詞加入既有技能的 `synonyms`，然後重新執行**本階段九的**步驟 1～4。
 
 ```python
 # 1. 匯出未匹配技能清單
@@ -647,7 +654,7 @@ if unmatched_skills:
     print("   2. 檢查同義詞（如 'JS' → 應加入 JavaScript 的 synonyms）")
     print("   3. 確認是否為新技能（需新增到 skill_master）")
     print("   4. 過濾無意義文字（如 '等'、'相關經驗'）")
-    print("\n請手動分類後補充到 skill_master，然後重新執行步驟 3-4")
+    print("\n請手動分類後補充到 skill_master，或先執行 skill_write_evaluation.ipynb 自動補一批高頻技能，然後重新執行本階段九的步驟 1～4")
 else:
     print("✅ 所有技能都已匹配，無需補充")
 ```
@@ -780,7 +787,7 @@ print("\n✅ 驗證完成")
              .eq('job_id', job_id)\
              .execute()
   ```
-- 重新執行步驟 3-4
+- 重新執行本階段九的步驟 3～4
 
 **Q4：如何批次補充 skill_master？**
 ```python
@@ -792,7 +799,7 @@ new_skills = new_skills_df.to_dict('records')
 response = supabase.table('skill_master').insert(new_skills).execute()
 print(f"✅ 新增了 {len(new_skills)} 個技能到 skill_master")
 
-# 重新執行步驟 1-4
+# 重新執行本階段九的步驟 1～4
 ```
 
 ---
@@ -858,7 +865,7 @@ print(f"✅ 新增了 {len(new_skills)} 個技能到 skill_master")
 3. **補充遺漏技能**
    - 處理 `unmatched_skills.csv`
    - 更新 skill_master
-   - 重新執行階段九的步驟 3-4
+   - 重新執行本階段九的步驟 3～4
 
 ---
 
