@@ -32,7 +32,7 @@
 | years_of_experience | 工作年資 | Years of Experience | INT | 工作年資 | - |
 | current_position | 目前職位 | Current Position | VARCHAR(100) | 目前職位 | - |
 | education_background | 教育背景 | Education Background | TEXT | 教育背景 | - |
-| privacy_settings | 隱私設定 | Privacy Settings | JSON | 隱私設定 | - |
+| privacy_settings | 隱私設定 | Privacy Settings | JSONB | 隱私設定 | - |
 | updated_at | 更新時間 | Updated At | DATETIME | 最後更新時間 | - |
 
 ---
@@ -43,13 +43,13 @@
 |---------|---------|-----|---------|------|---------|
 | survey_id | 問卷識別碼 | Survey ID | INT | 問卷識別碼 | PRIMARY KEY |
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
-| career_preference | 職涯偏好 | Career Preference | JSON | 職涯偏好 (目標職位/產業) | - |
-| skill_self_assessment | 技能自評 | Skill Self Assessment | JSON | 技能自評 (1-10分) | - |
+| career_preference | 職涯偏好 | Career Preference | JSONB | 職涯偏好 (目標職位/產業) | - |
+| skill_self_assessment | 技能自評 | Skill Self Assessment | JSONB | 技能自評 (1-10分) | - |
 | salary_min | 最低薪資期待 | Minimum Salary | INT | 最低薪資期待 | - |
 | salary_max | 最高薪資期待 | Maximum Salary | INT | 最高薪資期待 | - |
 | location_preference | 工作地點偏好 | Location Preference | VARCHAR(100) | 工作地點偏好 | - |
 | remote_preference | 遠端工作偏好 | Remote Work Preference | VARCHAR(50) | 遠端工作偏好 | - |
-| career_motivation | 職涯轉換動機 | Career Motivation | JSON | 職涯轉換動機 | - |
+| career_motivation | 職涯轉換動機 | Career Motivation | JSONB | 職涯轉換動機 | - |
 | completed_at | 完成時間 | Completed At | DATETIME | 完成時間 | - |
 | updated_at | 更新時間 | Updated At | DATETIME | 更新時間 | - |
 
@@ -63,8 +63,8 @@
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
 | template_id | 模板識別碼 | Template ID | INT | 使用的模板 | FOREIGN KEY |
 | resume_type | 履歷類型 | Resume Type | VARCHAR(50) | 履歷類型 (uploaded/generated) | NOT NULL |
-| structured_data | 結構化資料 | Structured Data | JSON | 結構化履歷資料 | - |
-| normalized_data | 標準化資料 | Normalized Data | JSON | 標準化後資料 | - |
+| structured_data | 結構化資料 | Structured Data | JSONB | 結構化履歷資料 | - |
+| normalized_data | 標準化資料 | Normalized Data | JSONB | 標準化後資料 | - |
 | vector_id | 向量識別碼 | Vector ID | UUID | 對應 Qdrant 中的 Point ID | - |
 | is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 是否已完成向量化 | DEFAULT FALSE |
 | is_primary | 主要履歷標記 | Is Primary | BOOLEAN | 是否為主要履歷 | DEFAULT FALSE |
@@ -81,7 +81,7 @@
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
 | version_number | 版本號碼 | Version Number | INT | 邏輯版本序號(第幾次修改,允許同一序號對應不同職缺) | NOT NULL |
 | file_path | 檔案儲存路徑 | File Path | VARCHAR(255) | 該版本的檔案儲存路徑 | - |
-| content | 版本內容 | Content | JSON | 版本完整內容 | - |
+| content | 版本內容 | Content | JSONB | 版本完整內容 | - |
 | optimization_target | 優化目標職位 | Optimization Target | VARCHAR(100) | 優化目標職位 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
 
@@ -94,7 +94,7 @@
 | template_id | 模板識別碼 | Template ID | INT | 模板識別碼 | PRIMARY KEY |
 | template_name | 模板名稱 | Template Name | VARCHAR(100) | 模板名稱 | NOT NULL |
 | template_type | 模板類型 | Template Type | VARCHAR(50) | 模板類型 (ATS/Creative/Standard) | - |
-| template_structure | 模板結構 | Template Structure | JSON | 模板結構定義 | - |
+| template_structure | 模板結構 | Template Structure | JSONB | 模板結構定義 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
 
 ---
@@ -110,7 +110,7 @@
 | upload_type | 上傳類型 | Upload Type | VARCHAR(50) | 上傳類型 (resume/portfolio) | - |
 | status | 處理狀態 | Status | VARCHAR(50) | 處理狀態 (pending/processing/completed/failed) | DEFAULT 'pending' |
 | uploaded_at | 上傳時間 | Uploaded At | DATETIME | 上傳時間 | NOT NULL |
-| metadata | 檔案中繼資料 | Metadata | JSON | 檔案中繼資料 | - |
+| metadata | 檔案中繼資料 | Metadata | JSONB | 檔案中繼資料 | - |
 
 ---
 
@@ -122,7 +122,7 @@
 | event_id | 事件識別碼 | Event ID | INT | 關聯上傳事件 | FOREIGN KEY |
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
 | raw_text | 原始文字 | Raw Text | TEXT | OCR 原始文字 | - |
-| extracted_data | 結構化萃取資料 | Extracted Data | JSON | 結構化萃取資料 | - |
+| extracted_data | 結構化萃取資料 | Extracted Data | JSONB | 結構化萃取資料 | - |
 | confidence_score | 辨識信心分數 | Confidence Score | FLOAT | 辨識信心分數 (0-1)。IF confidence_score < 0.7: → 標記為需要人工審核 → 提醒用戶重新上傳清晰版本 | - |
 | is_manual_review_needed | 是否需人工審核 | Is Manual Review Needed | BOOLEAN | 是否需人工審核。當 confidence_score < 0.7 時自動設為 TRUE | DEFAULT FALSE |
 | ocr_status | OCR 狀態 | OCR Status | VARCHAR(50) | OCR 狀態 (success/failed/partial) | - |
@@ -171,7 +171,7 @@
 | city | 城市 | City | VARCHAR(50) | 城市名稱，用於職缺硬篩選 |
 | district | 地區 | District | VARCHAR(50) | 行政區名稱，用於職缺硬篩選 |
 | remote_option | 遠端選項 | Remote Option | VARCHAR(50) | 遠端選項 |
-| job_details | 詳細資訊 | Job Details | JSON | 詳細資訊（福利、學歷、工時等） |
+| job_details | 詳細資訊 | Job Details | JSONB | 詳細資訊（福利、學歷、工時等） |
 | source_platform | 來源平台 | Source Platform | VARCHAR(50) | 來源平台 |
 | source_url | 來源網址 | Source URL | VARCHAR(500) | 來源網址 |
 | posted_date | 發布日期 | Posted Date | DATE | 發布日期 |
@@ -187,7 +187,7 @@
 | skill_id | 技能識別碼 | Skill ID | INT | 技能識別碼 | PRIMARY KEY |
 | skill_name | 技能名稱 | Skill Name | VARCHAR(100) | 技能名稱 | UNIQUE, NOT NULL |
 | skill_category | 技能分類 | Skill Category | VARCHAR(50) | 技能分類 (Programming/Framework/Tool/Soft) | - |
-| synonyms | 同義詞 | Synonyms | JSON | 同義詞列表 | - |
+| synonyms | 同義詞 | Synonyms | JSONB | 同義詞列表 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
 
 ---
@@ -243,7 +243,7 @@
 | experience_match_score | 經驗配適度分數 | Experience Match Score | FLOAT | 經驗配適度分數 (0-100) | - |
 | salary_match_score | 薪資配適度分數 | Salary Match Score | FLOAT | 薪資配適度分數 (0-100) | - |
 | location_match_score | 地點配適度分數 | Location Match Score | FLOAT | 地點配適度分數 (0-100) | - |
-| score_breakdown | 分數明細 | Score Breakdown | JSON | 分數明細說明 | - |
+| score_breakdown | 分數明細 | Score Breakdown | JSONB | 分數明細說明 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
 
 ---
@@ -260,7 +260,7 @@
 | applied_at | 投遞時間 | Applied At | DATETIME | 投遞時間 | NOT NULL |
 | status_updated_at | 狀態更新時間 | Status Updated At | DATETIME | 狀態更新時間 | - |
 | days_since_application | 投遞天數 | Days Since Application | INT | 投遞天數 | - |
-| user_feedback | 使用者回報結果 | User Feedback | JSON | 使用者回報結果 | - |
+| user_feedback | 使用者回報結果 | User Feedback | JSONB | 使用者回報結果 | - |
 
 ---
 
@@ -271,11 +271,17 @@
 | report_id | 報告識別碼 | Report ID | INT | 報告識別碼 | PRIMARY KEY |
 | survey_id | 問卷識別碼 | Survey ID | INT | 關聯問卷 | FOREIGN KEY |
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
-| skill_gap_analysis | 技能落差分析 | Skill Gap Analysis | JSON | 技能落差分析 | - |
-| career_path_suggestions | 職涯路徑建議 | Career Path Suggestions | JSON | 職涯路徑建議 | - |
-| market_insights | 市場洞察 | Market Insights | JSON | 市場洞察 | - |
+| skill_gap_analysis | 技能落差分析 | Skill Gap Analysis | JSONB | 技術性技能缺口細節 | - |
+| career_path_suggestions | 職涯路徑建議 | Career Path Suggestions | JSONB | 職涯路徑多條選項 | - |
+| market_insights | 市場洞察 | Market Insights | JSONB | 市場洞察 | - |
 | career_readiness_score | 職涯準備度分數 | Career Readiness Score | FLOAT | 職涯準備度分數 (0-100) | - |
-| generated_at | 報告生成時間 | Generated At | DATETIME | 報告生成時間 | - |
+| generated_at | 報告生成時間 | Generated At | DATETIME | 報告生成時間 | NOT NULL |
+| user_id | 使用者識別碼 | User ID | INT | 直接關聯用戶（避免多層 JOIN） | FOREIGN KEY |
+| report_version | 報告版本 | Report Version | VARCHAR(10) | 報告 Schema 版本 | DEFAULT '1.0' |
+| preliminary_summary | 初步摘要 | Preliminary Summary | JSONB | 存 `{"core_insight": "..."}` | - |
+| radar_chart | 雷達圖 | Radar Chart | JSONB | 雷達圖完整結構 | - |
+| gap_analysis | 職能落差分析 | Gap Analysis | JSONB | 職能落差完整結構 | - |
+| action_plan | 行動計畫 | Action Plan | JSONB | 短中長期行動計畫 | - |
 
 ---
 
@@ -302,7 +308,7 @@
 | gap_id | 落差識別碼 | Gap ID | INT | 關聯技能落差 | FOREIGN KEY |
 | project_name | 專案名稱 | Project Name | VARCHAR(200) | 專案名稱 | - |
 | project_description | 專案描述 | Project Description | TEXT | 專案描述 | - |
-| required_skills | 所需技能列表 | Required Skills | JSON | 所需技能列表 | - |
+| required_skills | 所需技能列表 | Required Skills | JSONB | 所需技能列表 | - |
 | difficulty_level | 難度等級 | Difficulty Level | VARCHAR(50) | 難度等級 (beginner/intermediate/advanced) | - |
 | estimated_hours | 預估完成時數 | Estimated Hours | INT | 預估完成時數 | - |
 | project_url | 專案參考連結 | Project URL | VARCHAR(500) | 專案參考連結 | - |

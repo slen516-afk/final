@@ -8,6 +8,7 @@ erDiagram
     USER ||--o{ UPLOAD_EVENT : triggers
     USER ||--o{ APPLICATION_RECORD : submits
     USER ||--o{ USER_SKILL : has
+    USER ||--o{ CAREER_ANALYSIS_REPORT : has
 
     CAREER_SURVEY ||--o{ RESUME : guides
     CAREER_SURVEY ||--o{ CAREER_ANALYSIS_REPORT : generates
@@ -58,20 +59,20 @@ erDiagram
         int years_of_experience
         string current_position "VARCHAR(100)"
         text education_background
-        json privacy_settings
+        jsonb privacy_settings
         datetime updated_at
     }
 
     CAREER_SURVEY {
         int survey_id PK
         int user_id FK
-        json career_preference
-        json skill_self_assessment
+        jsonb career_preference
+        jsonb skill_self_assessment
         int salary_min
         int salary_max
         string location_preference "VARCHAR(100)"
         string remote_preference "VARCHAR(50)"
-        json career_motivation
+        jsonb career_motivation
         datetime completed_at
         datetime updated_at
     }
@@ -81,8 +82,8 @@ erDiagram
         int user_id FK
         int template_id FK
         string resume_type "VARCHAR(50)"
-        json structured_data "⚡ 需向量化"
-        json normalized_data "⚡ 需向量化"
+        jsonb structured_data "⚡ 需向量化"
+        jsonb normalized_data "⚡ 需向量化"
         uuid vector_id "Qdrant Point ID"
         boolean is_embedded "DEFAULT FALSE"
         boolean is_primary
@@ -95,7 +96,7 @@ erDiagram
         int resume_id FK
         int version_number
         string file_path "VARCHAR(255)"
-        json content
+        jsonb content
         string optimization_target "VARCHAR(100)"
         datetime created_at
     }
@@ -104,7 +105,7 @@ erDiagram
         int template_id PK "🔵 履歷生成"
         string template_name "VARCHAR(100)"
         string template_type "VARCHAR(50)"
-        json template_structure
+        jsonb template_structure
         datetime created_at
     }
 
@@ -116,7 +117,7 @@ erDiagram
         string upload_type "VARCHAR(50)"
         string status "VARCHAR(50)"
         datetime uploaded_at
-        json metadata
+        jsonb metadata
     }
 
     OCR_RESULT {
@@ -124,7 +125,7 @@ erDiagram
         int event_id FK
         int resume_id FK
         text raw_text
-        json extracted_data
+        jsonb extracted_data
         float confidence_score
         boolean is_manual_review_needed "DEFAULT FALSE"
         string ocr_status "VARCHAR(50)"
@@ -157,7 +158,7 @@ erDiagram
         string city "VARCHAR(50)"
         string district "VARCHAR(50)"
         string remote_option "VARCHAR(50)"
-        json job_details
+        jsonb job_details
         string source_platform "VARCHAR(50)"
         string source_url "VARCHAR(500)"
         date posted_date
@@ -169,7 +170,7 @@ erDiagram
         int skill_id PK
         string skill_name UK "VARCHAR(100)"
         string skill_category "VARCHAR(50)"
-        json synonyms
+        jsonb synonyms
         datetime created_at
     }
 
@@ -209,7 +210,7 @@ erDiagram
         float experience_match_score
         float salary_match_score
         float location_match_score
-        json score_breakdown
+        jsonb score_breakdown
         datetime created_at
     }
 
@@ -222,18 +223,24 @@ erDiagram
         datetime applied_at
         datetime status_updated_at
         int days_since_application
-        json user_feedback
+        jsonb user_feedback
     }
 
     CAREER_ANALYSIS_REPORT {
         int report_id PK "🟠 職能分析"
         int survey_id FK
         int resume_id FK
-        json skill_gap_analysis
-        json career_path_suggestions
-        json market_insights
+        jsonb skill_gap_analysis
+        jsonb career_path_suggestions
+        jsonb market_insights
         float career_readiness_score
-        datetime generated_at
+        datetime generated_at "NOT NULL"
+        int user_id FK "直接關聯用戶"
+        string report_version "VARCHAR(10) DEFAULT '1.0'"
+        jsonb preliminary_summary
+        jsonb radar_chart
+        jsonb gap_analysis
+        jsonb action_plan
     }
 
     SKILL_GAP {
@@ -252,7 +259,7 @@ erDiagram
         int gap_id FK
         string project_name "VARCHAR(200)"
         text project_description
-        json required_skills
+        jsonb required_skills
         string difficulty_level "VARCHAR(50)"
         int estimated_hours
         string project_url "VARCHAR(500)"

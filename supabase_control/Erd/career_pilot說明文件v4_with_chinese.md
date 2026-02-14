@@ -90,7 +90,7 @@
 | years_of_experience | 工作年資 | Years of Experience | INT | 工作年資 | - |
 | current_position | 目前職位 | Current Position | VARCHAR(100) | 目前職位 | - |
 | education_background | 教育背景 | Education Background | TEXT | 教育背景 | - |
-| privacy_settings | 隱私設定 | Privacy Settings | JSON | 隱私設定 | - |
+| privacy_settings | 隱私設定 | Privacy Settings | JSONB | 隱私設定 | - |
 | updated_at | 更新時間 | Updated At | DATETIME | 最後更新時間 | - |
 
 **設計說明**:
@@ -99,7 +99,7 @@
   - 帳密歸帳密:敏感認證資料獨立儲存
   - 檔案歸檔案:業務細節分開管理,查詢效能高
 - **education_background 使用 TEXT**:教育背景可能包含校名、系所、榮譽獎項、研究論文題目等,長度變動極大
-- **privacy_settings 使用 JSON**:隱私設定包含多個開關(是否公開電話、是否允許 AI 分析、通知偏好等),結構多變且不常作為查詢條件
+- **privacy_settings 使用 JSONB**:隱私設定包含多個開關(是否公開電話、是否允許 AI 分析、通知偏好等),結構多變且不常作為查詢條件
 - **github_repo**:未來功能先保留,用於整合 GitHub 作品集
 
 ---
@@ -114,13 +114,13 @@
 |---------|---------|-----|---------|------|---------|
 | survey_id | 問卷識別碼 | Survey ID | INT | 問卷識別碼 | PRIMARY KEY |
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
-| career_preference | 職涯偏好 | Career Preference | JSON | 職涯偏好 (目標職位/產業) | - |
-| skill_self_assessment | 技能自評 | Skill Self Assessment | JSON | 技能自評 (1-10分) | - |
+| career_preference | 職涯偏好 | Career Preference | JSONB | 職涯偏好 (目標職位/產業) | - |
+| skill_self_assessment | 技能自評 | Skill Self Assessment | JSONB | 技能自評 (1-10分) | - |
 | salary_min | 最低薪資期待 | Minimum Salary | INT | 最低薪資期待 | - |
 | salary_max | 最高薪資期待 | Maximum Salary | INT | 最高薪資期待 | - |
 | location_preference | 工作地點偏好 | Location Preference | VARCHAR(100) | 工作地點偏好 | - |
 | remote_preference | 遠端工作偏好 | Remote Work Preference | VARCHAR(50) | 遠端工作偏好 | - |
-| career_motivation | 職涯轉換動機 | Career Motivation | JSON | 職涯轉換動機 | - |
+| career_motivation | 職涯轉換動機 | Career Motivation | JSONB | 職涯轉換動機 | - |
 | completed_at | 完成時間 | Completed At | DATETIME | 完成時間 | - |
 | updated_at | 更新時間 | Updated At | DATETIME | 更新時間 | - |
 
@@ -150,8 +150,8 @@
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
 | template_id | 模板識別碼 | Template ID | INT | 使用的模板 | FOREIGN KEY |
 | resume_type | 履歷類型 | Resume Type | VARCHAR(50) | 履歷類型 (uploaded/generated) | NOT NULL |
-| structured_data | 結構化資料 | Structured Data | JSON | 結構化履歷資料 | - |
-| normalized_data | 標準化資料 | Normalized Data | JSON | 標準化後資料 | - |
+| structured_data | 結構化資料 | Structured Data | JSONB | 結構化履歷資料 | - |
+| normalized_data | 標準化資料 | Normalized Data | JSONB | 標準化後資料 | - |
 | vector_id | 向量識別碼 | Vector ID | UUID | 對應 Qdrant 中的 Point ID | - |
 | is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 是否已完成向量化 | DEFAULT FALSE |
 | is_primary | 主要履歷標記 | Is Primary | BOOLEAN | 是否為主要履歷 | DEFAULT FALSE |
@@ -180,7 +180,7 @@
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
 | version_number | 版本號碼 | Version Number | INT | 邏輯版本序號(第幾次修改,允許同一序號對應不同職缺) | NOT NULL |
 | file_path | 檔案儲存路徑 | File Path | VARCHAR(255) | 該版本的檔案儲存路徑 | - |
-| content | 版本內容 | Content | JSON | 版本完整內容 | - |
+| content | 版本內容 | Content | JSONB | 版本完整內容 | - |
 | optimization_target | 優化目標職位 | Optimization Target | VARCHAR(100) | 優化目標職位 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
 
@@ -205,7 +205,7 @@
 | template_id | 模板識別碼 | Template ID | INT | 模板識別碼 | PRIMARY KEY |
 | template_name | 模板名稱 | Template Name | VARCHAR(100) | 模板名稱 | NOT NULL |
 | template_type | 模板類型 | Template Type | VARCHAR(50) | 模板類型 (ATS/Creative/Standard) | - |
-| template_structure | 模板結構 | Template Structure | JSON | 模板結構定義 | - |
+| template_structure | 模板結構 | Template Structure | JSONB | 模板結構定義 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
 
 **設計說明**:
@@ -240,7 +240,7 @@
 | upload_type | 上傳類型 | Upload Type | VARCHAR(50) | 上傳類型 (resume/portfolio) | - |
 | status | 處理狀態 | Status | VARCHAR(50) | 處理狀態 (pending/processing/completed/failed) | DEFAULT 'pending' |
 | uploaded_at | 上傳時間 | Uploaded At | DATETIME | 上傳時間 | NOT NULL |
-| metadata | 檔案中繼資料 | Metadata | JSON | 檔案中繼資料 | - |
+| metadata | 檔案中繼資料 | Metadata | JSONB | 檔案中繼資料 | - |
 
 **設計說明**:
 - 對應流程圖「儲存原始檔案 & 發出 UploadEvent」
@@ -274,7 +274,7 @@
 | event_id | 事件識別碼 | Event ID | INT | 關聯上傳事件 | FOREIGN KEY |
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
 | raw_text | 原始文字 | Raw Text | TEXT | OCR 原始文字 | - |
-| extracted_data | 結構化萃取資料 | Extracted Data | JSON | 結構化萃取資料 | - |
+| extracted_data | 結構化萃取資料 | Extracted Data | JSONB | 結構化萃取資料 | - |
 | confidence_score | 辨識信心分數 | Confidence Score | FLOAT | 辨識信心分數 (0-1)。IF confidence_score < 0.7: → 標記為需要人工審核 → 提醒用戶重新上傳清晰版本 | - |
 | is_manual_review_needed | 是否需人工審核 | Is Manual Review Needed | BOOLEAN | 是否需人工審核。當 confidence_score < 0.7 時自動設為 TRUE | DEFAULT FALSE |
 | ocr_status | OCR 狀態 | OCR Status | VARCHAR(50) | OCR 狀態 (success/failed/partial) | - |
@@ -354,7 +354,7 @@
 | city | 城市 | City | VARCHAR(50) | 城市名稱，用於職缺硬篩選 |
 | district | 地區 | District | VARCHAR(50) | 行政區名稱，用於職缺硬篩選 |
 | remote_option | 遠端選項 | Remote Option | VARCHAR(50) | 遠端選項 |
-| job_details | 詳細資訊 | Job Details | JSON | 詳細資訊（福利、學歷、工時等） |
+| job_details | 詳細資訊 | Job Details | JSONB | 詳細資訊（福利、學歷、工時等） |
 | source_platform | 來源平台 | Source Platform | VARCHAR(50) | 來源平台 |
 | source_url | 來源網址 | Source URL | VARCHAR(500) | 來源網址 |
 | posted_date | 發布日期 | Posted Date | DATE | 發布日期 |
@@ -379,7 +379,7 @@
   - **D4 AI與數據**: ETL、Python 資料分析、RAG/LLM 應用、ML 模型。
   - **D5 品質與架構**: 單元測試、設計模式、SOLID、資安意識；為區分 Senior 的關鍵向度，JD 強調「Clean Code」「Refactoring」時此項應給高分。
   - **D6 軟實力**: 溝通協作、Agile/Scrum、商業思維。
-- **✅ 最終建議 (MVP)**:只新增一個 JSON 欄位 `job_details`，把非固定欄位資訊集中存放
+- **✅ 最終建議 (MVP)**:只新增一個 JSONB 欄位 `job_details`，把非固定欄位資訊集中存放
   - 欄位建議包含:福利、休假制度、工作時間、學歷要求、經驗要求、其他雜項(穿著、停車、餐費等)
   - 優點:✅ 最彈性 ✅ 爬蟲最簡單 ✅ 不確定的資訊都能塞
   - 未來:等資料穩定後，再視需要拆出重要欄位
@@ -387,7 +387,7 @@
 
 ```sql
 ALTER TABLE JOB_POSTING 
-ADD COLUMN job_details JSON;
+ADD COLUMN job_details JSONB;
 ```
 
 ---
@@ -403,7 +403,7 @@ ADD COLUMN job_details JSON;
 | skill_id | 技能識別碼 | Skill ID | INT | 技能識別碼 | PRIMARY KEY |
 | skill_name | 技能名稱 | Skill Name | VARCHAR(100) | 技能名稱 | UNIQUE, NOT NULL |
 | skill_category | 技能分類 | Skill Category | VARCHAR(50) | 技能分類 (Programming/Framework/Tool/Soft) | - |
-| synonyms | 同義詞 | Synonyms | JSON | 同義詞列表 | - |
+| synonyms | 同義詞 | Synonyms | JSONB | 同義詞列表 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
 
 **設計說明**:
@@ -504,7 +504,7 @@ ADD COLUMN job_details JSON;
 | experience_match_score | 經驗配適度分數 | Experience Match Score | FLOAT | 經驗配適度分數 (0-100) | - |
 | salary_match_score | 薪資配適度分數 | Salary Match Score | FLOAT | 薪資配適度分數 (0-100) | - |
 | location_match_score | 地點配適度分數 | Location Match Score | FLOAT | 地點配適度分數 (0-100) | - |
-| score_breakdown | 分數明細 | Score Breakdown | JSON | 分數明細說明 | - |
+| score_breakdown | 分數明細 | Score Breakdown | JSONB | 分數明細說明 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
 
 **設計說明**:
@@ -538,7 +538,7 @@ ADD COLUMN job_details JSON;
 | applied_at | 投遞時間 | Applied At | DATETIME | 投遞時間 | NOT NULL |
 | status_updated_at | 狀態更新時間 | Status Updated At | DATETIME | 狀態更新時間 | - |
 | days_since_application | 投遞天數 | Days Since Application | INT | 投遞天數 | - |
-| user_feedback | 使用者回報結果 | User Feedback | JSON | 使用者回報結果 | - |
+| user_feedback | 使用者回報結果 | User Feedback | JSONB | 使用者回報結果 | - |
 
 **設計說明**:
 - 對應 Work Flow 的「Step4: 履歷投遞」與「Step5: 投遞進度追蹤」
@@ -559,18 +559,24 @@ ADD COLUMN job_details JSON;
 
 ### 9.1 CAREER_ANALYSIS_REPORT(職涯分析報告)🟠
 
-**功能說明**:儲存 AI 生成的職涯分析報告
+**功能說明**:儲存 AI 生成的職涯分析報告，含初步摘要、雷達圖、職能落差與行動計畫
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
 | report_id | 報告識別碼 | Report ID | INT | 報告識別碼 | PRIMARY KEY |
 | survey_id | 問卷識別碼 | Survey ID | INT | 關聯問卷 | FOREIGN KEY |
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
-| skill_gap_analysis | 技能落差分析 | Skill Gap Analysis | JSON | 技能落差分析 | - |
-| career_path_suggestions | 職涯路徑建議 | Career Path Suggestions | JSON | 職涯路徑建議 | - |
-| market_insights | 市場洞察 | Market Insights | JSON | 市場洞察 | - |
+| skill_gap_analysis | 技能落差分析 | Skill Gap Analysis | JSONB | 技術性技能缺口細節 | - |
+| career_path_suggestions | 職涯路徑建議 | Career Path Suggestions | JSONB | 職涯路徑多條選項 | - |
+| market_insights | 市場洞察 | Market Insights | JSONB | 市場洞察 | - |
 | career_readiness_score | 職涯準備度分數 | Career Readiness Score | FLOAT | 職涯準備度分數 (0-100) | - |
-| generated_at | 報告生成時間 | Generated At | DATETIME | 報告生成時間 | - |
+| generated_at | 報告生成時間 | Generated At | DATETIME | 報告生成時間 | NOT NULL |
+| user_id | 使用者識別碼 | User ID | INT | 直接關聯用戶（避免多層 JOIN） | FOREIGN KEY |
+| report_version | 報告版本 | Report Version | VARCHAR(10) | 報告 Schema 版本 | DEFAULT '1.0' |
+| preliminary_summary | 初步摘要 | Preliminary Summary | JSONB | 存 `{"core_insight": "..."}` | - |
+| radar_chart | 雷達圖 | Radar Chart | JSONB | 雷達圖完整結構 | - |
+| gap_analysis | 職能落差分析 | Gap Analysis | JSONB | 職能落差完整結構 | - |
+| action_plan | 行動計畫 | Action Plan | JSONB | 短中長期行動計畫 | - |
 
 **設計說明**:
 - 對應流程圖右側「顯示: 職涯發展表板」→「動作: 檢視職能分析結果」
@@ -579,6 +585,10 @@ ADD COLUMN job_details JSON;
   - `CAREER_SURVEY` 提供主觀意圖(想去的產業、期望薪資)
   - `RESUME` 提供客觀能力(實際技能、工作經驗)
   - 兩者結合才能產生有意義的分析報告
+- **新增欄位與報告 JSON 對應**:
+  - `user_id`: 對應 `report_metadata.user_id`，直接關聯用戶，查詢時不需多層 JOIN
+  - `report_version`: 對應 `report_metadata.version`，便於未來 Schema 演進
+  - `preliminary_summary`、`radar_chart`、`gap_analysis`、`action_plan`: 分別儲存報告內對應區塊的完整 JSONB，滿足快速上線與彈性儲存
 
 ---
 
@@ -614,7 +624,7 @@ ADD COLUMN job_details JSON;
 | gap_id | 落差識別碼 | Gap ID | INT | 關聯技能落差 | FOREIGN KEY |
 | project_name | 專案名稱 | Project Name | VARCHAR(200) | 專案名稱 | - |
 | project_description | 專案描述 | Project Description | TEXT | 專案描述 | - |
-| required_skills | 所需技能列表 | Required Skills | JSON | 所需技能列表 | - |
+| required_skills | 所需技能列表 | Required Skills | JSONB | 所需技能列表 | - |
 | difficulty_level | 難度等級 | Difficulty Level | VARCHAR(50) | 難度等級 (beginner/intermediate/advanced) | - |
 | estimated_hours | 預估完成時數 | Estimated Hours | INT | 預估完成時數 | - |
 | project_url | 專案參考連結 | Project URL | VARCHAR(500) | 專案參考連結 | - |
@@ -646,6 +656,7 @@ ADD COLUMN job_details JSON;
 | USER | User | RESUME | Resume | 一位使用者可建立多份履歷 |
 | USER | User | APPLICATION_RECORD | Application Record | 一位使用者可投遞多個職缺 |
 | USER | User | UPLOAD_EVENT | Upload Event | 一位使用者可上傳多個檔案 |
+| USER | User | CAREER_ANALYSIS_REPORT | Career Analysis Report | 一位使用者可擁有多份分析報告（經由 user_id） |
 | RESUME | Resume | RESUME_VERSION | Resume Version | 一份履歷可有多個版本 |
 | RESUME_VERSION | Resume Version | APPLICATION_RECORD | Application Record | 一個履歷版本可被多次投遞 |
 | CAREER_SURVEY | Career Survey | CAREER_ANALYSIS_REPORT | Career Analysis Report | 一份問卷可生成多次分析報告 |
@@ -794,7 +805,7 @@ LLM Embedding API (OpenAI text-embedding-3-large)
 ## 設計原則
 
 1. **模組化設計**:每個功能模組對應獨立的資料表群組
-2. **可擴展性**:JSON 欄位預留未來功能擴充空間
+2. **可擴展性**:JSONB 欄位預留未來功能擴充空間
 3. **資料完整性**:使用外鍵約束確保資料一致性
 4. **效能優化**:關鍵查詢欄位建立索引
 5. **安全性**:敏感資料加密儲存(password_hash)
