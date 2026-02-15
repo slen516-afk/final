@@ -73,6 +73,7 @@ erDiagram
         string location_preference "VARCHAR(100)"
         string remote_preference "VARCHAR(50)"
         jsonb career_motivation
+        jsonb questionnaire_response "完整問卷 module_a/b/c/d；GIN idx_survey_response_gin"
         datetime completed_at
         datetime updated_at
     }

@@ -50,6 +50,7 @@
 | location_preference | 工作地點偏好 | Location Preference | VARCHAR(100) | 工作地點偏好 | - |
 | remote_preference | 遠端工作偏好 | Remote Work Preference | VARCHAR(50) | 遠端工作偏好 | - |
 | career_motivation | 職涯轉換動機 | Career Motivation | JSONB | 職涯轉換動機 | - |
+| questionnaire_response | 問卷填答結果 | Questionnaire Response | JSONB | 完整問卷填答（module_a/b/c/d 所有題目與答案）；產分析報告時可依需求用 GIN 索引取值 | GIN 索引 idx_survey_response_gin |
 | completed_at | 完成時間 | Completed At | DATETIME | 完成時間 | - |
 | updated_at | 更新時間 | Updated At | DATETIME | 更新時間 | - |
 

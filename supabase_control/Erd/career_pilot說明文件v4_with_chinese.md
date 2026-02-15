@@ -108,7 +108,7 @@
 
 ### 2.1 CAREER_SURVEY(職涯調查問卷)
 
-**功能說明**:記錄使用者的職涯目標、技能自評與求職偏好,作為 AI 分析的重要輸入
+**功能說明**:記錄使用者的職涯目標、技能自評與求職偏好,作為 AI 分析的重要輸入；問卷完整填答結果集中存放於 `questionnaire_response`，供後續產出分析報告時使用。
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
@@ -121,12 +121,14 @@
 | location_preference | 工作地點偏好 | Location Preference | VARCHAR(100) | 工作地點偏好 | - |
 | remote_preference | 遠端工作偏好 | Remote Work Preference | VARCHAR(50) | 遠端工作偏好 | - |
 | career_motivation | 職涯轉換動機 | Career Motivation | JSONB | 職涯轉換動機 | - |
+| questionnaire_response | 問卷填答結果 | Questionnaire Response | JSONB | 完整問卷填答結果（包含 module_a/b/c/d 所有題目與答案）；產分析報告時可依需求以 GIN 索引查詢取值 | GIN 索引 idx_survey_response_gin |
 | completed_at | 完成時間 | Completed At | DATETIME | 完成時間 | - |
 | updated_at | 更新時間 | Updated At | DATETIME | 更新時間 | - |
 
 **設計說明**:
 - 對應流程圖「動作: 選擇填寫職涯調查問卷」
 - 支援 Release 2 的「問卷內容修改」功能
+- **問卷結果存庫**：經組內討論，將完整問卷填答結果寫入資料庫（`questionnaire_response`），方便後續產出職涯分析報告時取用；查詢時可透過 `idx_survey_response_gin`（GIN 索引）對 JSONB 內欄位做條件篩選或取值，兼顧彈性與查詢效能。
 - JSON 欄位格式範例:
   ```json
   {
@@ -135,6 +137,7 @@
     "career_motivation": "尋求更好的技術挑戰與成長機會"
   }
   ```
+- **questionnaire_response 格式**：存儲 module_a / module_b / module_c / module_d 等各模組之題目與答案完整結構，具體 schema 依前端問卷設計而定。
 
 ---
 

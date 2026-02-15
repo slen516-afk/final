@@ -219,3 +219,42 @@
 2026-02-06 21:02:07,902 - INFO - ✅ 成功處理: 100 筆（已寫入 Qdrant 並回寫 Supabase vector_id / is_embedded）
 2026-02-06 21:02:07,902 - INFO - 📌 尚有 7152 筆未處理，確認無誤後可設 MAX_BATCHES=0 跑完全部
 2026-02-06 21:02:07,903 - INFO - ============================================================
+2026-02-14 15:36:41,621 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-02-14 15:36:41,670 - INFO - ============================================================
+2026-02-14 15:36:41,671 - INFO - Career Pilot 履歷向量化作業
+2026-02-14 15:36:41,671 - INFO - 執行時間: 2026-02-14 15:36:41
+2026-02-14 15:36:41,671 - INFO - 模型: text-embedding-3-large，維度: 1536
+2026-02-14 15:36:41,671 - INFO - 本輪處理筆數上限: 10
+2026-02-14 15:36:41,672 - INFO - ============================================================
+2026-02-14 15:36:43,170 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?select=resume_id&is_embedded=eq.False "HTTP/2 200 OK"
+2026-02-14 15:36:43,171 - INFO - 📊 待處理履歷總數: 10，本輪將處理: 10 筆
+2026-02-14 15:36:47,951 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?select=resume_id%2Cuser_id%2Ctemplate_id%2Cresume_type%2Cstructured_data%2Cnormalized_data&is_embedded=eq.False&offset=0&limit=10 "HTTP/2 200 OK"
+2026-02-14 15:36:50,662 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:53,659 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:53,884 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:54,144 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:54,389 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:54,644 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:54,894 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:55,139 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:55,380 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:55,594 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-14 15:36:57,335 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/resume_vectors/points?wait=true "HTTP/1.1 200 OK"
+2026-02-14 15:36:57,336 - INFO - ✅ Qdrant 寫入 10 筆履歷向量
+2026-02-14 15:36:57,684 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.4 "HTTP/2 200 OK"
+2026-02-14 15:36:58,000 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.8 "HTTP/2 200 OK"
+2026-02-14 15:36:58,313 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.1 "HTTP/2 200 OK"
+2026-02-14 15:36:58,627 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.2 "HTTP/2 200 OK"
+2026-02-14 15:36:58,938 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.10 "HTTP/2 200 OK"
+2026-02-14 15:36:59,253 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.3 "HTTP/2 200 OK"
+2026-02-14 15:36:59,574 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.5 "HTTP/2 200 OK"
+2026-02-14 15:36:59,888 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.6 "HTTP/2 200 OK"
+2026-02-14 15:37:00,220 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.7 "HTTP/2 200 OK"
+2026-02-14 15:37:00,540 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.9 "HTTP/2 200 OK"
+2026-02-14 15:37:00,541 - INFO - 📈 進度: 成功=10, 失敗=0, 跳過=0 (本批 成功=10, 失敗=0, 跳過=0)
+2026-02-14 15:37:00,541 - INFO - ============================================================
+2026-02-14 15:37:00,542 - INFO - 🎉 本輪履歷向量化作業完成
+2026-02-14 15:37:00,542 - INFO - ✅ 成功轉出並回寫: 10 筆（已寫入 Qdrant 並更新 resume.vector_id / resume.is_embedded）
+2026-02-14 15:37:00,542 - INFO - ❌ 失敗: 0 筆
+2026-02-14 15:37:00,542 - INFO - ⚠️  跳過（無有效文本）: 0 筆
+2026-02-14 15:37:00,542 - INFO - ============================================================
