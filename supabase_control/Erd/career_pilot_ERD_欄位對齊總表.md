@@ -219,6 +219,27 @@
 
 ---
 
+### 6.4 COURSE(課程主表)🟣
+
+| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
+|---------|---------|-----|---------|------|---------|
+| course_id | 課程識別碼 | Course ID | INT / BIGSERIAL | 課程唯一識別碼 | PRIMARY KEY |
+| course_name | 課程名稱 | Course Name | VARCHAR(500) | 課程標題 | NOT NULL |
+| url | 課程網址 | URL | VARCHAR(500) | 課程連結（如 Coursera）；寫入以 url 為唯一鍵 upsert，避免重複 | UNIQUE, NOT NULL |
+| primary_skill_name | 主要技能名稱 | Primary Skill Name | VARCHAR(100) | 主技能標籤（對應 skill_master.skill_name） | - |
+| primary_skill_id | 主要技能識別碼 | Primary Skill ID | INT | 關聯技能主檔 | FOREIGN KEY → skill_master(skill_id) |
+| rating | 評分 | Rating | NUMERIC(3,2) | 0～5 | - |
+| review_count | 評論數 | Review Count | INT | 評論筆數 | - |
+| level | 難度 | Level | VARCHAR(50) | Beginner / Intermediate / Advanced | - |
+| course_type | 課程類型 | Course Type | VARCHAR(100) | Course / Specialization / Professional Certificate 等 | - |
+| course_information | 課程資訊 | Course Information | TEXT | 大綱/模組 | - |
+| duration_suggested | 建議學習時間 | Duration Suggested | VARCHAR(100) | 標準化字串（如 "1-3 months"） | - |
+| skills | 技能列表 | Skills | JSONB | 技能名稱陣列，供職缺/技能落差推薦匹配 | - |
+| source_platform | 來源平台 | Source Platform | VARCHAR(50) | 如 'Coursera' | DEFAULT 'Coursera' |
+| created_at | 建立時間 | Created At | TIMESTAMPTZ | 寫入時間 | DEFAULT now() |
+
+---
+
 ### 7.1 JOB_MATCHING(職缺媒合記錄)🟢
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |

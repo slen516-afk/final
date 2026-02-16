@@ -50,6 +50,7 @@
 | 17 | 職涯分析報告 | CAREER_ANALYSIS_REPORT | 🟠 職能分析 | 儲存 AI 生成的分析報告 |
 | 18 | 技能落差 | SKILL_GAP | 🟠 職能分析 | 識別技能缺口 |
 | 19 | Side Project 推薦 | SIDE_PROJECT_RECOMMENDATION | 🟠 職能分析 | 推薦學習專案 |
+| 20 | 課程主表 | COURSE | 🟣 課程推薦 | 儲存推薦用課程（如 Coursera），依技能與職缺/技能落差匹配 |
 
 ---
 
@@ -471,6 +472,37 @@ ADD COLUMN job_details JSONB;
 
 ---
 
+### 6.4 COURSE(課程主表)🟣
+
+**功能說明**:儲存推薦用課程（如 Coursera），供「依職缺技能需求」或「依技能落差」推薦課程。以 **url** 為唯一鍵，寫入時 upsert 避免重複；第一次寫入即依 skill_master 帶入 primary_skill_id。
+
+| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
+|---------|---------|-----|---------|------|---------|
+| course_id | 課程識別碼 | Course ID | INT / BIGSERIAL | 課程唯一識別碼 | PRIMARY KEY |
+| course_name | 課程名稱 | Course Name | VARCHAR(500) | 課程標題 | NOT NULL |
+| url | 課程網址 | URL | VARCHAR(500) | 課程連結（如 Coursera） | UNIQUE, NOT NULL |
+| primary_skill_name | 主要技能名稱 | Primary Skill Name | VARCHAR(100) | 主技能標籤（對應 skill_master.skill_name） | - |
+| primary_skill_id | 主要技能識別碼 | Primary Skill ID | INT | 關聯技能主檔 | FOREIGN KEY → skill_master(skill_id) |
+| rating | 評分 | Rating | NUMERIC(3,2) | 0～5 | - |
+| review_count | 評論數 | Review Count | INT | 評論筆數 | - |
+| level | 難度 | Level | VARCHAR(50) | Beginner / Intermediate / Advanced | - |
+| course_type | 課程類型 | Course Type | VARCHAR(100) | Course / Specialization / Professional Certificate 等 | - |
+| course_information | 課程資訊 | Course Information | TEXT | 大綱/模組 | - |
+| duration_suggested | 建議學習時間 | Duration Suggested | VARCHAR(100) | 標準化字串（如 "1-3 months"） | - |
+| skills | 技能列表 | Skills | JSONB | 技能名稱陣列，供推薦匹配 | - |
+| source_platform | 來源平台 | Source Platform | VARCHAR(50) | 如 'Coursera' | DEFAULT 'Coursera' |
+| created_at | 建立時間 | Created At | TIMESTAMPTZ | 寫入時間 | DEFAULT now() |
+
+**設計說明**:
+- **來源與寫入**: 由 `course_clean_and_upload.ipynb` 清洗 Coursera 等來源 CSV，以 url 為唯一鍵 upsert 寫入；新資料重跑即可覆寫同 URL，不重複插入。
+- **與 skill_master 關聯**: primary_skill_id 指向 skill_master(skill_id)，寫入時依 primary_skill_name（含同義詞）對照帶入。
+- **course_type 說明**（由來源 Metadata 拆出）：`Course` 單一課程、`Specialization` 專項課程、`Professional Certificate` 專業認證、`Guided Project` 導引專案；供篩選或顯示課程類型。
+- **與其他表之邏輯關聯（無直接 FK）**:
+  - **職缺推薦**: 由 JOB_SKILL_REQUIREMENT 取得職缺所需技能，與 COURSE 的 primary_skill_name / primary_skill_id 或 skills(JSONB) 匹配後排序推薦（如依 rating、review_count）。
+  - **技能落差推薦**: 由 SKILL_GAP 或 CAREER_SURVEY.skill_self_assessment 取得要補的技能，與 COURSE 技能欄位匹配後推薦課程。
+
+---
+
 ## 7. 職缺媒合與評分表
 
 ### 7.1 JOB_MATCHING(職缺媒合記錄)🟢
@@ -667,6 +699,7 @@ ADD COLUMN job_details JSONB;
 | SKILL_GAP | Skill Gap | SIDE_PROJECT_RECOMMENDATION | Side Project Recommendation | 一個技能落差可推薦多個專案 |
 | JOB_POSTING | Job Posting | JOB_MATCHING | Job Matching | 一個職缺可被多位求職者匹配 |
 | JOB_POSTING | Job Posting | APPLICATION_RECORD | Application Record | 一個職缺可被多人投遞 |
+| SKILL_MASTER | Skill Master | COURSE | Course | 一個技能可對應多門課程（primary_skill_id） |
 
 ### 多對多關係 (M:N)
 
@@ -674,6 +707,9 @@ ADD COLUMN job_details JSONB;
 |------|----------|-------|-----------|------|----------|------|
 | JOB_POSTING | Job Posting | JOB_SKILL_REQUIREMENT | Job Skill Requirement | SKILL_MASTER | Skill Master | 職缺可要求多種技能 |
 | USER_PROFILE | User Profile | USER_SKILL | User Skill | SKILL_MASTER | Skill Master | 使用者可擁有多種技能 |
+
+**邏輯關聯（無中介表，依欄位匹配）**:
+- **COURSE** 與 **JOB_SKILL_REQUIREMENT** / **SKILL_GAP**：透過 COURSE.primary_skill_id、COURSE.skills(JSONB) 與技能主檔對應，供「依職缺所需技能」或「依技能落差」推薦課程；實作時由應用層依 skill_id 或技能名稱匹配。
 
 ---
 

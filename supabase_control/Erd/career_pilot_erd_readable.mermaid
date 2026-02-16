@@ -33,6 +33,7 @@ erDiagram
     SKILL_MASTER ||--o{ JOB_SKILL_REQUIREMENT : defines
     SKILL_MASTER ||--o{ USER_SKILL : defines
     SKILL_MASTER ||--o{ SKILL_GAP : identifies
+    SKILL_MASTER ||--o{ COURSE : "primary_skill"
 
     CAREER_ANALYSIS_REPORT ||--o{ SKILL_GAP : identifies
     SKILL_GAP ||--o{ SIDE_PROJECT_RECOMMENDATION : suggests
@@ -173,6 +174,23 @@ erDiagram
         string skill_category "VARCHAR(50)"
         jsonb synonyms
         datetime created_at
+    }
+
+    COURSE {
+        int course_id PK "🟣 課程推薦"
+        string course_name "VARCHAR(500) NOT NULL"
+        string url UK "VARCHAR(500) UNIQUE"
+        string primary_skill_name "VARCHAR(100)"
+        int primary_skill_id FK "→ skill_master"
+        float rating "NUMERIC(3,2)"
+        int review_count
+        string level "VARCHAR(50)"
+        string course_type "VARCHAR(100)"
+        text course_information
+        string duration_suggested "VARCHAR(100)"
+        jsonb skills "技能陣列"
+        string source_platform "VARCHAR(50) DEFAULT 'Coursera'"
+        datetime created_at "DEFAULT now()"
     }
 
     JOB_SKILL_REQUIREMENT {
