@@ -337,3 +337,112 @@
 | project_url | 專案參考連結 | Project URL | VARCHAR(500) | 專案參考連結 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
 
+---
+
+### 21. RESUME_ANALYSIS（履歷分析報告）🔵
+
+| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
+|---------|---------|-----|---------|------|---------|
+| analysis_id | 分析識別碼 | Analysis ID | BIGSERIAL | 分析識別碼 | PRIMARY KEY |
+| resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FK → RESUME, NOT NULL |
+| user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FK → USER, NOT NULL |
+| candidate_positioning | 候選人定位 | Candidate Positioning | TEXT | 企業視角下此履歷代表的角色定位 | - |
+| target_role_gap_summary | 目標職位落差摘要 | Target Role Gap Summary | TEXT | 與目標職位的整體落差說明 | - |
+| overall_strengths | 整體優勢點 | Overall Strengths | JSONB | List[str] 最具說服力的優勢點 | - |
+| overall_weaknesses | 整體弱勢點 | Overall Weaknesses | JSONB | List[str] 影響錄取率的核心弱點 | - |
+| ats_risk_level | ATS風險等級 | ATS Risk Level | VARCHAR(20) | low / medium / high | - |
+| screening_outcome_prediction | 快速篩選預測 | Screening Outcome Prediction | TEXT | 模擬 6-10 秒掃描後的篩選結果 | - |
+| recommended_next_actions | 下一步行動建議 | Recommended Next Actions | JSONB | List[str] 可執行的下一步建議 | - |
+| target_job_id | 目標職缺識別碼 | Target Job ID | INT | 分析對應的目標職缺（可選） | FK → JOB_POSTING |
+| llm_model_used | 使用的 LLM 模型 | LLM Model Used | VARCHAR(100) | 產生此分析使用的 LLM 版本 | - |
+| analysis_version | 分析版本 | Analysis Version | VARCHAR(10) | 分析 Schema 版本 | DEFAULT '1.0' |
+| generated_at | 生成時間 | Generated At | TIMESTAMPTZ | 分析產生時間 | NOT NULL, DEFAULT NOW() |
+
+---
+
+### 22. RESUME_ISSUE（履歷問題條目）🔵
+
+| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
+|---------|---------|-----|---------|------|---------|
+| issue_id | 問題識別碼 | Issue ID | BIGSERIAL | 問題識別碼 | PRIMARY KEY |
+| analysis_id | 分析識別碼 | Analysis ID | BIGINT | 關聯分析報告 | FK → RESUME_ANALYSIS, NOT NULL |
+| section | 履歷區塊 | Section | VARCHAR(100) | 問題所在的履歷區塊（簡介/技能/經歷/專案/自傳） | - |
+| original_text | 原始文字 | Original Text | TEXT | 該區塊的原始文字，僅作分析依據 | - |
+| issue_type | 問題類型 | Issue Type | JSONB | List[str] 問題類型分類 | - |
+| severity | 嚴重程度 | Severity | JSONB | List[str] 從企業篩選視角評估的嚴重程度 | - |
+| diagnosis_dimension | 診斷面向 | Diagnosis Dimension | VARCHAR(100) | 此問題主要影響的企業診斷面向 | - |
+| issue_reason | 問題原因 | Issue Reason | TEXT | 站在 HR/ATS 角度說明降低錄取率的原因 | - |
+| improvement_direction | 改善方向 | Improvement Direction | JSONB | List[str] 可執行的改善方向建議 | - |
+| sort_order | 排列順序 | Sort Order | INT | 依嚴重度排序的顯示順序 | DEFAULT 0 |
+| is_resolved | 是否已解決 | Is Resolved | BOOLEAN | 使用者是否已處理此問題 | DEFAULT FALSE |
+
+---
+
+### 23. RESUME_OPTIMIZATION（履歷優化結果）🔵
+
+| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
+|---------|---------|-----|---------|------|---------|
+| optimization_id | 優化識別碼 | Optimization ID | BIGSERIAL | 優化識別碼 | PRIMARY KEY |
+| resume_id | 履歷識別碼 | Resume ID | INT | 關聯原始履歷 | FK → RESUME, NOT NULL |
+| version_id | 版本識別碼 | Version ID | INT | 關聯履歷版本（可選） | FK → RESUME_VERSION |
+| user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FK → USER, NOT NULL |
+| target_job_id | 目標職缺識別碼 | Target Job ID | INT | 優化針對的目標職缺（可選） | FK → JOB_POSTING |
+| professional_summary | 專業摘要 | Professional Summary | TEXT | 優化後的專業摘要（含目標職缺關鍵字） | - |
+| professional_experience | 工作經歷 | Professional Experience | JSONB | List[dict] 優化後的工作經歷（含 STAR 原則） | - |
+| core_skills | 核心技能 | Core Skills | JSONB | List[str] 萃取的核心技能關鍵字 | - |
+| projects | 專案作品集 | Projects | JSONB | List[dict] 優化後的專案描述 | - |
+| education | 學歷 | Education | JSONB | List[str] 最高學歷資訊 | - |
+| autobiography | 自傳 | Autobiography | TEXT | 保留原風格的優化後完整自傳 | - |
+| llm_model_used | 使用的 LLM 模型 | LLM Model Used | VARCHAR(100) | 產生此優化使用的 LLM 版本 | - |
+| optimization_version | 優化版本 | Optimization Version | VARCHAR(10) | Schema 版本 | DEFAULT '1.0' |
+| created_at | 建立時間 | Created At | TIMESTAMPTZ | 優化產生時間 | NOT NULL, DEFAULT NOW() |
+
+---
+
+### 24. COVER_LETTER（求職信）🟢
+
+| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
+|---------|---------|-----|---------|------|---------|
+| cover_letter_id | 求職信識別碼 | Cover Letter ID | BIGSERIAL | 求職信識別碼 | PRIMARY KEY |
+| user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FK → USER, NOT NULL |
+| job_id | 職缺識別碼 | Job ID | INT | 針對的目標職缺 | FK → JOB_POSTING, NOT NULL |
+| resume_id | 履歷識別碼 | Resume ID | INT | 產生時使用的履歷（可選） | FK → RESUME |
+| agent_session_id | Session 識別碼 | Agent Session ID | BIGINT | 關聯的 Agent 調用 Session | FK → AGENT_SESSION |
+| subject | 郵件主旨 | Subject | TEXT | 吸引人且專業的郵件主旨 | NOT NULL |
+| content | 求職信內容 | Content | TEXT | 完整求職信正文 | NOT NULL |
+| llm_model_used | 使用的 LLM 模型 | LLM Model Used | VARCHAR(100) | 產生此求職信使用的 LLM 版本 | - |
+| is_sent | 是否已發送 | Is Sent | BOOLEAN | 是否已實際發送給企業 | DEFAULT FALSE |
+| sent_at | 發送時間 | Sent At | TIMESTAMPTZ | 實際發送時間 | - |
+| created_at | 建立時間 | Created At | TIMESTAMPTZ | 求職信產生時間 | NOT NULL, DEFAULT NOW() |
+
+---
+
+### 25. AGENT_SESSION（Agent 調用記錄）⚙️
+
+| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
+|---------|---------|-----|---------|------|---------|
+| session_id | Session 識別碼 | Session ID | BIGSERIAL | Session 識別碼 | PRIMARY KEY |
+| user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FK → USER, NOT NULL |
+| resume_id | 履歷識別碼 | Resume ID | INT | 使用的履歷（可選） | FK → RESUME |
+| trigger_type | 觸發類型 | Trigger Type | VARCHAR(50) | job_match / resume_analysis / career_report / full | - |
+| user_input_summary | 使用者輸入摘要 | User Input Summary | TEXT | 使用者輸入的摘要（隱私保護，不存原文） | - |
+| tool_job_match_called | 職缺媒合工具調用 | Tool Job Match Called | BOOLEAN | 是否調用職缺媒合工具 | DEFAULT FALSE |
+| tool_resume_analysis_called | 履歷分析工具調用 | Tool Resume Analysis Called | BOOLEAN | 是否調用履歷分析工具 | DEFAULT FALSE |
+| tool_resume_optimize_called | 履歷優化工具調用 | Tool Resume Optimize Called | BOOLEAN | 是否調用履歷優化工具 | DEFAULT FALSE |
+| tool_skill_gap_called | 技能落差工具調用 | Tool Skill Gap Called | BOOLEAN | 是否調用技能落差分析工具 | DEFAULT FALSE |
+| tool_side_project_called | Side Project 工具調用 | Tool Side Project Called | BOOLEAN | 是否調用 Side Project 推薦工具 | DEFAULT FALSE |
+| tool_course_recommend_called | 課程推薦工具調用 | Tool Course Recommend Called | BOOLEAN | 是否調用課程推薦工具 | DEFAULT FALSE |
+| tool_cover_letter_called | 求職信工具調用 | Tool Cover Letter Called | BOOLEAN | 是否調用求職信生成工具 | DEFAULT FALSE |
+| analysis_id | 分析識別碼 | Analysis ID | BIGINT | 關聯的履歷分析結果 | FK → RESUME_ANALYSIS |
+| optimization_id | 優化識別碼 | Optimization ID | BIGINT | 關聯的履歷優化結果 | FK → RESUME_OPTIMIZATION |
+| career_report_id | 職涯報告識別碼 | Career Report ID | INT | 關聯的職涯分析報告 | FK → CAREER_ANALYSIS_REPORT |
+| recommended_job_ids | 推薦職缺 ID 清單 | Recommended Job IDs | JSONB | List[int] 推薦的 job_id | - |
+| recommended_course_ids | 推薦課程 ID 清單 | Recommended Course IDs | JSONB | List[int] 推薦的 course_id | - |
+| total_tokens_used | 消耗 Token 數 | Total Tokens Used | INT | 本次調用消耗的總 token 數 | - |
+| latency_ms | 回應時間 | Latency MS | INT | 總回應時間（毫秒） | - |
+| llm_model_used | 使用的 LLM 模型 | LLM Model Used | VARCHAR(100) | 本次調用使用的 LLM 版本 | - |
+| status | Session 狀態 | Status | VARCHAR(50) | running / completed / failed | DEFAULT 'completed' |
+| error_message | 錯誤訊息 | Error Message | TEXT | 失敗時的錯誤原因 | - |
+| created_at | 建立時間 | Created At | TIMESTAMPTZ | Session 開始時間 | NOT NULL, DEFAULT NOW() |
+| completed_at | 完成時間 | Completed At | TIMESTAMPTZ | Session 完成時間 | - |
+

@@ -8,9 +8,9 @@
 
 ## 📊 資料庫概覽
 
-- **總表數**: 19 張
-- **總欄位數**: 169 個
-- **外鍵關係**: 20 個
+- **總表數**: 24 張（新增 5 張表）
+- **總欄位數**: 約 220+ 個（新增約 50+ 個欄位）
+- **外鍵關係**: 約 28 個（新增約 8 個）
 - **唯一約束**: 6 個
 
 ---
@@ -36,6 +36,11 @@
 17. **job_skill_requirement** (5 個欄位)
 18. **resume_template** (5 個欄位)
 19. **skill_master** (5 個欄位)
+20. **resume_analysis** (14 個欄位) ⭐ 新增
+21. **resume_issue** (11 個欄位) ⭐ 新增
+22. **resume_optimization** (14 個欄位) ⭐ 新增
+23. **cover_letter** (11 個欄位) ⭐ 新增
+24. **agent_session** (24 個欄位) ⭐ 新增
 
 ---
 
@@ -389,6 +394,167 @@
 
 ---
 
+## resume_analysis ⭐ 新增
+
+| # | 欄位名稱 | 資料型態 | 長度 | 可空值 | 預設值 | 主鍵 | 外鍵 | 唯一 |
+|---|---------|---------|------|-------|-------|------|------|------|
+| 1 | `analysis_id` | bigint | - | ✗ | nextval('resume_analysis_analysis_id_seq'::regclass) | 🔑 |  |  |
+| 2 | `resume_id` | integer | - | ✗ | - |  | → resume.resume_id |  |
+| 3 | `user_id` | integer | - | ✗ | - |  | → USER.user_id |  |
+| 4 | `candidate_positioning` | text | - | ✓ | - |  |  |  |
+| 5 | `target_role_gap_summary` | text | - | ✓ | - |  |  |  |
+| 6 | `overall_strengths` | jsonb | - | ✓ | - |  |  |  |
+| 7 | `overall_weaknesses` | jsonb | - | ✓ | - |  |  |  |
+| 8 | `ats_risk_level` | character varying | 20.0 | ✓ | - |  |  |  |
+| 9 | `screening_outcome_prediction` | text | - | ✓ | - |  |  |  |
+| 10 | `recommended_next_actions` | jsonb | - | ✓ | - |  |  |  |
+| 11 | `target_job_id` | integer | - | ✓ | - |  | → job_posting.job_id |  |
+| 12 | `llm_model_used` | character varying | 100.0 | ✓ | - |  |  |  |
+| 13 | `analysis_version` | character varying | 10.0 | ✓ | '1.0'::character varying |  |  |  |
+| 14 | `generated_at` | timestamp with time zone | - | ✗ | now() |  |  |  |
+
+**外鍵約束**:
+- `resume_id` → `resume.resume_id` (DELETE: CASCADE, UPDATE: NO ACTION)
+- `user_id` → `USER.user_id` (DELETE: CASCADE, UPDATE: NO ACTION)
+- `target_job_id` → `job_posting.job_id` (DELETE: SET NULL, UPDATE: NO ACTION)
+
+**索引建議**:
+- `idx_resume_analysis_resume_id` ON `resume_analysis(resume_id)`
+- `idx_resume_analysis_user_id` ON `resume_analysis(user_id)`
+- `idx_resume_analysis_generated_at` ON `resume_analysis(generated_at DESC)`
+
+---
+
+## resume_issue ⭐ 新增
+
+| # | 欄位名稱 | 資料型態 | 長度 | 可空值 | 預設值 | 主鍵 | 外鍵 | 唯一 |
+|---|---------|---------|------|-------|-------|------|------|------|
+| 1 | `issue_id` | bigint | - | ✗ | nextval('resume_issue_issue_id_seq'::regclass) | 🔑 |  |  |
+| 2 | `analysis_id` | bigint | - | ✗ | - |  | → resume_analysis.analysis_id |  |
+| 3 | `section` | character varying | 100.0 | ✓ | - |  |  |  |
+| 4 | `original_text` | text | - | ✓ | - |  |  |  |
+| 5 | `issue_type` | jsonb | - | ✓ | - |  |  |  |
+| 6 | `severity` | jsonb | - | ✓ | - |  |  |  |
+| 7 | `diagnosis_dimension` | character varying | 100.0 | ✓ | - |  |  |  |
+| 8 | `issue_reason` | text | - | ✓ | - |  |  |  |
+| 9 | `improvement_direction` | jsonb | - | ✓ | - |  |  |  |
+| 10 | `sort_order` | integer | - | ✓ | 0 |  |  |  |
+| 11 | `is_resolved` | boolean | - | ✓ | false |  |  |  |
+
+**外鍵約束**:
+- `analysis_id` → `resume_analysis.analysis_id` (DELETE: CASCADE, UPDATE: NO ACTION)
+
+**索引建議**:
+- `idx_resume_issue_analysis_id` ON `resume_issue(analysis_id)`
+- `idx_resume_issue_section` ON `resume_issue(section)`
+- `idx_resume_issue_severity` ON `resume_issue USING GIN(severity)`
+
+---
+
+## resume_optimization ⭐ 新增
+
+| # | 欄位名稱 | 資料型態 | 長度 | 可空值 | 預設值 | 主鍵 | 外鍵 | 唯一 |
+|---|---------|---------|------|-------|-------|------|------|------|
+| 1 | `optimization_id` | bigint | - | ✗ | nextval('resume_optimization_optimization_id_seq'::regclass) | 🔑 |  |  |
+| 2 | `resume_id` | integer | - | ✗ | - |  | → resume.resume_id |  |
+| 3 | `version_id` | integer | - | ✓ | - |  | → resume_version.version_id |  |
+| 4 | `user_id` | integer | - | ✗ | - |  | → USER.user_id |  |
+| 5 | `target_job_id` | integer | - | ✓ | - |  | → job_posting.job_id |  |
+| 6 | `professional_summary` | text | - | ✓ | - |  |  |  |
+| 7 | `professional_experience` | jsonb | - | ✓ | - |  |  |  |
+| 8 | `core_skills` | jsonb | - | ✓ | - |  |  |  |
+| 9 | `projects` | jsonb | - | ✓ | - |  |  |  |
+| 10 | `education` | jsonb | - | ✓ | - |  |  |  |
+| 11 | `autobiography` | text | - | ✓ | - |  |  |  |
+| 12 | `llm_model_used` | character varying | 100.0 | ✓ | - |  |  |  |
+| 13 | `optimization_version` | character varying | 10.0 | ✓ | '1.0'::character varying |  |  |  |
+| 14 | `created_at` | timestamp with time zone | - | ✗ | now() |  |  |  |
+
+**外鍵約束**:
+- `resume_id` → `resume.resume_id` (DELETE: CASCADE, UPDATE: NO ACTION)
+- `version_id` → `resume_version.version_id` (DELETE: SET NULL, UPDATE: NO ACTION)
+- `user_id` → `USER.user_id` (DELETE: CASCADE, UPDATE: NO ACTION)
+- `target_job_id` → `job_posting.job_id` (DELETE: SET NULL, UPDATE: NO ACTION)
+
+**索引建議**:
+- `idx_resume_optimization_resume_id` ON `resume_optimization(resume_id)`
+- `idx_resume_optimization_user_id` ON `resume_optimization(user_id)`
+- `idx_resume_optimization_job_id` ON `resume_optimization(target_job_id)`
+
+---
+
+## cover_letter ⭐ 新增
+
+| # | 欄位名稱 | 資料型態 | 長度 | 可空值 | 預設值 | 主鍵 | 外鍵 | 唯一 |
+|---|---------|---------|------|-------|-------|------|------|------|
+| 1 | `cover_letter_id` | bigint | - | ✗ | nextval('cover_letter_cover_letter_id_seq'::regclass) | 🔑 |  |  |
+| 2 | `user_id` | integer | - | ✗ | - |  | → USER.user_id |  |
+| 3 | `job_id` | integer | - | ✗ | - |  | → job_posting.job_id |  |
+| 4 | `resume_id` | integer | - | ✓ | - |  | → resume.resume_id |  |
+| 5 | `agent_session_id` | bigint | - | ✓ | - |  | → agent_session.session_id |  |
+| 6 | `subject` | text | - | ✗ | - |  |  |  |
+| 7 | `content` | text | - | ✗ | - |  |  |  |
+| 8 | `llm_model_used` | character varying | 100.0 | ✓ | - |  |  |  |
+| 9 | `is_sent` | boolean | - | ✓ | false |  |  |  |
+| 10 | `sent_at` | timestamp with time zone | - | ✓ | - |  |  |  |
+| 11 | `created_at` | timestamp with time zone | - | ✗ | now() |  |  |  |
+
+**外鍵約束**:
+- `user_id` → `USER.user_id` (DELETE: CASCADE, UPDATE: NO ACTION)
+- `job_id` → `job_posting.job_id` (DELETE: CASCADE, UPDATE: NO ACTION)
+- `resume_id` → `resume.resume_id` (DELETE: SET NULL, UPDATE: NO ACTION)
+- `agent_session_id` → `agent_session.session_id` (DELETE: SET NULL, UPDATE: NO ACTION)
+
+**索引建議**:
+- `idx_cover_letter_user_id` ON `cover_letter(user_id)`
+- `idx_cover_letter_job_id` ON `cover_letter(job_id)`
+
+---
+
+## agent_session ⭐ 新增
+
+| # | 欄位名稱 | 資料型態 | 長度 | 可空值 | 預設值 | 主鍵 | 外鍵 | 唯一 |
+|---|---------|---------|------|-------|-------|------|------|------|
+| 1 | `session_id` | bigint | - | ✗ | nextval('agent_session_session_id_seq'::regclass) | 🔑 |  |  |
+| 2 | `user_id` | integer | - | ✗ | - |  | → USER.user_id |  |
+| 3 | `resume_id` | integer | - | ✓ | - |  | → resume.resume_id |  |
+| 4 | `trigger_type` | character varying | 50.0 | ✓ | - |  |  |  |
+| 5 | `user_input_summary` | text | - | ✓ | - |  |  |  |
+| 6 | `tool_job_match_called` | boolean | - | ✓ | false |  |  |  |
+| 7 | `tool_resume_analysis_called` | boolean | - | ✓ | false |  |  |  |
+| 8 | `tool_resume_optimize_called` | boolean | - | ✓ | false |  |  |  |
+| 9 | `tool_skill_gap_called` | boolean | - | ✓ | false |  |  |  |
+| 10 | `tool_side_project_called` | boolean | - | ✓ | false |  |  |  |
+| 11 | `tool_course_recommend_called` | boolean | - | ✓ | false |  |  |  |
+| 12 | `tool_cover_letter_called` | boolean | - | ✓ | false |  |  |  |
+| 13 | `analysis_id` | bigint | - | ✓ | - |  | → resume_analysis.analysis_id |  |
+| 14 | `optimization_id` | bigint | - | ✓ | - |  | → resume_optimization.optimization_id |  |
+| 15 | `career_report_id` | integer | - | ✓ | - |  | → career_analysis_report.report_id |  |
+| 16 | `recommended_job_ids` | jsonb | - | ✓ | - |  |  |  |
+| 17 | `recommended_course_ids` | jsonb | - | ✓ | - |  |  |  |
+| 18 | `total_tokens_used` | integer | - | ✓ | - |  |  |  |
+| 19 | `latency_ms` | integer | - | ✓ | - |  |  |  |
+| 20 | `llm_model_used` | character varying | 100.0 | ✓ | - |  |  |  |
+| 21 | `status` | character varying | 50.0 | ✓ | 'completed'::character varying |  |  |  |
+| 22 | `error_message` | text | - | ✓ | - |  |  |  |
+| 23 | `created_at` | timestamp with time zone | - | ✗ | now() |  |  |  |
+| 24 | `completed_at` | timestamp with time zone | - | ✓ | - |  |  |  |
+
+**外鍵約束**:
+- `user_id` → `USER.user_id` (DELETE: CASCADE, UPDATE: NO ACTION)
+- `resume_id` → `resume.resume_id` (DELETE: SET NULL, UPDATE: NO ACTION)
+- `analysis_id` → `resume_analysis.analysis_id` (DELETE: SET NULL, UPDATE: NO ACTION)
+- `optimization_id` → `resume_optimization.optimization_id` (DELETE: SET NULL, UPDATE: NO ACTION)
+- `career_report_id` → `career_analysis_report.report_id` (DELETE: SET NULL, UPDATE: NO ACTION)
+
+**索引建議**:
+- `idx_agent_session_user_id` ON `agent_session(user_id)`
+- `idx_agent_session_created_at` ON `agent_session(created_at DESC)`
+- `idx_agent_session_trigger_type` ON `agent_session(trigger_type)`
+- `idx_agent_session_status` ON `agent_session(status)`
+
+---
+
 ## 🔗 外鍵關係總覽
 
 ```mermaid
@@ -398,15 +564,33 @@ erDiagram
     USER ||--o{ resume : creates
     USER ||--o{ upload_event : uploads
     USER ||--o{ user_skill : possesses
+    USER ||--o{ resume_analysis : triggers
+    USER ||--o{ resume_optimization : requests
+    USER ||--o{ cover_letter : generates
+    USER ||--o{ agent_session : initiates
     
     resume ||--o{ resume_version : has_versions
     resume ||--|| resume_template : uses
     resume ||--o{ job_matching : matched_to
+    resume ||--o{ resume_analysis : analyzed_by
+    resume ||--o{ resume_optimization : optimized_as
+    resume ||--o{ cover_letter : used_for
+    
+    resume_analysis ||--o{ resume_issue : contains
+    resume_analysis }o--|| job_posting : targets
+    resume_analysis }o--|| agent_session : linked_to
+    
+    resume_optimization }o--o| resume_version : saved_as
+    resume_optimization }o--|| job_posting : targets
+    resume_optimization }o--|| agent_session : linked_to
     
     company_info ||--o{ job_posting : posts
     job_posting ||--o{ job_skill_requirement : requires
     job_posting ||--o{ job_matching : matched_with
     job_posting ||--o{ application_record : receives
+    job_posting ||--o{ resume_analysis : analyzed_for
+    job_posting ||--o{ resume_optimization : optimized_for
+    job_posting ||--o{ cover_letter : receives
     
     skill_master ||--o{ job_skill_requirement : defines
     skill_master ||--o{ user_skill : categorizes
@@ -416,10 +600,13 @@ erDiagram
     
     career_survey ||--o{ career_analysis_report : generates
     career_analysis_report ||--o{ skill_gap : analyzes
+    career_analysis_report }o--|| agent_session : linked_to
     skill_gap ||--o{ side_project_recommendation : suggests
     
     upload_event ||--o{ ocr_result : processes
     resume_version ||--o{ application_record : used_for
+    
+    agent_session }o--o| cover_letter : generates
 ```
 
 ---
@@ -448,6 +635,18 @@ erDiagram
 - `resume.normalized_data`
 - `resume_template.template_structure`
 - `resume_version.content`
+- `resume_analysis.overall_strengths`
+- `resume_analysis.overall_weaknesses`
+- `resume_analysis.recommended_next_actions`
+- `resume_issue.issue_type`
+- `resume_issue.severity`
+- `resume_issue.improvement_direction`
+- `resume_optimization.professional_experience`
+- `resume_optimization.core_skills`
+- `resume_optimization.projects`
+- `resume_optimization.education`
+- `agent_session.recommended_job_ids`
+- `agent_session.recommended_course_ids`
 - `side_project_recommendation.required_skills`
 - `skill_master.synonyms`
 - `upload_event.metadata`
@@ -494,7 +693,7 @@ SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
 ORDER BY table_name;
 
--- 應該要有 19 張表
+-- 應該要有 24 張表（含新增的 5 張表）
 ```
 
 ### 3. 檢查外鍵關係
@@ -512,7 +711,7 @@ JOIN information_schema.constraint_column_usage AS ccu
 WHERE tc.constraint_type = 'FOREIGN KEY'
 ORDER BY tc.table_name;
 
--- 應該要有 20 個外鍵關係
+-- 應該要有約 28 個外鍵關係（含新增的約 8 個）
 ```
 
 ### 4. 重新匯入資料
@@ -524,12 +723,17 @@ ORDER BY tc.table_name;
 
 ## 📝 更新記錄
 
-### 最新更新（與說明書v4對照）
+### 最新更新（2026-02-20）
+- ✅ 新增 5 張表：RESUME_ANALYSIS, RESUME_ISSUE, RESUME_OPTIMIZATION, COVER_LETTER, AGENT_SESSION
+- ✅ 總表數從 19 張增加到 24 張
+- ✅ 新增約 8 個外鍵關係
+- ✅ 所有唯一約束正確設定
+
+### 先前更新（與說明書v4對照）
 - ✅ 19 張表完全符合
 - ✅ job_posting 新增 `job_category`, `city`, `district`, `full_address`
 - ✅ job_posting 新增職務維度分數欄位 `role_type`, `role_name`, `d1_frontend`~`d6_soft_skills`
 - ✅ 20 個外鍵關係完整
-- ✅ 所有唯一約束正確設定
 
 ---
 
