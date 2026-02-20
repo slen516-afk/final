@@ -50,7 +50,7 @@
 | location_preference | 工作地點偏好 | Location Preference | VARCHAR(100) | 工作地點偏好 | - |
 | remote_preference | 遠端工作偏好 | Remote Work Preference | VARCHAR(50) | 遠端工作偏好 | - |
 | career_motivation | 職涯轉換動機 | Career Motivation | JSONB | 職涯轉換動機 | - |
-| questionnaire_response | 問卷填答結果 | Questionnaire Response | JSONB | 完整問卷填答（module_a/b/c/d 所有題目與答案）；產分析報告時可依需求用 GIN 索引取值 | GIN 索引 idx_survey_response_gin |
+   | questionnaire_response | 問卷填答結果 | Questionnaire Response | JSONB | 完整問卷填答（module_a/b/c/d 所有題目與答案）；產分析報告時可依需求用 GIN 索引取值 | GIN 索引 idx_survey_response_gin |
 | completed_at | 完成時間 | Completed At | DATETIME | 完成時間 | - |
 | updated_at | 更新時間 | Updated At | DATETIME | 更新時間 | - |
 
@@ -293,6 +293,7 @@
 | report_id | 報告識別碼 | Report ID | INT | 報告識別碼 | PRIMARY KEY |
 | survey_id | 問卷識別碼 | Survey ID | INT | 關聯問卷 | FOREIGN KEY |
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
+| target_position | 目標職位 | Target Position | VARCHAR(200) | LLM 分析報告中識別出的目標職位資訊 | - |
 | skill_gap_analysis | 技能落差分析 | Skill Gap Analysis | JSONB | 技術性技能缺口細節 | - |
 | career_path_suggestions | 職涯路徑建議 | Career Path Suggestions | JSONB | 職涯路徑多條選項 | - |
 | market_insights | 市場洞察 | Market Insights | JSONB | 市場洞察 | - |

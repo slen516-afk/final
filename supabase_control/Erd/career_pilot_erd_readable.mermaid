@@ -249,6 +249,7 @@ erDiagram
         int report_id PK "🟠 職能分析"
         int survey_id FK
         int resume_id FK
+        string target_position "VARCHAR(200) LLM分析報告中識別出的目標職位資訊"
         jsonb skill_gap_analysis
         jsonb career_path_suggestions
         jsonb market_insights

@@ -1,0 +1,117 @@
+body {
+    font-family: "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #2c3e50;
+}
+
+h2 {
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+    margin-top: 40px;
+    color: #3498db;
+}
+
+.intro {
+    text-align: center;
+    color: #7f8c8d;
+    margin-bottom: 30px;
+}
+
+.question-block {
+    margin-bottom: 25px;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #fafafa;
+    border-left: 4px solid #ddd;
+}
+
+.question-block:hover {
+    border-left-color: #3498db;
+    background-color: #f0f8ff;
+}
+
+.q-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Q1 Styling */
+.skill-row {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.lang-input {
+    flex: 2;
+    padding: 8px;
+}
+
+.score-input {
+    flex: 1;
+    padding: 8px;
+}
+
+/* Radio/Checkbox Labels */
+label {
+    display: block;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+/* Textarea */
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Selects */
+select.rank-select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 5px;
+}
+
+/* Button */
+button {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    background-color: #2ecc71;
+    color: white;
+    font-size: 1.2em;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 30px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background-color: #27ae60;
+}

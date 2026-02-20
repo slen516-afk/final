@@ -601,6 +601,7 @@ ADD COLUMN job_details JSONB;
 | report_id | 報告識別碼 | Report ID | INT | 報告識別碼 | PRIMARY KEY |
 | survey_id | 問卷識別碼 | Survey ID | INT | 關聯問卷 | FOREIGN KEY |
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
+| target_position | 目標職位 | Target Position | VARCHAR(200) | LLM 分析報告中識別出的目標職位資訊 | - |
 | skill_gap_analysis | 技能落差分析 | Skill Gap Analysis | JSONB | 技術性技能缺口細節 | - |
 | career_path_suggestions | 職涯路徑建議 | Career Path Suggestions | JSONB | 職涯路徑多條選項 | - |
 | market_insights | 市場洞察 | Market Insights | JSONB | 市場洞察 | - |
@@ -623,6 +624,7 @@ ADD COLUMN job_details JSONB;
 - **新增欄位與報告 JSON 對應**:
   - `user_id`: 對應 `report_metadata.user_id`，直接關聯用戶，查詢時不需多層 JOIN
   - `report_version`: 對應 `report_metadata.version`，便於未來 Schema 演進
+  - `target_position`: 儲存 LLM 分析報告中識別出的目標職位資訊，用於快速查詢與顯示使用者期望的職位方向
   - `preliminary_summary`、`radar_chart`、`gap_analysis`、`action_plan`: 分別儲存報告內對應區塊的完整 JSONB，滿足快速上線與彈性儲存
 
 ---

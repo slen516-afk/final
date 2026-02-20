@@ -1,0 +1,551 @@
+[
+    {
+        "user_info": {
+            "id": 1,
+            "name": "陳浩宇 (Hao-Yu Chen)",
+            "current_role": "Senior Backend Engineer"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "Python",
+                    "level": 5
+                },
+                {
+                    "language": "SQL",
+                    "level": 4
+                },
+                {
+                    "language": "Go",
+                    "level": 3
+                }
+            ],
+            "Q2": "B",
+            "Q3": "D",
+            "Q4": [
+                "A",
+                "C"
+            ],
+            "Q5": "C",
+            "Q6": "A",
+            "Q7": "C",
+            "Q8": "FinTech, Distributed Systems",
+            "Q9": "C",
+            "Q10": "C",
+            "Q11": "C",
+            "Q12": "C",
+            "Q13": "C",
+            "Q14": "B",
+            "Q15": "C",
+            "Q16": "D",
+            "Q17": "B",
+            "Q18": "E",
+            "Q19": "B",
+            "Q20": [
+                1,
+                2,
+                3
+            ],
+            "Q21": "B",
+            "Q22": "A",
+            "Q23": [
+                "A",
+                "C"
+            ]
+        }
+    },
+    {
+        "user_info": {
+            "id": 2,
+            "name": "林雅婷 (Linda Lin)",
+            "current_role": "Frontend Developer"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "JavaScript",
+                    "level": 5
+                },
+                {
+                    "language": "TypeScript",
+                    "level": 4
+                },
+                {
+                    "language": "HTML/CSS",
+                    "level": 5
+                }
+            ],
+            "Q2": "C",
+            "Q3": "A",
+            "Q4": [
+                "A",
+                "B"
+            ],
+            "Q5": "B",
+            "Q6": "A",
+            "Q7": "B",
+            "Q8": "E-commerce, UI/UX Design",
+            "Q9": "B",
+            "Q10": "C",
+            "Q11": "C",
+            "Q12": "B",
+            "Q13": "C",
+            "Q14": "B",
+            "Q15": "C",
+            "Q16": "C",
+            "Q17": "A",
+            "Q18": "E",
+            "Q19": "B",
+            "Q20": [
+                2,
+                5,
+                3
+            ],
+            "Q21": "C",
+            "Q22": "B",
+            "Q23": [
+                "B",
+                "C"
+            ]
+        }
+    },
+    {
+        "user_info": {
+            "id": 3,
+            "name": "王俊傑 (Jason Wang)",
+            "current_role": "System Architect"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "Java",
+                    "level": 5
+                },
+                {
+                    "language": "Go",
+                    "level": 4
+                },
+                {
+                    "language": "Python",
+                    "level": 4
+                }
+            ],
+            "Q2": "B",
+            "Q3": "E",
+            "Q4": [
+                "A",
+                "C",
+                "D"
+            ],
+            "Q5": "D",
+            "Q6": "D",
+            "Q7": "D",
+            "Q8": "Distributed Computing, High-Frequency Trading",
+            "Q9": "D",
+            "Q10": "D",
+            "Q11": "D",
+            "Q12": "D",
+            "Q13": "D",
+            "Q14": "D",
+            "Q15": "D",
+            "Q16": "E",
+            "Q17": "B",
+            "Q18": "B",
+            "Q19": "C",
+            "Q20": [
+                2,
+                1,
+                6
+            ],
+            "Q21": "B",
+            "Q22": "A",
+            "Q23": [
+                "A",
+                "D"
+            ]
+        }
+    },
+    {
+        "user_info": {
+            "id": 4,
+            "name": "李曉雯 (Sarah Lee)",
+            "current_role": "Junior Fullstack Developer"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "JavaScript",
+                    "level": 4
+                },
+                {
+                    "language": "HTML/CSS",
+                    "level": 4
+                },
+                {
+                    "language": "SQL",
+                    "level": 3
+                }
+            ],
+            "Q2": "C",
+            "Q3": "B",
+            "Q4": [
+                "B"
+            ],
+            "Q5": "B",
+            "Q6": "A",
+            "Q7": "B",
+            "Q8": "Social Media, Content Management",
+            "Q9": "B",
+            "Q10": "B",
+            "Q11": "C",
+            "Q12": "B",
+            "Q13": "B",
+            "Q14": "B",
+            "Q15": "B",
+            "Q16": "B",
+            "Q17": "C",
+            "Q18": "A",
+            "Q19": "A",
+            "Q20": [
+                2,
+                5,
+                1
+            ],
+            "Q21": "A",
+            "Q22": "B",
+            "Q23": [
+                "B",
+                "C"
+            ]
+        }
+    },
+    {
+        "user_info": {
+            "id": 5,
+            "name": "洪明德 (Michael Hung)",
+            "current_role": "DevOps Lead"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "Python",
+                    "level": 4
+                },
+                {
+                    "language": "Go",
+                    "level": 3
+                },
+                {
+                    "language": "SQL",
+                    "level": 3
+                }
+            ],
+            "Q2": "B",
+            "Q3": "C",
+            "Q4": [
+                "A",
+                "B",
+                "C"
+            ],
+            "Q5": "E",
+            "Q6": "B",
+            "Q7": "D",
+            "Q8": "Cloud Infrastructure, SRE Best Practices",
+            "Q9": "D",
+            "Q10": "D",
+            "Q11": "D",
+            "Q12": "D",
+            "Q13": "D",
+            "Q14": "D",
+            "Q15": "D",
+            "Q16": "E",
+            "Q17": "F",
+            "Q18": "B",
+            "Q19": "B",
+            "Q20": [
+                2,
+                3,
+                1
+            ],
+            "Q21": "B",
+            "Q22": "A",
+            "Q23": [
+                "A",
+                "C"
+            ]
+        }
+    },
+    {
+        "user_info": {
+            "id": 6,
+            "name": "張嘉玲 (Chia-Ling Chang)",
+            "current_role": "Mobile App Developer"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "Swift",
+                    "level": 5
+                },
+                {
+                    "language": "JavaScript",
+                    "level": 4
+                },
+                {
+                    "language": "HTML/CSS",
+                    "level": 3
+                }
+            ],
+            "Q2": "B",
+            "Q3": "A",
+            "Q4": [
+                "B"
+            ],
+            "Q5": "B",
+            "Q6": "A",
+            "Q7": "B",
+            "Q8": "Mobile UX, Multimedia Streaming",
+            "Q9": "B",
+            "Q10": "C",
+            "Q11": "C",
+            "Q12": "C",
+            "Q13": "C",
+            "Q14": "B",
+            "Q15": "C",
+            "Q16": "C",
+            "Q17": "A",
+            "Q18": "E",
+            "Q19": "B",
+            "Q20": [
+                3,
+                2,
+                5
+            ],
+            "Q21": "C",
+            "Q22": "B",
+            "Q23": [
+                "B",
+                "C"
+            ]
+        }
+    },
+    {
+        "user_info": {
+            "id": 7,
+            "name": "吳冠宇 (Kevin Wu)",
+            "current_role": "Technical Lead"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "JavaScript",
+                    "level": 5
+                },
+                {
+                    "language": "TypeScript",
+                    "level": 5
+                },
+                {
+                    "language": "SQL",
+                    "level": 4
+                }
+            ],
+            "Q2": "D",
+            "Q3": "C",
+            "Q4": [
+                "A",
+                "B",
+                "C"
+            ],
+            "Q5": "C",
+            "Q6": "B",
+            "Q7": "C",
+            "Q8": "B2B SaaS, Agile Management",
+            "Q9": "D",
+            "Q10": "D",
+            "Q11": "D",
+            "Q12": "D",
+            "Q13": "D",
+            "Q14": "D",
+            "Q15": "D",
+            "Q16": "E",
+            "Q17": "C",
+            "Q18": "E",
+            "Q19": "B",
+            "Q20": [
+                2,
+                1,
+                5
+            ],
+            "Q21": "B",
+            "Q22": "C",
+            "Q23": [
+                "A",
+                "C",
+                "E"
+            ]
+        }
+    },
+    {
+        "user_info": {
+            "id": 8,
+            "name": "陳怡君 (Nina Chen)",
+            "current_role": "Intern Software Engineer"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "Python",
+                    "level": 4
+                },
+                {
+                    "language": "JavaScript",
+                    "level": 3
+                },
+                {
+                    "language": "HTML/CSS",
+                    "level": 4
+                }
+            ],
+            "Q2": "B",
+            "Q3": "A",
+            "Q4": [
+                "A"
+            ],
+            "Q5": "A",
+            "Q6": "B",
+            "Q7": "A",
+            "Q8": "Library Management Systems",
+            "Q9": "B",
+            "Q10": "A",
+            "Q11": "B",
+            "Q12": "A",
+            "Q13": "B",
+            "Q14": "A",
+            "Q15": "B",
+            "Q16": "A",
+            "Q17": "A",
+            "Q18": "D",
+            "Q19": "D",
+            "Q20": [
+                2,
+                3,
+                5
+            ],
+            "Q21": "B",
+            "Q22": "B",
+            "Q23": [
+                "B",
+                "C"
+            ]
+        }
+    },
+    {
+        "user_info": {
+            "id": 9,
+            "name": "蔡志強 (Alex Tsai)",
+            "current_role": "Cloud Solutions Architect"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "Python",
+                    "level": 4
+                },
+                {
+                    "language": "SQL",
+                    "level": 3
+                },
+                {
+                    "language": "Go",
+                    "level": 3
+                }
+            ],
+            "Q2": "B",
+            "Q3": "C",
+            "Q4": [
+                "A",
+                "B",
+                "C",
+                "G"
+            ],
+            "Q5": "E",
+            "Q6": "B",
+            "Q7": "D",
+            "Q8": "Cloud Migration, Financial Compliance",
+            "Q9": "D",
+            "Q10": "D",
+            "Q11": "D",
+            "Q12": "D",
+            "Q13": "D",
+            "Q14": "D",
+            "Q15": "D",
+            "Q16": "E",
+            "Q17": "F",
+            "Q18": "B",
+            "Q19": "B",
+            "Q20": [
+                1,
+                2,
+                4
+            ],
+            "Q21": "A",
+            "Q22": "A",
+            "Q23": [
+                "A",
+                "C",
+                "D"
+            ]
+        }
+    },
+    {
+        "user_info": {
+            "id": 10,
+            "name": "劉家豪 (David Liu)",
+            "current_role": "Fresh Graduate"
+        },
+        "responses": {
+            "Q1": [
+                {
+                    "language": "JavaScript",
+                    "level": 3
+                },
+                {
+                    "language": "HTML/CSS",
+                    "level": 4
+                }
+            ],
+            "Q2": "B",
+            "Q3": "A",
+            "Q4": [
+                "A"
+            ],
+            "Q5": "A",
+            "Q6": "A",
+            "Q7": "A",
+            "Q8": "Online Survey Systems",
+            "Q9": "B",
+            "Q10": "B",
+            "Q11": "A",
+            "Q12": "A",
+            "Q13": "B",
+            "Q14": "A",
+            "Q15": "B",
+            "Q16": "A",
+            "Q17": "A",
+            "Q18": "D",
+            "Q19": "A",
+            "Q20": [
+                1,
+                2,
+                5
+            ],
+            "Q21": "A",
+            "Q22": "B",
+            "Q23": [
+                "B",
+                "C"
+            ]
+        }
+    }
+]

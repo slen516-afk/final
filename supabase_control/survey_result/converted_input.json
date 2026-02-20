@@ -1,0 +1,581 @@
+[
+  {
+    "user_id": "user_1",
+    "timestamp": "2026-02-19T23:12:51.367412Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "Python",
+          "score": 5
+        },
+        {
+          "name": "SQL",
+          "score": 4
+        },
+        {
+          "name": "Go",
+          "score": 3
+        }
+      ],
+      "q2_frontend": "basic_html_css",
+      "q3_backend": "high_concurrency",
+      "q4_database": [
+        "rdbms_sql",
+        "key_value_cache"
+      ],
+      "q5_devops": "cloud_manual",
+      "q6_ai_data": "api_consumer",
+      "q7_security": "auth_rbac",
+      "q8_domain": "FinTech, Distributed Systems"
+    },
+    "module_b": {
+      "q9_troubleshoot": "rollback",
+      "q10_tech_choice": "team_familiarity",
+      "q11_communication": "alternative_solution",
+      "q12_code_review": "logic_safety",
+      "q13_learning": "consistent_input",
+      "q14_process": "agile_scrum",
+      "q15_english": "fluent_reading"
+    },
+    "module_c": {
+      "q16_current_level": "senior",
+      "q17_target_role": "backend",
+      "q18_industry": "product_company",
+      "q19_search_status": "passive_open"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "financial_reward",
+        "technical_growth",
+        "work_life_balance"
+      ],
+      "q21_pressure": "consider_short_term",
+      "q22_career_type": "specialist",
+      "q23_learning_style": [
+        "official_docs",
+        "hands_on_projects"
+      ]
+    }
+  },
+  {
+    "user_id": "user_2",
+    "timestamp": "2026-02-19T23:12:51.367477Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "JavaScript",
+          "score": 5
+        },
+        {
+          "name": "TypeScript",
+          "score": 4
+        },
+        {
+          "name": "HTML/CSS",
+          "score": 5
+        }
+      ],
+      "q2_frontend": "framework_spa",
+      "q3_backend": "unfamiliar",
+      "q4_database": [
+        "rdbms_sql",
+        "nosql_document"
+      ],
+      "q5_devops": "docker_basic",
+      "q6_ai_data": "api_consumer",
+      "q7_security": "owasp_basic",
+      "q8_domain": "E-commerce, UI/UX Design"
+    },
+    "module_b": {
+      "q9_troubleshoot": "log_search",
+      "q10_tech_choice": "team_familiarity",
+      "q11_communication": "alternative_solution",
+      "q12_code_review": "style_check",
+      "q13_learning": "consistent_input",
+      "q14_process": "agile_scrum",
+      "q15_english": "fluent_reading"
+    },
+    "module_c": {
+      "q16_current_level": "mid_level",
+      "q17_target_role": "frontend",
+      "q18_industry": "product_company",
+      "q19_search_status": "passive_open"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "technical_growth",
+        "team_culture",
+        "work_life_balance"
+      ],
+      "q21_pressure": "prefer_health",
+      "q22_career_type": "generalist",
+      "q23_learning_style": [
+        "video_courses",
+        "hands_on_projects"
+      ]
+    }
+  },
+  {
+    "user_id": "user_3",
+    "timestamp": "2026-02-19T23:12:51.367520Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "Java",
+          "score": 5
+        },
+        {
+          "name": "Go",
+          "score": 4
+        },
+        {
+          "name": "Python",
+          "score": 4
+        }
+      ],
+      "q2_frontend": "basic_html_css",
+      "q3_backend": "distributed_system",
+      "q4_database": [
+        "rdbms_sql",
+        "key_value_cache",
+        "search_engine"
+      ],
+      "q5_devops": "k8s_cicd",
+      "q6_ai_data": "rag_langchain",
+      "q7_security": "audit_devsecops",
+      "q8_domain": "Distributed Computing, High-Frequency Trading"
+    },
+    "module_b": {
+      "q9_troubleshoot": "incident_analysis",
+      "q10_tech_choice": "tradeoff_analysis",
+      "q11_communication": "value_driven",
+      "q12_code_review": "architecture_solid",
+      "q13_learning": "deep_dive_sharing",
+      "q14_process": "process_optimization",
+      "q15_english": "global_comm"
+    },
+    "module_c": {
+      "q16_current_level": "lead_architect",
+      "q17_target_role": "backend",
+      "q18_industry": "big_tech",
+      "q19_search_status": "market_research"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "technical_growth",
+        "financial_reward",
+        "social_impact"
+      ],
+      "q21_pressure": "consider_short_term",
+      "q22_career_type": "specialist",
+      "q23_learning_style": [
+        "official_docs",
+        "books"
+      ]
+    }
+  },
+  {
+    "user_id": "user_4",
+    "timestamp": "2026-02-19T23:12:51.367554Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "JavaScript",
+          "score": 4
+        },
+        {
+          "name": "HTML/CSS",
+          "score": 4
+        },
+        {
+          "name": "SQL",
+          "score": 3
+        }
+      ],
+      "q2_frontend": "framework_spa",
+      "q3_backend": "crud_api",
+      "q4_database": [
+        "nosql_document"
+      ],
+      "q5_devops": "docker_basic",
+      "q6_ai_data": "api_consumer",
+      "q7_security": "owasp_basic",
+      "q8_domain": "Social Media, Content Management"
+    },
+    "module_b": {
+      "q9_troubleshoot": "log_search",
+      "q10_tech_choice": "popularity",
+      "q11_communication": "alternative_solution",
+      "q12_code_review": "style_check",
+      "q13_learning": "hoarding",
+      "q14_process": "agile_scrum",
+      "q15_english": "slow_reading"
+    },
+    "module_c": {
+      "q16_current_level": "junior",
+      "q17_target_role": "fullstack",
+      "q18_industry": "startup",
+      "q19_search_status": "active_urgent"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "technical_growth",
+        "team_culture",
+        "financial_reward"
+      ],
+      "q21_pressure": "accept_immediately",
+      "q22_career_type": "generalist",
+      "q23_learning_style": [
+        "video_courses",
+        "hands_on_projects"
+      ]
+    }
+  },
+  {
+    "user_id": "user_5",
+    "timestamp": "2026-02-19T23:12:51.367661Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "Python",
+          "score": 4
+        },
+        {
+          "name": "Go",
+          "score": 3
+        },
+        {
+          "name": "SQL",
+          "score": 3
+        }
+      ],
+      "q2_frontend": "basic_html_css",
+      "q3_backend": "db_auth_testing",
+      "q4_database": [
+        "rdbms_sql",
+        "nosql_document",
+        "key_value_cache"
+      ],
+      "q5_devops": "iac_monitoring",
+      "q6_ai_data": "pandas_numpy",
+      "q7_security": "audit_devsecops",
+      "q8_domain": "Cloud Infrastructure, SRE Best Practices"
+    },
+    "module_b": {
+      "q9_troubleshoot": "incident_analysis",
+      "q10_tech_choice": "tradeoff_analysis",
+      "q11_communication": "value_driven",
+      "q12_code_review": "architecture_solid",
+      "q13_learning": "deep_dive_sharing",
+      "q14_process": "process_optimization",
+      "q15_english": "global_comm"
+    },
+    "module_c": {
+      "q16_current_level": "lead_architect",
+      "q17_target_role": "devops_sre",
+      "q18_industry": "big_tech",
+      "q19_search_status": "passive_open"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "technical_growth",
+        "work_life_balance",
+        "financial_reward"
+      ],
+      "q21_pressure": "consider_short_term",
+      "q22_career_type": "specialist",
+      "q23_learning_style": [
+        "official_docs",
+        "hands_on_projects"
+      ]
+    }
+  },
+  {
+    "user_id": "user_6",
+    "timestamp": "2026-02-19T23:12:51.367713Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "Swift",
+          "score": 5
+        },
+        {
+          "name": "JavaScript",
+          "score": 4
+        },
+        {
+          "name": "HTML/CSS",
+          "score": 3
+        }
+      ],
+      "q2_frontend": "basic_html_css",
+      "q3_backend": "unfamiliar",
+      "q4_database": [
+        "nosql_document"
+      ],
+      "q5_devops": "docker_basic",
+      "q6_ai_data": "api_consumer",
+      "q7_security": "owasp_basic",
+      "q8_domain": "Mobile UX, Multimedia Streaming"
+    },
+    "module_b": {
+      "q9_troubleshoot": "log_search",
+      "q10_tech_choice": "team_familiarity",
+      "q11_communication": "alternative_solution",
+      "q12_code_review": "logic_safety",
+      "q13_learning": "consistent_input",
+      "q14_process": "agile_scrum",
+      "q15_english": "fluent_reading"
+    },
+    "module_c": {
+      "q16_current_level": "mid_level",
+      "q17_target_role": "frontend",
+      "q18_industry": "product_company",
+      "q19_search_status": "passive_open"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "work_life_balance",
+        "technical_growth",
+        "team_culture"
+      ],
+      "q21_pressure": "prefer_health",
+      "q22_career_type": "generalist",
+      "q23_learning_style": [
+        "video_courses",
+        "hands_on_projects"
+      ]
+    }
+  },
+  {
+    "user_id": "user_7",
+    "timestamp": "2026-02-19T23:12:51.367754Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "JavaScript",
+          "score": 5
+        },
+        {
+          "name": "TypeScript",
+          "score": 5
+        },
+        {
+          "name": "SQL",
+          "score": 4
+        }
+      ],
+      "q2_frontend": "optimization_ssr",
+      "q3_backend": "db_auth_testing",
+      "q4_database": [
+        "rdbms_sql",
+        "nosql_document",
+        "key_value_cache"
+      ],
+      "q5_devops": "cloud_manual",
+      "q6_ai_data": "pandas_numpy",
+      "q7_security": "auth_rbac",
+      "q8_domain": "B2B SaaS, Agile Management"
+    },
+    "module_b": {
+      "q9_troubleshoot": "incident_analysis",
+      "q10_tech_choice": "tradeoff_analysis",
+      "q11_communication": "value_driven",
+      "q12_code_review": "architecture_solid",
+      "q13_learning": "deep_dive_sharing",
+      "q14_process": "process_optimization",
+      "q15_english": "global_comm"
+    },
+    "module_c": {
+      "q16_current_level": "lead_architect",
+      "q17_target_role": "fullstack",
+      "q18_industry": "product_company",
+      "q19_search_status": "passive_open"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "technical_growth",
+        "financial_reward",
+        "team_culture"
+      ],
+      "q21_pressure": "consider_short_term",
+      "q22_career_type": "manager",
+      "q23_learning_style": [
+        "official_docs",
+        "hands_on_projects",
+        "mentorship_community"
+      ]
+    }
+  },
+  {
+    "user_id": "user_8",
+    "timestamp": "2026-02-19T23:12:51.367800Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "Python",
+          "score": 4
+        },
+        {
+          "name": "JavaScript",
+          "score": 3
+        },
+        {
+          "name": "HTML/CSS",
+          "score": 4
+        }
+      ],
+      "q2_frontend": "basic_html_css",
+      "q3_backend": "unfamiliar",
+      "q4_database": [
+        "rdbms_sql"
+      ],
+      "q5_devops": "paas_only",
+      "q6_ai_data": "pandas_numpy",
+      "q7_security": "framework_default",
+      "q8_domain": "Library Management Systems"
+    },
+    "module_b": {
+      "q9_troubleshoot": "log_search",
+      "q10_tech_choice": "newest_tech",
+      "q11_communication": "reject",
+      "q12_code_review": "formality",
+      "q13_learning": "hoarding",
+      "q14_process": "waterfall_none",
+      "q15_english": "slow_reading"
+    },
+    "module_c": {
+      "q16_current_level": "entry_level",
+      "q17_target_role": "frontend",
+      "q18_industry": "software_house",
+      "q19_search_status": "student_training"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "technical_growth",
+        "work_life_balance",
+        "team_culture"
+      ],
+      "q21_pressure": "consider_short_term",
+      "q22_career_type": "generalist",
+      "q23_learning_style": [
+        "video_courses",
+        "hands_on_projects"
+      ]
+    }
+  },
+  {
+    "user_id": "user_9",
+    "timestamp": "2026-02-19T23:12:51.367857Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "Python",
+          "score": 4
+        },
+        {
+          "name": "SQL",
+          "score": 3
+        },
+        {
+          "name": "Go",
+          "score": 3
+        }
+      ],
+      "q2_frontend": "basic_html_css",
+      "q3_backend": "db_auth_testing",
+      "q4_database": [
+        "rdbms_sql",
+        "nosql_document",
+        "key_value_cache",
+        "data_warehouse"
+      ],
+      "q5_devops": "iac_monitoring",
+      "q6_ai_data": "pandas_numpy",
+      "q7_security": "audit_devsecops",
+      "q8_domain": "Cloud Migration, Financial Compliance"
+    },
+    "module_b": {
+      "q9_troubleshoot": "incident_analysis",
+      "q10_tech_choice": "tradeoff_analysis",
+      "q11_communication": "value_driven",
+      "q12_code_review": "architecture_solid",
+      "q13_learning": "deep_dive_sharing",
+      "q14_process": "process_optimization",
+      "q15_english": "global_comm"
+    },
+    "module_c": {
+      "q16_current_level": "lead_architect",
+      "q17_target_role": "devops_sre",
+      "q18_industry": "big_tech",
+      "q19_search_status": "passive_open"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "financial_reward",
+        "technical_growth",
+        "brand_reputation"
+      ],
+      "q21_pressure": "accept_immediately",
+      "q22_career_type": "specialist",
+      "q23_learning_style": [
+        "official_docs",
+        "hands_on_projects",
+        "books"
+      ]
+    }
+  },
+  {
+    "user_id": "user_10",
+    "timestamp": "2026-02-19T23:12:51.367898Z",
+    "module_a": {
+      "q1_languages": [
+        {
+          "name": "JavaScript",
+          "score": 3
+        },
+        {
+          "name": "HTML/CSS",
+          "score": 4
+        }
+      ],
+      "q2_frontend": "basic_html_css",
+      "q3_backend": "unfamiliar",
+      "q4_database": [
+        "rdbms_sql"
+      ],
+      "q5_devops": "paas_only",
+      "q6_ai_data": "api_consumer",
+      "q7_security": "framework_default",
+      "q8_domain": "Online Survey Systems"
+    },
+    "module_b": {
+      "q9_troubleshoot": "log_search",
+      "q10_tech_choice": "popularity",
+      "q11_communication": "comply",
+      "q12_code_review": "formality",
+      "q13_learning": "hoarding",
+      "q14_process": "waterfall_none",
+      "q15_english": "slow_reading"
+    },
+    "module_c": {
+      "q16_current_level": "entry_level",
+      "q17_target_role": "frontend",
+      "q18_industry": "software_house",
+      "q19_search_status": "active_urgent"
+    },
+    "module_d": {
+      "q20_values_top3": [
+        "financial_reward",
+        "technical_growth",
+        "team_culture"
+      ],
+      "q21_pressure": "accept_immediately",
+      "q22_career_type": "generalist",
+      "q23_learning_style": [
+        "video_courses",
+        "hands_on_projects"
+      ]
+    }
+  }
+]

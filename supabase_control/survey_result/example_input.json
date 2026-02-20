@@ -1,0 +1,59 @@
+{
+  "user_id": "user_001",
+  "timestamp": "2026-02-19T10:00:00.000Z",
+  "module_a": {
+    "q1_languages": [
+      {
+        "name": "Python",
+        "score": 4
+      },
+      {
+        "name": "JavaScript",
+        "score": 3
+      },
+      {
+        "name": "SQL",
+        "score": 3
+      }
+    ],
+    "q2_frontend": "framework_spa",
+    "q3_backend": "db_auth_testing",
+    "q4_database": [
+      "rdbms_sql",
+      "nosql_document",
+      "vector_db"
+    ],
+    "q5_devops": "docker_basic",
+    "q6_ai_data": "pandas_numpy",
+    "q7_security": "owasp_basic",
+    "q8_domain": "電商"
+  },
+  "module_b": {
+    "q9_troubleshoot": "log_search",
+    "q10_tech_choice": "team_familiarity",
+    "q11_communication": "alternative_solution",
+    "q12_code_review": "logic_safety",
+    "q13_learning": "consistent_input",
+    "q14_process": "agile_scrum",
+    "q15_english": "fluent_reading"
+  },
+  "module_c": {
+    "q16_current_level": "mid_level",
+    "q17_target_role": "fullstack",
+    "q18_industry": "product_company",
+    "q19_search_status": "passive_open"
+  },
+  "module_d": {
+    "q20_values_top3": [
+      "technical_growth",
+      "work_life_balance",
+      "team_culture"
+    ],
+    "q21_pressure": "prefer_health",
+    "q22_career_type": "generalist",
+    "q23_learning_style": [
+      "hands_on_projects",
+      "official_docs"
+    ]
+  }
+}
