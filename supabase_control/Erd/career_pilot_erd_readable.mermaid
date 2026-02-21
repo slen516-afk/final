@@ -9,6 +9,10 @@ erDiagram
     USER ||--o{ APPLICATION_RECORD : submits
     USER ||--o{ USER_SKILL : has
     USER ||--o{ CAREER_ANALYSIS_REPORT : has
+    USER ||--o{ RESUME_ANALYSIS : requests
+    USER ||--o{ RESUME_OPTIMIZATION : requests
+    USER ||--o{ COVER_LETTER : creates
+    USER ||--o{ AGENT_SESSION : triggers
 
     CAREER_SURVEY ||--o{ RESUME : guides
     CAREER_SURVEY ||--o{ CAREER_ANALYSIS_REPORT : generates
@@ -18,8 +22,17 @@ erDiagram
     RESUME ||--o{ JOB_MATCHING : participates_in
     RESUME ||--o{ CAREER_ANALYSIS_REPORT : analyzes
     RESUME ||--o| OCR_RESULT : parsed_by
+    RESUME ||--o{ RESUME_ANALYSIS : analyzed_by
+    RESUME ||--o{ RESUME_OPTIMIZATION : optimized_to
+    RESUME ||--o{ COVER_LETTER : used_for
 
     RESUME_VERSION ||--o{ APPLICATION_RECORD : used_in
+    RESUME_VERSION ||--o{ RESUME_OPTIMIZATION : linked_to
+
+    RESUME_ANALYSIS ||--o{ RESUME_ISSUE : contains
+    RESUME_ANALYSIS ||--o| AGENT_SESSION : generated_by
+
+    RESUME_OPTIMIZATION ||--o| AGENT_SESSION : generated_by
 
     UPLOAD_EVENT ||--|| OCR_RESULT : produces
 
@@ -27,6 +40,9 @@ erDiagram
     JOB_POSTING ||--o{ APPLICATION_RECORD : receives
     JOB_POSTING ||--o{ JOB_MATCHING : matches_with
     JOB_POSTING ||--o{ JOB_SKILL_REQUIREMENT : requires
+    JOB_POSTING ||--o{ RESUME_ANALYSIS : analyzed_for
+    JOB_POSTING ||--o{ RESUME_OPTIMIZATION : optimized_for
+    JOB_POSTING ||--o{ COVER_LETTER : receives_cover_letter
 
     JOB_MATCHING ||--|| MATCH_SCORE : has
 
@@ -36,7 +52,10 @@ erDiagram
     SKILL_MASTER ||--o{ COURSE : "primary_skill"
 
     CAREER_ANALYSIS_REPORT ||--o{ SKILL_GAP : identifies
+    CAREER_ANALYSIS_REPORT ||--o| AGENT_SESSION : generated_by
     SKILL_GAP ||--o{ SIDE_PROJECT_RECOMMENDATION : suggests
+
+    AGENT_SESSION ||--o{ COVER_LETTER : generates
 
     %% ========================================
     %% Tables
@@ -149,6 +168,14 @@ erDiagram
         int job_id PK "🟢 職缺推薦"
         int company_id FK
         string job_category "VARCHAR(100)"
+        text role_type "例如「前端工程師 / 後端工程師 / 全端」等職務大類"
+        text role_name "更細緻的職務名稱或角色標籤"
+        numeric d1_frontend "D1 前端工程；分數 1~5"
+        numeric d2_backend "D2 後端工程；分數 1~5"
+        numeric d3_devops "D3 雲端維運；分數 1~5"
+        numeric d4_ai_data "D4 AI與數據；分數 1~5"
+        numeric d5_quality "D5 品質與架構；分數 1~5"
+        numeric d6_soft_skills "D6 軟實力；分數 1~5"
         string job_title "VARCHAR(200)"
         text job_description "⚡ 需向量化"
         text requirements "⚡ 需向量化"
@@ -284,5 +311,94 @@ erDiagram
         int estimated_hours
         string project_url "VARCHAR(500)"
         datetime created_at
+    }
+
+    RESUME_ANALYSIS {
+        bigserial analysis_id PK "🔵 履歷生成"
+        int resume_id FK "NOT NULL"
+        int user_id FK "NOT NULL"
+        int target_job_id FK "可選"
+        text candidate_positioning "企業視角下此履歷代表的角色定位"
+        text target_role_gap_summary "與目標職位的整體落差說明"
+        jsonb overall_strengths "List[str] 最具說服力的優勢點"
+        jsonb overall_weaknesses "List[str] 影響錄取率的核心弱點"
+        string ats_risk_level "VARCHAR(20) low/medium/high"
+        text screening_outcome_prediction "模擬 6-10 秒掃描後的篩選結果"
+        jsonb recommended_next_actions "List[str] 可執行的下一步建議"
+        string llm_model_used "VARCHAR(100)"
+        string analysis_version "VARCHAR(10) DEFAULT '1.0'"
+        timestamptz generated_at "NOT NULL, DEFAULT NOW()"
+    }
+
+    RESUME_ISSUE {
+        bigserial issue_id PK "🔵 履歷生成"
+        bigint analysis_id FK "NOT NULL"
+        string section "VARCHAR(100) 履歷區塊（簡介/技能/經歷/專案/自傳）"
+        text original_text "該區塊的原始文字"
+        jsonb issue_type "List[str] 問題類型分類"
+        jsonb severity "List[str] 嚴重程度"
+        string diagnosis_dimension "VARCHAR(100)"
+        text issue_reason "站在 HR/ATS 角度說明降低錄取率的原因"
+        jsonb improvement_direction "List[str] 可執行的改善方向建議"
+        int sort_order "DEFAULT 0"
+        boolean is_resolved "DEFAULT FALSE"
+    }
+
+    RESUME_OPTIMIZATION {
+        bigserial optimization_id PK "🔵 履歷生成"
+        int resume_id FK "NOT NULL"
+        int version_id FK "可選"
+        int user_id FK "NOT NULL"
+        int target_job_id FK "可選"
+        text professional_summary "優化後的專業摘要（含目標職缺關鍵字）"
+        jsonb professional_experience "List[dict] 優化後的工作經歷（含 STAR 原則）"
+        jsonb core_skills "List[str] 萃取的核心技能關鍵字"
+        jsonb projects "List[dict] 優化後的專案描述"
+        jsonb education "List[str] 最高學歷資訊"
+        text autobiography "保留原風格的優化後完整自傳"
+        string llm_model_used "VARCHAR(100)"
+        string optimization_version "VARCHAR(10) DEFAULT '1.0'"
+        timestamptz created_at "NOT NULL, DEFAULT NOW()"
+    }
+
+    COVER_LETTER {
+        bigserial cover_letter_id PK "🟢 職缺推薦"
+        int user_id FK "NOT NULL"
+        int job_id FK "NOT NULL"
+        int resume_id FK "可選"
+        bigint agent_session_id FK "可選"
+        text subject "NOT NULL 吸引人且專業的郵件主旨"
+        text content "NOT NULL 完整求職信正文"
+        string llm_model_used "VARCHAR(100)"
+        boolean is_sent "DEFAULT FALSE"
+        timestamptz sent_at
+        timestamptz created_at "NOT NULL, DEFAULT NOW()"
+    }
+
+    AGENT_SESSION {
+        bigserial session_id PK "⚙️ 系統追蹤"
+        int user_id FK "NOT NULL"
+        int resume_id FK "可選"
+        string trigger_type "VARCHAR(50) job_match/resume_analysis/career_report/full"
+        text user_input_summary "使用者輸入的摘要（隱私保護）"
+        boolean tool_job_match_called "DEFAULT FALSE"
+        boolean tool_resume_analysis_called "DEFAULT FALSE"
+        boolean tool_resume_optimize_called "DEFAULT FALSE"
+        boolean tool_skill_gap_called "DEFAULT FALSE"
+        boolean tool_side_project_called "DEFAULT FALSE"
+        boolean tool_course_recommend_called "DEFAULT FALSE"
+        boolean tool_cover_letter_called "DEFAULT FALSE"
+        bigint analysis_id FK "可選"
+        bigint optimization_id FK "可選"
+        int career_report_id FK "可選"
+        jsonb recommended_job_ids "List[int] 推薦的 job_id"
+        jsonb recommended_course_ids "List[int] 推薦的 course_id"
+        int total_tokens_used "消耗 Token 數"
+        int latency_ms "回應時間（毫秒）"
+        string llm_model_used "VARCHAR(100)"
+        string status "VARCHAR(50) running/completed/failed DEFAULT 'completed'"
+        text error_message "失敗時的錯誤原因"
+        timestamptz created_at "NOT NULL, DEFAULT NOW()"
+        timestamptz completed_at
     }
 
