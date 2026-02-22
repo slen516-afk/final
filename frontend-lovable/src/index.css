@@ -1,0 +1,281 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Earth Tone Palette from 網頁最終配色.png */
+    --background: 27 73% 95%;        /* #fbf1e8 beige */
+    --foreground: 0 0% 0%;            /* #000000 pure black for titles */
+
+    --card: 0 0% 100%;                /* #ffffff white cards */
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    /* Primary Copper - Brand accent #8d4903 */
+    --primary: 30 96% 28%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Bright/Dark variants */
+    --primary-bright: 30 90% 35%;
+    --primary-dark: 30 96% 22%;
+
+    --secondary: 27 40% 92%;
+    --secondary-foreground: 23 21% 33%;
+
+    --muted: 27 30% 91%;
+    --muted-foreground: 23 21% 33%;    /* #675143 */
+
+    --accent: 30 96% 28%;
+    --accent-foreground: 0 0% 100%;
+
+    --success: 152 69% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 27 30% 85%;
+    --input: 27 30% 85%;
+    --ring: 30 96% 28%;
+
+    --radius: 0.75rem;
+
+    /* Header - Warm Brown #966949 */
+    --header-bg: 27 32% 44%;
+    /* Footer - Deep Brown #502D03 */
+    --footer-bg: 30 94% 16%;
+    --footer-foreground: 27 40% 92%;
+
+    /* Custom tokens - Earth Tone Theme */
+    --gradient-primary: linear-gradient(135deg, hsl(30 96% 28%) 0%, hsl(25 80% 35%) 100%);
+    --gradient-hero: radial-gradient(ellipse 80% 50% at 50% 50%, hsl(30 60% 75% / 0.4) 0%, hsl(27 50% 80% / 0.2) 50%, transparent 80%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(27 40% 98%) 100%);
+    --gradient-light: linear-gradient(135deg, hsl(27 50% 95%) 0%, hsl(27 40% 93%) 100%);
+    --shadow-soft: 0 4px 6px -1px hsl(30 40% 30% / 0.08), 0 2px 4px -2px hsl(30 40% 30% / 0.06);
+    --shadow-medium: 0 10px 15px -3px hsl(30 40% 30% / 0.1), 0 4px 6px -4px hsl(30 40% 30% / 0.08);
+    --shadow-warm: 0 4px 16px -2px hsl(27 40% 50% / 0.12);
+    --shadow-large: 0 25px 50px -12px hsl(30 40% 30% / 0.2);
+
+    /* News / muted sub-section bg #FFFBF5 */
+    --news-bg: 36 100% 98%;
+    /* Stat number color #9a6752 */
+    --stat-number: 17 31% 46%;
+    /* Icon on light bg #8d4903, icon on dark bg light */
+    --icon-dark: 30 96% 28%;
+    --icon-light: 26 42% 76%;         /* #dabea8 */
+
+    --sidebar-background: 27 40% 97%;
+    --sidebar-foreground: 23 21% 33%;
+    --sidebar-primary: 30 96% 28%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 27 40% 92%;
+    --sidebar-accent-foreground: 23 21% 33%;
+    --sidebar-border: 27 30% 88%;
+    --sidebar-ring: 30 96% 35%;
+  }
+
+  .dark {
+    --background: 23 15% 10%;
+    --foreground: 27 40% 95%;
+
+    --card: 23 15% 14%;
+    --card-foreground: 27 40% 95%;
+
+    --popover: 23 15% 14%;
+    --popover-foreground: 27 40% 95%;
+
+    --primary: 30 90% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --primary-bright: 30 85% 42%;
+    --primary-dark: 30 96% 28%;
+
+    --secondary: 23 15% 18%;
+    --secondary-foreground: 27 40% 90%;
+
+    --muted: 23 15% 18%;
+    --muted-foreground: 27 25% 60%;
+
+    --accent: 30 90% 35%;
+    --accent-foreground: 0 0% 100%;
+
+    --success: 152 69% 50%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 27 40% 95%;
+
+    --border: 23 15% 22%;
+    --input: 23 15% 22%;
+    --ring: 30 90% 40%;
+
+    --header-bg: 27 32% 38%;
+    --footer-bg: 30 94% 13%;
+    --footer-foreground: 27 40% 85%;
+
+    --news-bg: 36 50% 95%;
+    --stat-number: 17 31% 55%;
+    --icon-dark: 30 90% 40%;
+    --icon-light: 26 42% 76%;
+
+    --sidebar-background: 23 15% 12%;
+    --sidebar-foreground: 27 40% 90%;
+    --sidebar-primary: 30 90% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 23 15% 18%;
+    --sidebar-accent-foreground: 27 40% 90%;
+    --sidebar-border: 23 15% 20%;
+    --sidebar-ring: 30 90% 40%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Noto Sans TC', 'Inter', system-ui, sans-serif;
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+    font-family: 'Noto Sans TC', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .gradient-light {
+    background: var(--gradient-light);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-medium {
+    box-shadow: var(--shadow-medium);
+  }
+
+  .shadow-warm {
+    box-shadow: var(--shadow-warm);
+  }
+
+  .shadow-large {
+    box-shadow: var(--shadow-large);
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+  }
+
+  /* Hero section background - Warm beige with radial copper glow */
+  .hero-bg {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 45%, hsl(30 60% 75% / 0.35) 0%, hsl(27 50% 80% / 0.15) 50%, transparent 75%),
+      hsl(27, 73%, 95%);
+  }
+
+  /* Feature card with warm shadow on beige bg */
+  .feature-card {
+    @apply bg-card border border-border rounded-xl p-6 transition-all duration-300;
+    box-shadow: var(--shadow-warm);
+  }
+
+  .feature-card:hover {
+    @apply shadow-medium -translate-y-1;
+  }
+
+  /* Floating animation for hero cards */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float 4s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+
+  /* Footer dark brown background */
+  .footer-bg {
+    background: hsl(var(--footer-bg));
+    color: hsl(var(--footer-foreground));
+  }
+
+  /* Header warm brown background */
+  .header-bg {
+    background: hsl(var(--header-bg));
+  }
+
+  /* White UI component lockdown — modals, tooltips, alerts, chatbot */
+  .ui-white {
+    background: #ffffff !important;
+    box-shadow: var(--shadow-warm);
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background: var(--gradient-primary);
+  }
+
+  .text-stat {
+    color: hsl(var(--stat-number));
+  }
+}
+
+/* Career ladder custom scrollbar */
+.career-ladder-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+.career-ladder-scroll::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+.career-ladder-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+.career-ladder-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
