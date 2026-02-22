@@ -3,15 +3,19 @@ version: '3.8'
 services:
   # 1. 後端 (Python) - 通用環境
   backend:
-    image: python:3.10-slim  # 直接用官方純淨映像檔，不讀 Dockerfile
-    command: sleep infinity  # 讓容器發呆，等你進去操作
+    build: ./backend  
     volumes:
-      - ./backend:/app       # 把你的程式碼掛載進去
+      - ./backend:/app       
+      - ./supabase_control:/app/supabase_control
     working_dir: /app
     ports:
       - "8000:8000"          # 預留給 Django/FastAPI/Flask
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
     networks:
       - default
+    command: sleep infinity  
   supabase_control:
     image: python:3.10-slim
     command: sleep infinity
@@ -23,17 +27,6 @@ services:
     #   - .env
     networks:
       - default
-      
-  # 5. 爬蟲服務 (Python)
-  scrawler:
-    image: python:3.10-slim
-    command: sleep infinity
-    volumes:
-      - ./scrawler:/app
-    working_dir: /app
-    networks:
-      - default
-
   # 2. 前端 
   frontend:
     image: ubuntu:22.04    
@@ -47,19 +40,29 @@ services:
       - default
   # 專門負責 "眼睛" 的服務 (OCR)
   ocr_service:
-    image: python:3.10-slim
-    command: sleep infinity
+    build: 
+      context: ./backend/service/ocr_service  # 告訴 Docker 去哪裡找 Dockerfile
+      dockerfile: Dockerfile
+    command: sleep infinity                   # 依然讓它發呆，方便你進去操作
     volumes:
-      - ./ocr_service:/app
+      # 1. 程式碼掛載：讓你在本機改 code，容器內同步生效
+      - ./backend/service/ocr_service:/app
+      # 2. 模型快取掛載：這是之前卡死的地方，我們用 Volume 的方式給它，不放進 Build 過程
+      - ./backend/cache/hf_cache:/root/.cache/huggingface
+      - ./supabase_control:/app/supabase_control
     ports:
-      - "5001:5000"  # 外部 5001 -> 內部 5000
+      - "5001:5000"
     networks:
       - default
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      
   llm_service:
     image: python:3.10-slim
     command: sleep infinity
     volumes:
-      - ./llm_service:/app
+      - ./backend/service/llm_service:/app
     working_dir: /app
     ports:
       - "5002:5000"  # 外部 5002 -> 內部 5000 (避開 OCR 的 5001)
@@ -69,34 +72,7 @@ services:
     networks:
       - default
 
-  # # 3. AI 服務 (Python) - 通用環境
-  # ml_service:
-  #   image: python:3.10-slim
-  #   command: sleep infinity
-  #   volumes:
-  #     - ./ml_service:/app
-  #   working_dir: /app
-  #   ports:
-  #     - "5001:5000"          
-  #   networks:
-  #     - default
 
-
-  # db:
-  #   image: mysql:8.0
-  #   restart: always
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: password
-  #     MYSQL_DATABASE: myapp
-  #     MYSQL_USER: user
-  #     MYSQL_PASSWORD: password
-  #   ports:
-  #     - "3307:3306"          # 外部用 3307，內部用 3306 (解決 Port 衝突)
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #     - ./database:/docker-entrypoint-initdb.d
-  #   networks:
-  #     - default
 
 volumes:
   mysql_data:

@@ -3,6 +3,9 @@
     "dockerComposeFile": "../../docker-compose.yml",
     "service": "ocr_service",
     "workspaceFolder": "/app",
+    "mounts": [
+        "source=${localWorkspaceFolder}/.hf_cache,target=/root/.cache/huggingface,type=bind"
+    ],
     "customizations": {
         "vscode": {
             "extensions": [
@@ -11,7 +14,6 @@
             ]
         }
     },
-    // ↓↓↓ 這裡是最重要的修改！ ↓↓↓
     // 1. apt-get update: 更新軟體清單
     // 2. install tesseract-ocr: 安裝 OCR 引擎
     // 3. install tesseract-ocr-chi-tra: 安裝繁體中文包 (不然看不懂中文)

@@ -82,7 +82,7 @@ def connect_to_supabase(env_path=None, test_connection=True):
                 f"  - {possible_paths[2]}"
             )
 
-    load_dotenv(env_path)
+    load_dotenv(env_path, override=True)
 
     # 4. 取得 Supabase 連線資訊
     SUPABASE_URL = os.getenv('project_url')

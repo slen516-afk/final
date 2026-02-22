@@ -3,6 +3,9 @@
     "dockerComposeFile": "../../docker-compose.yml",
     "service": "backend",
     "workspaceFolder": "/app",
+    "mounts": [
+        "source=${localWorkspaceFolder}/.hf_cache,target=/root/.cache/huggingface,type=bind"
+    ],
     "customizations": {
         "vscode": {
             "extensions": [

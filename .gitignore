@@ -8,7 +8,7 @@ env/
 venv/
 .venv/
 pip-log.txt
-
+backend/cache/
 # --- Jupyter Notebook (ML Service) ---
 .ipynb_checkpoints/
 
@@ -32,3 +32,25 @@ docker-compose.override.yml
 
 # --- VS Code (個人設定不傳) ---
 .vscode/
+# 1. 絕對不能上傳的巨大模型 (省下 4GB+ 空間)
+.hf_cache/
+hf_cache/
+
+# 2. 絕對不能上傳的機密設定 (保護你的資料庫密碼)
+.env
+.venv/
+env/
+venv/
+
+# 3. Python 產生的垃圾暫存檔
+__pycache__/
+*.pyc
+
+# 4. (選用) 你的測試圖片與 PDF，如果不想上傳也可以加進來
+*.jpg
+*.jpeg
+*.png
+*.pdf
+
+# 5. Mac 系統產生的垃圾檔
+.DS_Store

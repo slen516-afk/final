@@ -1,0 +1,5 @@
+# 絕對忽略：不論路徑，只要叫 cache 或 hf_cache 都不准打包
+**/cache/
+**/hf_cache/
+cache/
+hf_cache/

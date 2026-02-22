@@ -14,7 +14,7 @@ if supabase_control_path not in sys.path:
     sys.path.insert(0, supabase_control_path)
 
 # 現在可以導入 supabase_control 中的函數
-from supabase_connection import connect_to_supabase
+from supabase_control.supabase_connection import connect_to_supabase
 
 # 使用範例
 if __name__ == "__main__":

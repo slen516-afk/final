@@ -11,9 +11,5 @@
             ]
         }
     },
-    // ↓↓↓ 關鍵指令 ↓↓↓
-    // 1. apt-get update: 更新清單
-    // 2. install libgomp1: ★這是 FAISS 運算需要的底層函式庫，沒裝會報錯
-    // 3. pip install: 安裝 requirements.txt 裡的 LangChain 套件
     "postCreateCommand": "apt-get update && apt-get install -y libgomp1 && pip install -r requirements.txt || echo 'Setup skipped'"
 }
