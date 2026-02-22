@@ -772,26 +772,56 @@ ADD COLUMN job_details JSONB;
 
 ---
 
-### 9.3 SIDE_PROJECT_RECOMMENDATION(Side Project 推薦)🟠
+### 9.3 SIDE_PROJECT_RECOMMENDATION（Side Project 推薦）🟠
 
-**功能說明**:推薦學習專案以填補技能落差
+**功能說明**：推薦學習專案以填補技能落差，對應 SideProject 輸出結構，含完整的分階段實作規劃
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
 | recommendation_id | 推薦識別碼 | Recommendation ID | INT | 推薦識別碼 | PRIMARY KEY |
-| gap_id | 落差識別碼 | Gap ID | INT | 關聯技能落差 | FOREIGN KEY |
-| project_name | 專案名稱 | Project Name | VARCHAR(200) | 專案名稱 | - |
-| project_description | 專案描述 | Project Description | TEXT | 專案描述 | - |
-| required_skills | 所需技能列表 | Required Skills | JSONB | 所需技能列表 | - |
-| difficulty_level | 難度等級 | Difficulty Level | VARCHAR(50) | 難度等級 (beginner/intermediate/advanced) | - |
+| gap_id | 落差識別碼 | Gap ID | INT | 關聯技能落差 | FOREIGN KEY → skill_gap(gap_id) |
+| project_name | 專案名稱 | Project Name | VARCHAR(200) | 專案名稱，需具專業感能清楚體現核心價值 | - |
+| project_description | 專案描述 | Project Description | TEXT | 對外展示用的專案簡介 | - |
+| tech_stack | 使用技術清單 | Tech Stack | JSONB | 完整技術棧清單（後端、資料庫、部署、容器化等）List[str] | - |
+| difficulty | 實作困難程度 | Difficulty | TEXT | 格式：'難度等級 (低/中/高) \| 預估開發週期（含部署與測試）'，並簡述主要挑戰點 | - |
 | estimated_hours | 預估完成時數 | Estimated Hours | INT | 預估完成時數 | - |
 | project_url | 專案參考連結 | Project URL | VARCHAR(500) | 專案參考連結 | - |
-| created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
+| capability_gaps_addressed | 對應補強的能力缺口 | Capability Gaps Addressed | JSONB | 此專案主要補強的能力缺口清單（對應求職弱項）List[str] | - |
+| project_phases | 專案分階段規劃 | Project Phases | JSONB | 分階段實作規劃 List[ProjectPhase]，結構見下方說明 | - |
+| overall_resume_impact | 對履歷競爭力的提升說明 | Overall Resume Impact | TEXT | 整個專案完成後對履歷競爭力的整體提升說明 | - |
+| created_at | 建立時間 | Created At | TIMESTAMPTZ | 建立時間 | DEFAULT now() |
 
-**設計說明**:
+**設計說明**：
 - 對應流程圖右側「動作: 檢視推薦 side project」
-- 結合 PRD 提到的 Side Project Library
-- **推薦邏輯**:根據 SKILL_GAP 的優先順序推薦相應難度的專案
+- 對應輸出結構定義 `SideProject` Class
+- **欄位修正紀錄（v2.1）**：
+  - `required_skills` 改名為 `tech_stack`
+  - `difficulty_level` 改名為 `difficulty` 並改為 TEXT：輸出格式包含難度等級與時程評估的完整字串，VARCHAR(50) 
+  - `project_description` 保留作為對外展示簡介，新增 `overall_resume_impact` 專門儲存對履歷競爭力的提升說明
+- **`project_phases` JSONB 結構定義**（對應 `ProjectPhase` Class）：
+  ```json
+  [
+    {
+      "phase_name": "Phase 1: 核心 API 與資料庫設計 (MVP Backend)",
+      "phase_goal": "建立可運作的後端服務與資料模型",
+      "tasks": [
+        "設計 RESTful API 端點",
+        "建立 PostgreSQL schema",
+        "實作基本 CRUD 操作"
+      ],
+      "resume_value": "獨立設計並實作高併發 RESTful API，支援每秒 500 筆請求處理"
+    }
+  ]
+  ```
+- **`capability_gaps_addressed` 範例**：
+  ```json
+  ["Kubernetes 部署", "CI/CD 流程設計", "系統監控與告警"]
+  ```
+- **`tech_stack` 範例**：
+  ```json
+  ["FastAPI", "PostgreSQL", "Redis", "Docker", "GitHub Actions"]
+  ```
+- **推薦邏輯**：根據 SKILL_GAP 的優先順序，由 AI 產生對應難度與技術棧的專案規劃
 
 ---
 

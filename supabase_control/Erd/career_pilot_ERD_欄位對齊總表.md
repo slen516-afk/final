@@ -323,19 +323,22 @@
 
 ---
 
-### 9.3 SIDE_PROJECT_RECOMMENDATION(Side Project 推薦)🟠
+### 9.3 SIDE_PROJECT_RECOMMENDATION（Side Project 推薦）🟠
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
 | recommendation_id | 推薦識別碼 | Recommendation ID | INT | 推薦識別碼 | PRIMARY KEY |
-| gap_id | 落差識別碼 | Gap ID | INT | 關聯技能落差 | FOREIGN KEY |
-| project_name | 專案名稱 | Project Name | VARCHAR(200) | 專案名稱 | - |
-| project_description | 專案描述 | Project Description | TEXT | 專案描述 | - |
-| required_skills | 所需技能列表 | Required Skills | JSONB | 所需技能列表 | - |
-| difficulty_level | 難度等級 | Difficulty Level | VARCHAR(50) | 難度等級 (beginner/intermediate/advanced) | - |
+| gap_id | 落差識別碼 | Gap ID | INT | 關聯技能落差 | FOREIGN KEY → skill_gap(gap_id) |
+| project_name | 專案名稱 | Project Name | VARCHAR(200) | 專案名稱，需具專業感能清楚體現核心價值 | - |
+| project_description | 專案描述 | Project Description | TEXT | 對外展示用的專案簡介 | - |
+| tech_stack | 使用技術清單 | Tech Stack | JSONB | 完整技術棧清單（後端、資料庫、部署、容器化等）List[str] | - |
+| difficulty | 實作困難程度 | Difficulty | TEXT | 格式：'難度等級 (低/中/高) \| 預估開發週期（含部署與測試）'，並簡述主要挑戰點 | - |
 | estimated_hours | 預估完成時數 | Estimated Hours | INT | 預估完成時數 | - |
 | project_url | 專案參考連結 | Project URL | VARCHAR(500) | 專案參考連結 | - |
-| created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
+| capability_gaps_addressed | 對應補強的能力缺口 | Capability Gaps Addressed | JSONB | 此專案主要補強的能力缺口清單（對應求職弱項）List[str] | - |
+| project_phases | 專案分階段規劃 | Project Phases | JSONB | 分階段實作規劃，每階段含 phase_name / phase_goal / tasks / resume_value；結構見下方 | - |
+| overall_resume_impact | 對履歷競爭力的提升說明 | Overall Resume Impact | TEXT | 整個專案完成後對履歷競爭力的整體提升說明 | - |
+| created_at | 建立時間 | Created At | TIMESTAMPTZ | 建立時間 | DEFAULT now() |
 
 ---
 
