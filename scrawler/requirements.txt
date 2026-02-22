@@ -1,0 +1,5 @@
+# 請在此列出爬蟲需要的套件 (例如 requests, beautifulsoup4)
+# 系統啟動時會自動安裝這些套件
+requests
+beautifulsoup4
+pandas

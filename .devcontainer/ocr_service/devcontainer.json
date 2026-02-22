@@ -1,0 +1,21 @@
+{
+    "name": "OCR Service (Python)",
+    "dockerComposeFile": "../../docker-compose.yml",
+    "service": "ocr_service",
+    "workspaceFolder": "/app",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-toolsai.jupyter"
+            ]
+        }
+    },
+    // ↓↓↓ 這裡是最重要的修改！ ↓↓↓
+    // 1. apt-get update: 更新軟體清單
+    // 2. install tesseract-ocr: 安裝 OCR 引擎
+    // 3. install tesseract-ocr-chi-tra: 安裝繁體中文包 (不然看不懂中文)
+    // 4. install libgl1: 安裝 OpenCV 需要的圖形庫 (以防萬一你會用到)
+    // 5. pip install: 安裝 requirements.txt
+    "postCreateCommand": "apt-get update && apt-get install -y tesseract-ocr tesseract-ocr-chi-tra libgl1 && pip install -r requirements.txt || echo 'Setup skipped'"
+}

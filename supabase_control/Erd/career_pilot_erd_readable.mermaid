@@ -1,0 +1,262 @@
+erDiagram
+    %% ========================================
+    %% Relationships
+    %% ========================================
+    USER ||--|| USER_PROFILE : has
+    USER ||--o{ CAREER_SURVEY : completes
+    USER ||--o{ RESUME : creates
+    USER ||--o{ UPLOAD_EVENT : triggers
+    USER ||--o{ APPLICATION_RECORD : submits
+    USER ||--o{ USER_SKILL : has
+
+    CAREER_SURVEY ||--o{ RESUME : guides
+    CAREER_SURVEY ||--o{ CAREER_ANALYSIS_REPORT : generates
+
+    RESUME ||--o{ RESUME_VERSION : has
+    RESUME ||--|| RESUME_TEMPLATE : uses
+    RESUME ||--o{ JOB_MATCHING : participates_in
+    RESUME ||--o{ CAREER_ANALYSIS_REPORT : analyzes
+    RESUME ||--o| OCR_RESULT : parsed_by
+
+    RESUME_VERSION ||--o{ APPLICATION_RECORD : used_in
+
+    UPLOAD_EVENT ||--o| OCR_RESULT : produces
+
+    COMPANY_INFO ||--o{ JOB_POSTING : owns
+    JOB_POSTING ||--o{ APPLICATION_RECORD : receives
+    JOB_POSTING ||--o{ JOB_MATCHING : matches_with
+    JOB_POSTING ||--o{ JOB_SKILL_REQUIREMENT : requires
+
+    JOB_MATCHING ||--|| MATCH_SCORE : has
+
+    SKILL_MASTER ||--o{ JOB_SKILL_REQUIREMENT : defines
+    SKILL_MASTER ||--o{ USER_SKILL : defines
+    SKILL_MASTER ||--o{ SKILL_GAP : identifies
+
+    CAREER_ANALYSIS_REPORT ||--o{ SKILL_GAP : identifies
+    SKILL_GAP ||--o{ SIDE_PROJECT_RECOMMENDATION : suggests
+
+    %% ========================================
+    %% Tables
+    %% ========================================
+    USER {
+        int user_id PK
+        string email UK "VARCHAR(255)"
+        string password_hash "VARCHAR(255)"
+        string auth_provider "VARCHAR(50)"
+        datetime created_at
+        datetime last_login
+        boolean is_active
+    }
+
+    USER_PROFILE {
+        int profile_id PK
+        int user_id FK "UNIQUE"
+        string github_repo "VARCHAR(100)"
+        string full_name "VARCHAR(100)"
+        string location "VARCHAR(100)"
+        int years_of_experience
+        string current_position "VARCHAR(100)"
+        text education_background
+        json privacy_settings
+        datetime updated_at
+    }
+
+    CAREER_SURVEY {
+        int survey_id PK
+        int user_id FK
+        json career_preference
+        json skill_self_assessment
+        int salary_min
+        int salary_max
+        string location_preference "VARCHAR(100)"
+        string remote_preference "VARCHAR(50)"
+        json career_motivation
+        datetime completed_at
+        datetime updated_at
+    }
+
+    RESUME {
+        int resume_id PK "🔵 履歷生成"
+        int user_id FK
+        int template_id FK
+        string resume_type "VARCHAR(50)"
+        json structured_data "⚡ 需向量化"
+        json normalized_data "⚡ 需向量化"
+        uuid vector_id "Qdrant Point ID"
+        boolean is_embedded "DEFAULT FALSE"
+        boolean is_primary
+        datetime created_at
+        datetime updated_at
+    }
+
+    RESUME_VERSION {
+        int version_id PK "🔵 履歷生成"
+        int resume_id FK
+        int version_number
+        string file_path "VARCHAR(255)"
+        json content
+        string optimization_target "VARCHAR(100)"
+        datetime created_at
+    }
+
+    RESUME_TEMPLATE {
+        int template_id PK "🔵 履歷生成"
+        string template_name "VARCHAR(100)"
+        string template_type "VARCHAR(50)"
+        json template_structure
+        datetime created_at
+    }
+
+    UPLOAD_EVENT {
+        int event_id PK "🔵 履歷生成"
+        int user_id FK
+        string file_name "VARCHAR(255)"
+        string file_path "VARCHAR(500)"
+        string upload_type "VARCHAR(50)"
+        string status "VARCHAR(50)"
+        datetime uploaded_at
+        json metadata
+    }
+
+    OCR_RESULT {
+        int ocr_id PK "🔵 履歷生成"
+        int event_id FK
+        int resume_id FK
+        text raw_text
+        json extracted_data
+        float confidence_score
+        boolean is_manual_review_needed "DEFAULT FALSE"
+        string ocr_status "VARCHAR(50)"
+        datetime processed_at
+    }
+
+    COMPANY_INFO {
+        int company_id PK "🟢 職缺推薦"
+        string company_name "VARCHAR(200)"
+        string industry "VARCHAR(100)"
+        string company_size "VARCHAR(50)"
+        string location "VARCHAR(200)"
+        string website "VARCHAR(500)"
+        text description
+        datetime created_at
+    }
+
+    JOB_POSTING {
+        int job_id PK "🟢 職缺推薦"
+        int company_id FK
+        string job_title "VARCHAR(200)"
+        text job_description "⚡ 需向量化"
+        text requirements "⚡ 需向量化"
+        uuid vector_id "Qdrant Point ID"
+        boolean is_embedded "DEFAULT FALSE"
+        int salary_min
+        int salary_max
+        string full_address "VARCHAR(200)"
+        string city "VARCHAR(50)"
+        string district "VARCHAR(50)"
+        string remote_option "VARCHAR(50)"
+        json job_details
+        string source_platform "VARCHAR(50)"
+        string source_url "VARCHAR(500)"
+        date posted_date
+        datetime scraped_at
+        boolean is_active
+    }
+
+    SKILL_MASTER {
+        int skill_id PK
+        string skill_name UK "VARCHAR(100)"
+        string skill_category "VARCHAR(50)"
+        json synonyms
+        datetime created_at
+    }
+
+    JOB_SKILL_REQUIREMENT {
+        int requirement_id PK "🟢 職缺推薦"
+        int job_id FK
+        int skill_id FK
+        string importance "VARCHAR(50)"
+        int proficiency_level
+    }
+
+    USER_SKILL {
+        int user_skill_id PK
+        int user_id FK
+        int skill_id FK
+        int proficiency_level
+        float years_of_experience
+        boolean verified
+        datetime created_at
+    }
+
+    JOB_MATCHING {
+        int matching_id PK "🟢 職缺推薦"
+        int resume_id FK
+        int job_id FK
+        float overall_match_score
+        string matching_algorithm "VARCHAR(50)"
+        datetime matched_at
+        datetime matched_at "NOT NULL"
+        boolean user_viewed "DEFAULT FALSE"
+        string matching_status "DEFAULT 'active'"
+    }
+
+    MATCH_SCORE {
+        int score_id PK "🟢 職缺推薦"
+        int matching_id FK
+        float skill_match_score
+        float experience_match_score
+        float salary_match_score
+        float location_match_score
+        float growth_potential_score
+        json score_breakdown
+        datetime created_at
+    }
+
+    APPLICATION_RECORD {
+        int application_id PK "🟢 職缺推薦"
+        int user_id FK
+        int job_id FK
+        int version_id FK
+        string application_status "VARCHAR(50)"
+        datetime applied_at
+        datetime status_updated_at
+        int days_since_application
+        json user_feedback
+    }
+
+    CAREER_ANALYSIS_REPORT {
+        int report_id PK "🟠 職能分析"
+        int survey_id FK
+        int resume_id FK
+        json skill_gap_analysis
+        json career_path_suggestions
+        json market_insights
+        float career_readiness_score
+        datetime generated_at
+    }
+
+    SKILL_GAP {
+        int gap_id PK "🟠 職能分析"
+        int report_id FK
+        int skill_id FK
+        int current_level
+        int target_level
+        int priority_rank
+        float time_investment_hours
+        float skill_roi_score
+    }
+
+    SIDE_PROJECT_RECOMMENDATION {
+        int recommendation_id PK "🟠 職能分析"
+        int gap_id FK
+        string project_name "VARCHAR(200)"
+        text project_description
+        json required_skills
+        string difficulty_level "VARCHAR(50)"
+        int estimated_hours
+        string project_url "VARCHAR(500)"
+        datetime created_at
+    }
+
