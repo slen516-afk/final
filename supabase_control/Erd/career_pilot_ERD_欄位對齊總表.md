@@ -330,11 +330,8 @@
 | recommendation_id | 推薦識別碼 | Recommendation ID | INT | 推薦識別碼 | PRIMARY KEY |
 | gap_id | 落差識別碼 | Gap ID | INT | 關聯技能落差 | FOREIGN KEY → skill_gap(gap_id) |
 | project_name | 專案名稱 | Project Name | VARCHAR(200) | 專案名稱，需具專業感能清楚體現核心價值 | - |
-| project_description | 專案描述 | Project Description | TEXT | 對外展示用的專案簡介 | - |
 | tech_stack | 使用技術清單 | Tech Stack | JSONB | 完整技術棧清單（後端、資料庫、部署、容器化等）List[str] | - |
 | difficulty | 實作困難程度 | Difficulty | TEXT | 格式：'難度等級 (低/中/高) \| 預估開發週期（含部署與測試）'，並簡述主要挑戰點 | - |
-| estimated_hours | 預估完成時數 | Estimated Hours | INT | 預估完成時數 | - |
-| project_url | 專案參考連結 | Project URL | VARCHAR(500) | 專案參考連結 | - |
 | capability_gaps_addressed | 對應補強的能力缺口 | Capability Gaps Addressed | JSONB | 此專案主要補強的能力缺口清單（對應求職弱項）List[str] | - |
 | project_phases | 專案分階段規劃 | Project Phases | JSONB | 分階段實作規劃，每階段含 phase_name / phase_goal / tasks / resume_value；結構見下方 | - |
 | overall_resume_impact | 對履歷競爭力的提升說明 | Overall Resume Impact | TEXT | 整個專案完成後對履歷競爭力的整體提升說明 | - |
@@ -360,28 +357,11 @@
 | llm_model_used | 使用的 LLM 模型 | LLM Model Used | VARCHAR(100) | 產生此分析使用的 LLM 版本 | - |
 | analysis_version | 分析版本 | Analysis Version | VARCHAR(10) | 分析 Schema 版本 | DEFAULT '1.0' |
 | generated_at | 生成時間 | Generated At | TIMESTAMPTZ | 分析產生時間 | NOT NULL, DEFAULT NOW() |
+| critical_issues | 履歷問題清單 | Critical Issues | JSONB | 履歷各區塊的問題條目清單 List[ResumeIssue]，每筆含 section / original_text / issue_type / severity / diagnosis_dimension / issue_reason / improvement_direction | - |
 
 ---
 
-### 22. RESUME_ISSUE（履歷問題條目）🔵
-
-| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
-|---------|---------|-----|---------|------|---------|
-| issue_id | 問題識別碼 | Issue ID | BIGSERIAL | 問題識別碼 | PRIMARY KEY |
-| analysis_id | 分析識別碼 | Analysis ID | BIGINT | 關聯分析報告 | FK → RESUME_ANALYSIS, NOT NULL |
-| section | 履歷區塊 | Section | VARCHAR(100) | 問題所在的履歷區塊（簡介/技能/經歷/專案/自傳） | - |
-| original_text | 原始文字 | Original Text | TEXT | 該區塊的原始文字，僅作分析依據 | - |
-| issue_type | 問題類型 | Issue Type | JSONB | List[str] 問題類型分類 | - |
-| severity | 嚴重程度 | Severity | JSONB | List[str] 從企業篩選視角評估的嚴重程度 | - |
-| diagnosis_dimension | 診斷面向 | Diagnosis Dimension | VARCHAR(100) | 此問題主要影響的企業診斷面向 | - |
-| issue_reason | 問題原因 | Issue Reason | TEXT | 站在 HR/ATS 角度說明降低錄取率的原因 | - |
-| improvement_direction | 改善方向 | Improvement Direction | JSONB | List[str] 可執行的改善方向建議 | - |
-| sort_order | 排列順序 | Sort Order | INT | 依嚴重度排序的顯示順序 | DEFAULT 0 |
-| is_resolved | 是否已解決 | Is Resolved | BOOLEAN | 使用者是否已處理此問題 | DEFAULT FALSE |
-
----
-
-### 23. RESUME_OPTIMIZATION（履歷優化結果）🔵
+### 22. RESUME_OPTIMIZATION（履歷優化結果）🔵
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
@@ -402,7 +382,7 @@
 
 ---
 
-### 24. COVER_LETTER（求職信）🟢
+### 23. COVER_LETTER（求職信）🟢
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
@@ -420,7 +400,7 @@
 
 ---
 
-### 25. AGENT_SESSION（Agent 調用記錄）⚙️
+### 24. AGENT_SESSION（Agent 調用記錄）⚙️
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|

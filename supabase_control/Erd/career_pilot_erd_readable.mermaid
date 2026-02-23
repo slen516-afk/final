@@ -29,7 +29,6 @@ erDiagram
     RESUME_VERSION ||--o{ APPLICATION_RECORD : used_in
     RESUME_VERSION ||--o{ RESUME_OPTIMIZATION : linked_to
 
-    RESUME_ANALYSIS ||--o{ RESUME_ISSUE : contains
     RESUME_ANALYSIS ||--o| AGENT_SESSION : generated_by
 
     RESUME_OPTIMIZATION ||--o| AGENT_SESSION : generated_by
@@ -305,11 +304,8 @@ erDiagram
         int recommendation_id PK "🟠 職能分析"
         int gap_id FK
         string project_name "VARCHAR(200)"
-        text project_description
         jsonb tech_stack "完整技術棧 List[str]"
         text difficulty "難度等級 | 預估開發週期"
-        int estimated_hours
-        string project_url "VARCHAR(500)"
         jsonb capability_gaps_addressed "List[str] 補強的能力缺口"
         jsonb project_phases "List[ProjectPhase] 分階段規劃"
         text overall_resume_impact "對履歷競爭力的提升說明"
@@ -328,23 +324,10 @@ erDiagram
         string ats_risk_level "VARCHAR(20) low/medium/high"
         text screening_outcome_prediction "模擬 6-10 秒掃描後的篩選結果"
         jsonb recommended_next_actions "List[str] 可執行的下一步建議"
+        jsonb critical_issues "List[ResumeIssue] 履歷各區塊問題條目，含 section/original_text/issue_type/severity/diagnosis_dimension/issue_reason/improvement_direction"
         string llm_model_used "VARCHAR(100)"
         string analysis_version "VARCHAR(10) DEFAULT '1.0'"
         timestamptz generated_at "NOT NULL, DEFAULT NOW()"
-    }
-
-    RESUME_ISSUE {
-        bigserial issue_id PK "🔵 履歷生成"
-        bigint analysis_id FK "NOT NULL"
-        string section "VARCHAR(100) 履歷區塊（簡介/技能/經歷/專案/自傳）"
-        text original_text "該區塊的原始文字"
-        jsonb issue_type "List[str] 問題類型分類"
-        jsonb severity "List[str] 嚴重程度"
-        string diagnosis_dimension "VARCHAR(100)"
-        text issue_reason "站在 HR/ATS 角度說明降低錄取率的原因"
-        jsonb improvement_direction "List[str] 可執行的改善方向建議"
-        int sort_order "DEFAULT 0"
-        boolean is_resolved "DEFAULT FALSE"
     }
 
     RESUME_OPTIMIZATION {
