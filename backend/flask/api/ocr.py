@@ -5,9 +5,7 @@ import json
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, current_app
 
-# ==========================================
 # 解決跨資料夾 Import core 的問題
-# ==========================================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 flask_dir = os.path.dirname(current_dir)
 backend_dir = os.path.dirname(flask_dir)
@@ -66,9 +64,8 @@ def run_ocr_api():
 
             print(f"\n[API] 📦 正在處理批次檔案: {file.filename} (遞補給 User ID: {dynamic_user_id})")
 
-            # ==========================================
-            # 🔥 寫入第 0 張表： upload_event (先取得事件 ID)
-            # ==========================================
+
+            # 寫入第 0 張表： upload_event (先取得事件 ID)
             insert_event_payload = {
                 "user_id": int(dynamic_user_id),
                 "file_name": file.filename,
@@ -80,7 +77,7 @@ def run_ocr_api():
             }
             event_response = supabase.table("upload_event").insert(insert_event_payload).execute()
             inserted_event_id = event_response.data[0]['event_id']
-            print(f"[API] 💾 成功建立 upload_event！Event ID: {inserted_event_id}")
+            print(f"[API] 成功建立 upload_event！Event ID: {inserted_event_id}")
 
             # 呼叫 Qwen 取得 JSON 字典
             extracted_data = extract_func(file_path)
@@ -95,9 +92,8 @@ def run_ocr_api():
             # OCR 成功，把 event 狀態更新為 completed
             supabase.table("upload_event").update({"status": "completed"}).eq("event_id", inserted_event_id).execute()
 
-            # ==========================================
+
             # 寫入第一張表： resume
-            # ==========================================
             insert_resume_payload = {
                 "user_id": int(dynamic_user_id),     
                 "template_id": int(template_id),     
@@ -114,9 +110,8 @@ def run_ocr_api():
             inserted_resume_id = resume_response.data[0]['resume_id']
             print(f"[API] 💾 成功寫入 resume 表！Resume ID: {inserted_resume_id}")
 
-            # ==========================================
+
             # 寫入第二張表： ocr_result
-            # ==========================================
             insert_ocr_payload = {
                 "resume_id": inserted_resume_id, 
                 "event_id": inserted_event_id,          # 🔥 完美對應剛剛產生的 Event ID！
@@ -130,9 +125,8 @@ def run_ocr_api():
             ocr_response = supabase.table("ocr_result").insert(insert_ocr_payload).execute()
             print(f"[API] 💾 成功寫入 ocr_result 表！")
 
-            # ==========================================
+          
             # 寫入第三張表： user_profile
-            # ==========================================
             try:
                 # 1. 改去 normalized_data 裡面的 contact 找名字
                 contact_info = extracted_data.get("normalized_data", {}).get("contact", {})
@@ -154,9 +148,9 @@ def run_ocr_api():
                 # 2. 組裝 Payload，使用正確的 contact_info
                 insert_profile_payload = {
                     "user_id": int(dynamic_user_id),
-                    "github_repo": contact_info.get("github", ""),      # AI 這次沒抓到就會是空的
-                    "full_name": contact_info.get("name", ""),          # 🔥 這次一定抓得到「蔡志強」！
-                    "location": contact_info.get("location", ""),       # AI 這次沒抓到就會是空的
+                    "github_repo": contact_info.get("github", ""),      
+                    "full_name": contact_info.get("name", ""),          
+                    "location": contact_info.get("location", ""),       
                     "years_of_experience": int(total_years),
                     "current_position": current_pos,
                     "education_background": edu_bg,
@@ -164,9 +158,9 @@ def run_ocr_api():
                     "updated_at": now_str
                 }
                 profile_response = supabase.table("user_profile").insert(insert_profile_payload).execute()
-                print(f"[API] 💾 成功同步寫入 user_profile 表！")
+                print(f"[API] 成功同步寫入 user_profile 表！")
             except Exception as profile_e:
-                print(f"[API] ⚠️ user_profile 寫入失敗: {profile_e}")
+                print(f"[API] user_profile 寫入失敗: {profile_e}")
 
             processed_results.append({
                 "filename": file.filename,
