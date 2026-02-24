@@ -48,21 +48,33 @@ const App = () => (
               
               {/* 核心 (Protected) */}
               <Route path="/jobs/skill-search" element={
-                <ProtectedRoute><SkillSearch /></ProtectedRoute>
+                <ProtectedRoute requiredFlags={['isLoggedIn']}>
+                  <SkillSearch />
+                </ProtectedRoute>
               } />
               <Route path="/jobs/recommendations" element={
-                <ProtectedRoute><Recommendations /></ProtectedRoute>
+                <ProtectedRoute requiredFlags={['isLoggedIn', 'isResumeUploaded', 'isPersonalityQuizDone', 'isPersonalityTestDone']}>
+                  <Recommendations />
+                </ProtectedRoute>
               } />
               <Route path="/jobs/:id" element={<JobDetail />} />
               <Route path="/resume/optimize" element={
-                <ProtectedRoute><Optimize /></ProtectedRoute>
+                <ProtectedRoute requiredFlags={['isLoggedIn', 'isResumeUploaded', 'isPersonalityQuizDone', 'isPersonalityTestDone']}>
+                  <Optimize />
+                </ProtectedRoute>
               } />
               <Route path="/analysis/skills" element={
-                <ProtectedRoute><Skills /></ProtectedRoute>
+                <ProtectedRoute requiredFlags={['isLoggedIn', 'isResumeUploaded', 'isPersonalityQuizDone', 'isPersonalityTestDone']}>
+                  <Skills />
+                </ProtectedRoute>
               } />
               
               {/* 會員 */}
-              <Route path="/member/center" element={<MemberCenter />} />
+              <Route path="/member/center" element={
+                <ProtectedRoute requiredFlags={['isLoggedIn']}>
+                  <MemberCenter />
+                </ProtectedRoute>
+              } />
               <Route path="/auth/register-form" element={<RegisterForm />} />
               <Route path="/member/upload-resume" element={<UploadResume />} />
               

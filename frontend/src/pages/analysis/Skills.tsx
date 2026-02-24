@@ -20,9 +20,6 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AILoadingSpinner, ContentTransition } from "@/components/loading/LoadingStates";
 import { motion } from "framer-motion";
-import { useAppState } from "@/contexts/AppContext";
-import AuthModal from "@/components/auth/AuthModal";
-import GatekeeperOverlay from "@/components/gatekeeper/GatekeeperOverlay";
 import {
   RadarChart,
   PolarGrid,
@@ -74,46 +71,22 @@ type SubView = "main" | "learning" | "sideproject";
 
 const Skills = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isResumeUploaded, isPersonalityQuizDone } = useAppState();
 
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCareer, setSelectedCareer] = useState<string>("frontend");
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showGatekeeper, setShowGatekeeper] = useState(false);
   const [subView, setSubView] = useState<SubView>("main");
   const [subViewLoading, setSubViewLoading] = useState(false);
 
-  // Access control check
+  // Load data
   useEffect(() => {
-    if (!isLoggedIn) {
-      setShowAuthModal(true);
-    } else if (!isResumeUploaded || !isPersonalityQuizDone) {
-      setShowGatekeeper(true);
-    } else {
-      const loadData = async () => {
-        setIsLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        setIsLoading(false);
-      };
-      loadData();
-    }
-  }, [isLoggedIn, isResumeUploaded, isPersonalityQuizDone]);
+    const loadData = async () => {
+      setIsLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setIsLoading(false);
+    };
+    loadData();
+  }, []);
 
-  const handleAuthModalClose = (open: boolean) => {
-    setShowAuthModal(open);
-    if (!open && !isLoggedIn) {
-      navigate(-1);
-    }
-  };
-
-  const handleGatekeeperClose = (open: boolean) => {
-    setShowGatekeeper(open);
-  };
-
-  const handleGatekeeperLoginClick = () => {
-    setShowGatekeeper(false);
-    setShowAuthModal(true);
-  };
 
   const currentTemplate = radarTemplates[selectedCareer];
 
@@ -181,7 +154,6 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
   if (subView === "learning") {
     return (
       <>
-        <AuthModal open={showAuthModal} onOpenChange={handleAuthModalClose} />
         <div className="min-h-screen bg-card">
           <div className="container py-8">
             {/* Top bar */}
@@ -250,7 +222,7 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
   if (subView === "sideproject") {
     return (
       <>
-        <AuthModal open={showAuthModal} onOpenChange={handleAuthModalClose} />
+        
         <div className="min-h-screen bg-card">
           <div className="container py-8">
             {/* Top bar */}
@@ -317,13 +289,6 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
   // ── Main View ──
   return (
     <>
-      <AuthModal open={showAuthModal} onOpenChange={handleAuthModalClose} />
-      <GatekeeperOverlay
-        open={showGatekeeper}
-        onOpenChange={handleGatekeeperClose}
-        onLoginClick={handleGatekeeperLoginClick}
-      />
-
       <div className="min-h-screen">
         {/* Header */}
         <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">

@@ -18,22 +18,22 @@ VITE_API_BASE_URL=https://api.example.com vite build
 
 ## 🗂️ 需要串接 API 的頁面一覽
 
-| 優先級 | 頁面路由 | 功能說明 | 對應 Service | 預期 API Endpoint |
-|:---:|---|---|---|---|
-| 🔴 P0 | `/member/center` | 個人資料讀取與編輯 | `memberService.ts` | `GET/PUT /members/me` |
-| 🔴 P0 | `/member/upload-resume` | 履歷上傳 | `resumeService.ts` | `POST /resumes/upload` |
-| 🔴 P0 | `/auth/register-form` | 會員註冊 | — | `POST /auth/register` |
-| 🟠 P1 | `/resume/optimize` | 履歷優化（取得原始 → AI 優化 → 建議） | `resumeService.ts` | `GET /resumes/:id/original`、`POST /resumes/:id/optimize`、`GET /resumes/:id/suggestions` |
-| 🟠 P1 | `/member/my-resumes` | 履歷列表 | `resumeService.ts` | `GET /resumes` |
-| 🟠 P1 | `/jobs/skill-search` | 技能搜尋職缺 | `jobService.ts` | `GET /jobs?page=&skills=` |
-| 🟠 P1 | `/jobs/recommendations` | AI 推薦職缺 | `jobService.ts` | `GET /jobs?page=` |
-| 🟠 P1 | `/jobs/:id` | 職缺詳情 + 求職信生成 | `jobService.ts` | `GET /jobs/:id`、`POST /jobs/:id/cover-letter` |
-| 🟡 P2 | `/analysis/skills` | 技能雷達圖 + 落差分析 + 學習資源 | `analysisService.ts` | `GET /analysis/radar`、`GET /analysis/gap`、`GET /analysis/resources`、`GET /analysis/projects`、`GET /analysis/history` |
-| 🟡 P2 | `/interview/prep` | 面試準備題目 + 感謝信 | `interviewService.ts` | `GET /interview/topics`、`POST /interview/thank-you-letter` |
-| 🟡 P2 | `/member/survey/personality-test` | 職涯性向測驗提交 | — | `POST /survey/personality` |
-| 🟢 P3 | `/` (首頁) | 統計數據 + 最新消息 | `homepageService.ts` | `GET /homepage/stats`、`GET /homepage/news` |
-| 🟢 P3 | `/member/career-path` | 職涯路徑圖 | — | `GET /career/path` |
-| 🟢 P3 | `/jobs/categories` | 職缺分類 | `jobService.ts` | `GET /jobs/categories` |
+| 優先級 | 頁面路由                          | 功能說明                              | 對應 Service          | 預期 API Endpoint                                                                                                        |
+| :----: | --------------------------------- | ------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 🔴 P0  | `/member/center`                  | 個人資料讀取與編輯                    | `memberService.ts`    | `GET/PUT /members/me`                                                                                                    |
+| 🔴 P0  | `/member/upload-resume`           | 履歷上傳                              | `resumeService.ts`    | `POST /resumes/upload`                                                                                                   |
+| 🔴 P0  | `/auth/register-form`             | 會員註冊                              | —                     | `POST /auth/register`                                                                                                    |
+| 🟠 P1  | `/resume/optimize`                | 履歷優化（取得原始 → AI 優化 → 建議） | `resumeService.ts`    | `GET /resumes/:id/original`、`POST /resumes/:id/optimize`、`GET /resumes/:id/suggestions`                                |
+| 🟠 P1  | `/member/my-resumes`              | 履歷列表                              | `resumeService.ts`    | `GET /resumes`                                                                                                           |
+| 🟠 P1  | `/jobs/skill-search`              | 技能搜尋職缺                          | `jobService.ts`       | `GET /jobs?page=&skills=`                                                                                                |
+| 🟠 P1  | `/jobs/recommendations`           | AI 推薦職缺                           | `jobService.ts`       | `GET /jobs?page=`                                                                                                        |
+| 🟠 P1  | `/jobs/:id`                       | 職缺詳情 + 求職信生成                 | `jobService.ts`       | `GET /jobs/:id`、`POST /jobs/:id/cover-letter`                                                                           |
+| 🟡 P2  | `/analysis/skills`                | 技能雷達圖 + 落差分析 + 學習資源      | `analysisService.ts`  | `GET /analysis/radar`、`GET /analysis/gap`、`GET /analysis/resources`、`GET /analysis/projects`、`GET /analysis/history` |
+| 🟡 P2  | `/interview/prep`                 | 面試準備題目 + 感謝信                 | `interviewService.ts` | `GET /interview/topics`、`POST /interview/thank-you-letter`                                                              |
+| 🟡 P2  | `/member/survey/personality-test` | 職涯性向測驗提交                      | —                     | `POST /survey/personality`                                                                                               |
+| 🟢 P3  | `/` (首頁)                        | 統計數據 + 最新消息                   | `homepageService.ts`  | `GET /homepage/stats`、`GET /homepage/news`                                                                              |
+| 🟢 P3  | `/member/career-path`             | 職涯路徑圖                            | —                     | `GET /career/path`                                                                                                       |
+| 🟢 P3  | `/jobs/categories`                | 職缺分類                              | `jobService.ts`       | `GET /jobs/categories`                                                                                                   |
 
 ---
 
@@ -83,16 +83,16 @@ export async function getResumes(): Promise<ResumeItem[]> {
 
 前端使用 CSS 變數 + Tailwind 語義化 Token，後端回傳的資料**不需包含任何樣式資訊**。
 
-| 用途 | 色碼 | CSS Token |
-|---|---|---|
-| 頁面背景（米杏色） | `#fbf1e8` | `--background` |
-| 主標題 | `#000000` | `--foreground` |
-| 品牌重點色（紅銅色） | `#8d4903` | `--primary` |
-| 輔助文字（深棕色） | `#675143` | `--muted-foreground` |
-| 導覽列底色（暖棕色） | `#966949` | `--header-bg` |
-| 頁尾底色（深褐色） | `#502D03` | `--footer-bg` |
-| 卡片背景 | `#ffffff` | `--card` |
-| 次級區塊背景（奶油色） | `#FFFBF5` | `--news-bg` |
+| 用途                   | 色碼      | CSS Token            |
+| ---------------------- | --------- | -------------------- |
+| 頁面背景（米杏色）     | `#fbf1e8` | `--background`       |
+| 主標題                 | `#000000` | `--foreground`       |
+| 品牌重點色（紅銅色）   | `#8d4903` | `--primary`          |
+| 輔助文字（深棕色）     | `#675143` | `--muted-foreground` |
+| 導覽列底色（暖棕色）   | `#966949` | `--header-bg`        |
+| 頁尾底色（深褐色）     | `#502D03` | `--footer-bg`        |
+| 卡片背景               | `#ffffff` | `--card`             |
+| 次級區塊背景（奶油色） | `#FFFBF5` | `--news-bg`          |
 
 ### UI 組件邏輯
 
@@ -116,6 +116,16 @@ export async function getResumes(): Promise<ResumeItem[]> {
 - `RadarTemplate`, `GapAnalysisData`, `LearningResource` → `src/types/analysis.ts`
 - `InterviewTopic` → `src/types/interview.ts`
 - `HeroStat`, `NewsItem` → `src/types/homepage.ts`
+
+---
+
+## 測試門禁系統
+
+- `isLoggedIn ` 登入狀態
+- `isResumeUploaded` 履歷上傳狀態
+- `isPersonalityQuizDone` 職涯問卷狀態
+- `isJobPreferenceQuizDone` 工作偏好問卷狀態
+- `isPersonalityTestDone` 人格問卷狀態
 
 ---
 
