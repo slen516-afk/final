@@ -46,11 +46,6 @@ venv/
 __pycache__/
 *.pyc
 
-# 4. (選用) 你的測試圖片與 PDF，如果不想上傳也可以加進來
-*.jpg
-*.jpeg
-*.png
-*.pdf
 
 # 5. Mac 系統產生的垃圾檔
 .DS_Store
