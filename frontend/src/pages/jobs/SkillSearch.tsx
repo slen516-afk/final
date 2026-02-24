@@ -98,7 +98,7 @@ const SkillSearch = () => {
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mb-6">
           <Search className="h-8 w-8 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold mb-4">職缺核心技能查詢</h1>
+        <h1 className="text-3xl font-bold mb-4">職類核心技能查詢</h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">選擇您感興趣的職務類別，探索所需的核心技能</p>
       </div>
 

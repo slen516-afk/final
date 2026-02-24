@@ -10,7 +10,7 @@ const Footer = () => {
   ];
 
   const serviceLinks = [
-    { to: "/jobs/skill-search", label: "職缺核心技能查詢" },
+    { to: "/jobs/skill-search", label: "職類核心技能查詢" },
     { to: "/resume/optimize", label: "履歷優化" },
     { to: "/jobs/recommendations", label: "推薦職缺" },
     { to: "/analysis/skills", label: "職能圖譜" },
