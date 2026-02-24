@@ -46,6 +46,5 @@ venv/
 __pycache__/
 *.pyc
 
-
 # 5. Mac 系統產生的垃圾檔
 .DS_Store
