@@ -1,6 +1,11 @@
+# 0.Redis (Job Queue)
+redis>=5.0.0
+
 # 1.Web 框架與 API 相關 (Backend & API)
 flask
 flask-cors
+supabase
+python-dotenv
 fastapi
 uvicorn
 python-multipart

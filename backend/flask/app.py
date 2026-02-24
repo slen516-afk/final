@@ -22,6 +22,12 @@ ocr_inner_dir = os.path.join(service_dir, 'ocr_service')
 sys.path.append(service_dir)
 sys.path.append(ocr_inner_dir)  # <--- 加入這行，Python 就能直接找到裡面的 ocr_service.py 了！
 
+# llm_service 分析模組路徑 (問卷分析)
+project_root = os.path.dirname(backend_dir)
+analysis_dir = os.path.join(project_root, 'llm_service', 'src', 'analysis')
+if analysis_dir not in sys.path:
+    sys.path.append(analysis_dir)
+
 
 
 from flask import Flask, request, jsonify
