@@ -277,8 +277,7 @@
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯原始履歷 | FK → RESUME, NOT NULL |
 | version_id | 版本識別碼 | Version ID | INT | 關聯履歷版本（可選） | FK → RESUME_VERSION |
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FK → USER, NOT NULL |
-| target_job_id | 目標職缺識別碼 | Target Job ID | INT | 優化針對的目標職缺（可選） | FK → JOB_POSTING |
-| professional_summary | 專業摘要 | Professional Summary | TEXT | 優化後的專業摘要（含目標職缺關鍵字） | - |
+| professional_summary | 專業摘要 | Professional Summary | TEXT | 優化後的專業摘要 | - |
 | professional_experience | 工作經歷 | Professional Experience | JSONB | List[dict] 優化後的工作經歷（含 STAR 原則） | - |
 | core_skills | 核心技能 | Core Skills | JSONB | List[str] 萃取的核心技能關鍵字 | - |
 | projects | 專案作品集 | Projects | JSONB | List[dict] 優化後的專案描述 | - |
@@ -293,7 +292,6 @@
 - **FK 設計邏輯**:
   - `resume_id` → `RESUME`：確認這份優化屬於哪份原始履歷
   - `version_id` → `RESUME_VERSION`：可選，若優化結果已存為新版本則關聯
-  - `target_job_id` → `JOB_POSTING`：可選，記錄此次優化是針對哪個職缺
 - **注意**: name/phone/email/linkedin/github 為個人敏感資料，不由 LLM 輸出寫入，此表不儲存，由前端從 USER_PROFILE 取得
 
 ---
@@ -636,6 +634,7 @@ ADD COLUMN job_details JSONB;
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FK → USER, NOT NULL |
 | job_id | 職缺識別碼 | Job ID | INT | 針對的目標職缺 | FK → JOB_POSTING, NOT NULL |
 | resume_id | 履歷識別碼 | Resume ID | INT | 產生時使用的履歷（可選） | FK → RESUME |
+| optimization_id | 優化識別碼 | Optimization ID | BIGINT | 產生時使用的履歷優化結果（可選） | FK → RESUME_OPTIMIZATION |
 | agent_session_id | Session 識別碼 | Agent Session ID | BIGINT | 關聯的 Agent 調用 Session | FK → AGENT_SESSION |
 | subject | 郵件主旨 | Subject | TEXT | 吸引人且專業的郵件主旨 | NOT NULL |
 | content | 求職信內容 | Content | TEXT | 完整求職信正文 | NOT NULL |
@@ -649,7 +648,8 @@ ADD COLUMN job_details JSONB;
 - **FK 設計邏輯**:
   - `user_id` → `USER`：必填，確認求職信屬於哪位使用者
   - `job_id` → `JOB_POSTING`：必填，針對的目標職缺
-  - `resume_id` → `RESUME`：可選，產生時使用的履歷
+  - `resume_id` → `RESUME`：可選，產生時使用的原始履歷
+  - `optimization_id` → `RESUME_OPTIMIZATION`：可選，產生時使用的履歷優化結果（以優化版生成求職信時填寫）
   - `agent_session_id` → `AGENT_SESSION`：可選，若由 Agent 產生則關聯 Session
 - **注意**: `COVER_LETTER.agent_session_id` FK 指向 `AGENT_SESSION`，需在建立 `AGENT_SESSION` 後才能加入此約束
 
@@ -863,7 +863,7 @@ ADD COLUMN job_details JSONB;
 | RESUME | Resume | RESUME_VERSION | Resume Version | 一份履歷可有多個版本 |
 | RESUME_VERSION | Resume Version | APPLICATION_RECORD | Application Record | 一個履歷版本可被多次投遞 |
 | RESUME | Resume | RESUME_ANALYSIS | Resume Analysis | 一份履歷可產生多次分析（針對不同職缺或時間點） |
-| RESUME | Resume | RESUME_OPTIMIZATION | Resume Optimization | 一份原始履歷可產生多份優化版本（針對不同職缺） |
+| RESUME | Resume | RESUME_OPTIMIZATION | Resume Optimization | 一份原始履歷可產生多份優化版本 |
 | RESUME_VERSION | Resume Version | RESUME_OPTIMIZATION | Resume Optimization | 一個版本可對應一份 AI 優化結果（可選） |
 | CAREER_SURVEY | Career Survey | CAREER_ANALYSIS_REPORT | Career Analysis Report | 一份問卷可生成多次分析報告 |
 | CAREER_ANALYSIS_REPORT | Career Analysis Report | SKILL_GAP | Skill Gap | 一份報告可識別多個技能落差 |
@@ -871,7 +871,6 @@ ADD COLUMN job_details JSONB;
 | JOB_POSTING | Job Posting | JOB_MATCHING | Job Matching | 一個職缺可被多位求職者匹配 |
 | JOB_POSTING | Job Posting | APPLICATION_RECORD | Application Record | 一個職缺可被多人投遞 |
 | JOB_POSTING | Job Posting | RESUME_ANALYSIS | Resume Analysis | 一個職缺可對應多份履歷分析（選擇性關聯） |
-| JOB_POSTING | Job Posting | RESUME_OPTIMIZATION | Resume Optimization | 一個職缺可對應多份履歷優化結果（選擇性關聯） |
 | JOB_POSTING | Job Posting | COVER_LETTER | Cover Letter | 一個職缺可產生多封求職信 |
 | USER | User | COVER_LETTER | Cover Letter | 一位使用者可產生多封求職信 |
 | USER | User | AGENT_SESSION | Agent Session | 一位使用者可觸發多次 Agent 調用 |
@@ -882,9 +881,9 @@ ADD COLUMN job_details JSONB;
 | 主表 | 主表英文 | 從表 | 從表英文 | 說明 |
 |-----|---------|------|---------|------|
 | JOB_POSTING | Job Posting | RESUME_ANALYSIS | Resume Analysis | 分析時若有對應目標職缺則記錄，否則為 NULL |
-| JOB_POSTING | Job Posting | RESUME_OPTIMIZATION | Resume Optimization | 優化時若有對應目標職缺則記錄，否則為 NULL |
 | RESUME_VERSION | Resume Version | RESUME_OPTIMIZATION | Resume Optimization | 優化結果若已存為新版本則關聯，否則為 NULL |
 | RESUME | Resume | COVER_LETTER | Cover Letter | 產生求職信時使用的履歷（可選） |
+| RESUME_OPTIMIZATION | Resume Optimization | COVER_LETTER | Cover Letter | 產生求職信時使用的履歷優化結果（可選） |
 | AGENT_SESSION | Agent Session | COVER_LETTER | Cover Letter | 求職信若由 Agent 產生則關聯 Session（可選） |
 | RESUME_ANALYSIS | Resume Analysis | AGENT_SESSION | Agent Session | Session 若調用履歷分析工具則關聯（可選） |
 | RESUME_OPTIMIZATION | Resume Optimization | AGENT_SESSION | Agent Session | Session 若調用履歷優化工具則關聯（可選） |

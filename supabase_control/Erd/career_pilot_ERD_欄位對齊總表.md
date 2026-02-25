@@ -369,8 +369,7 @@
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯原始履歷 | FK → RESUME, NOT NULL |
 | version_id | 版本識別碼 | Version ID | INT | 關聯履歷版本（可選） | FK → RESUME_VERSION |
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FK → USER, NOT NULL |
-| target_job_id | 目標職缺識別碼 | Target Job ID | INT | 優化針對的目標職缺（可選） | FK → JOB_POSTING |
-| professional_summary | 專業摘要 | Professional Summary | TEXT | 優化後的專業摘要（含目標職缺關鍵字） | - |
+| professional_summary | 專業摘要 | Professional Summary | TEXT | 優化後的專業摘要 | - |
 | professional_experience | 工作經歷 | Professional Experience | JSONB | List[dict] 優化後的工作經歷（含 STAR 原則） | - |
 | core_skills | 核心技能 | Core Skills | JSONB | List[str] 萃取的核心技能關鍵字 | - |
 | projects | 專案作品集 | Projects | JSONB | List[dict] 優化後的專案描述 | - |
@@ -390,6 +389,7 @@
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FK → USER, NOT NULL |
 | job_id | 職缺識別碼 | Job ID | INT | 針對的目標職缺 | FK → JOB_POSTING, NOT NULL |
 | resume_id | 履歷識別碼 | Resume ID | INT | 產生時使用的履歷（可選） | FK → RESUME |
+| optimization_id | 優化識別碼 | Optimization ID | BIGINT | 產生時使用的履歷優化結果（可選） | FK → RESUME_OPTIMIZATION |
 | agent_session_id | Session 識別碼 | Agent Session ID | BIGINT | 關聯的 Agent 調用 Session | FK → AGENT_SESSION |
 | subject | 郵件主旨 | Subject | TEXT | 吸引人且專業的郵件主旨 | NOT NULL |
 | content | 求職信內容 | Content | TEXT | 完整求職信正文 | NOT NULL |
