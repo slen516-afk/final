@@ -1106,7 +1106,7 @@ const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
                   {editData.languages.map((lang, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <Select value={lang.language} onValueChange={(v) => updateEditLanguage(index, 'language', v)}>
-                        <SelectTrigger className="flex-1 focus:ring-2 focus:ring-primary/50 focus:shadow-[0_0_12px_rgba(34,197,94,0.2)]">
+                        <SelectTrigger className="flex-1 focus:ring-2 focus:ring-primary/50 focus:shadow-[0_0_12px_rgba(141,73,3,0.2)]">
                           <SelectValue placeholder="選擇語言" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1114,7 +1114,7 @@ const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
                         </SelectContent>
                       </Select>
                       <Select value={lang.proficiency} onValueChange={(v) => updateEditLanguage(index, 'proficiency', v)}>
-                        <SelectTrigger className="w-32 md:w-40 focus:ring-2 focus:ring-primary/50 focus:shadow-[0_0_12px_rgba(34,197,94,0.2)]">
+                        <SelectTrigger className="w-32 md:w-40 focus:ring-2 focus:ring-primary/50 focus:shadow-[0_0_12px_rgba(141,73,3,0.2)]">
                           <SelectValue placeholder="熟練度" />
                         </SelectTrigger>
                         <SelectContent>

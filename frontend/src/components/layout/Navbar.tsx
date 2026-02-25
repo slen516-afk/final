@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useAppState } from '@/contexts/AppContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from '@/components/ui/navigation-menu';
-import { FileText, BarChart3, User, Menu, LogOut, Settings, FileUp, Search, Target, ChevronDown, Compass, Map, ClipboardList, Lock, Sparkles } from 'lucide-react';
+import { FileText, BarChart3, User, Menu, LogOut, FileUp, Search, Target, ChevronDown, Map, ClipboardList, Lock, Sparkles, HelpCircle } from 'lucide-react';
 import logoImage from '@/assets/logo.png';
 import logoCat from '@/assets/logocat.png';
 import { Separator } from '@/components/ui/separator';
@@ -158,24 +158,28 @@ const Navbar = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72">
-              <div className="flex items-center gap-2.5 mb-8">
+            <SheetContent side="right" className="w-72 bg-white p-0">
+              <div className="flex items-center gap-2.5 px-5 pt-5 pb-4 mb-2 bg-[#fbf1e8]">
                 <img src={logoImage} alt="職星領航員 Logo" className="h-9 w-9 object-contain" />
                 <div className="flex flex-col leading-none">
                   <span className="text-lg font-bold">職星領航員</span>
                   <span className="text-xs text-muted-foreground">Career Pilot</span>
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1 px-3">
                 {navLinks.map((link) =>
-                <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors">
+                <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#fbf1e8] active:bg-[#fbf1e8] transition-colors">
                     <span className="font-medium">{link.label}</span>
                   </Link>
                 )}
+                <Link to="/faq" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#fbf1e8] active:bg-[#fbf1e8] transition-colors">
+                    <HelpCircle className="h-5 w-5 text-primary" />
+                    <span className="font-medium">常見問答</span>
+                </Link>
                 <div className="border-t border-border my-2 pt-2">
                   <p className="text-xs text-muted-foreground px-3 mb-2">服務項目</p>
                   {productLinks.map((link) =>
-                  <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors">
+                  <Link key={link.to} to={link.to} onClick={() => setMobileOpen(false)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#fbf1e8] active:bg-[#fbf1e8] transition-colors">
                       <link.icon className="h-5 w-5 text-primary" />
                       <span className="font-medium">{link.label}</span>
                     </Link>
@@ -184,11 +188,11 @@ const Navbar = () => {
                 <div className="border-t border-border my-2" />
                 {isLoggedIn ?
                 <>
-                    <Link to="/member/center" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors">
+                    <Link to="/member/center" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#fbf1e8] active:bg-[#fbf1e8] transition-colors">
                       <User className="h-5 w-5 text-primary" />
                       <span className="font-medium">會員中心</span>
                     </Link>
-                    <button onClick={() => {handleLogout();setMobileOpen(false);}} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-destructive">
+                    <button onClick={() => {handleLogout();setMobileOpen(false);}} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#fbf1e8] active:bg-[#fbf1e8] transition-colors text-destructive">
                       <LogOut className="h-5 w-5" />
                       <span className="font-medium">登出</span>
                     </button>
