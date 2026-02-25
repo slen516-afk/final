@@ -4,17 +4,21 @@ services:
   # 1. 後端 (Python) - 通用環境
   backend:
     build: ./backend
+    build: ./backend
     volumes:
+      - ./backend:/app
       - ./backend:/app
       - ./supabase_control:/app/supabase_control
     working_dir: /app
     ports:
+      - "8000:8000" # 預留給 Django/FastAPI/Flask
       - "8000:8000" # 預留給 Django/FastAPI/Flask
     environment:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
     networks:
       - default
+    command: sleep infinity
     command: sleep infinity
   supabase_control:
     image: python:3.10-slim
@@ -31,10 +35,15 @@ services:
   frontend:
     build:
       context: ./frontend # 告訴 Compose 去 frontend 資料夾找 Dockerfile
+    build:
+      context: ./frontend # 告訴 Compose 去 frontend 資料夾找 Dockerfile
     volumes:
       - ./frontend:/app # 把本機的程式碼同步到容器內，這樣你存檔畫面就會自動更新
       - /app/node_modules # 關鍵！保護容器內的 Node 模組不被本機覆蓋
+      - ./frontend:/app # 把本機的程式碼同步到容器內，這樣你存檔畫面就會自動更新
+      - /app/node_modules # 關鍵！保護容器內的 Node 模組不被本機覆蓋
     ports:
+      - "3000:3000" # 本機 3000 對應容器 3000
       - "3000:3000" # 本機 3000 對應容器 3000
     networks:
       - default
@@ -42,8 +51,9 @@ services:
   ocr_service:
     build:
       context: ./backend/service/ocr_service # 告訴 Docker 去哪裡找 Dockerfile
+    build:
+      context: ./backend/service/ocr_service # 告訴 Docker 去哪裡找 Dockerfile
       dockerfile: Dockerfile
-      provenance: false
     command: sleep infinity # 依然讓它發呆，方便你進去操作
     volumes:
       # 1. 程式碼掛載：讓你在本機改 code，容器內同步生效
@@ -59,6 +69,7 @@ services:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
 
+
   llm_service:
     image: python:3.10-slim
     command: sleep infinity
@@ -66,6 +77,7 @@ services:
       - ./backend/service/llm_service:/app
     working_dir: /app
     ports:
+      - "5002:5000" # 外部 5002 -> 內部 5000 (避開 OCR 的 5001)
       - "5002:5000" # 外部 5002 -> 內部 5000 (避開 OCR 的 5001)
     # 如果你有用 .env 存 API Key，記得把下面這兩行註解打開
     # env_file:
@@ -98,10 +110,37 @@ services:
       - SUPABASE_KEY=${SUPABASE_KEY}
     networks:
       - default
+  # --- 新增的 Redis 服務 ---
+  redis:
+    image: redis:alpine
+    container_name: final-redis
+    ports:
+      - "6380:6379" # 外部用 6380 避開衝突，內部維持 6379
+    networks:
+      - default
+
+  # --- 新增的 Celery Worker ---
+  worker:
+    build: ./backend
+    command: celery -A worker.celery_app worker --loglevel=info
+    volumes:
+      - ./backend:/app
+      - ./supabase_control:/app/supabase_control
+    working_dir: /app
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+    networks:
+      - default
 
 volumes:
   mysql_data:
 
 
+
 networks:
   default:
+
