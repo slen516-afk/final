@@ -115,21 +115,20 @@ def prepare_payload(job: Dict) -> Dict:
     }
 
 
-def vectorize_batch(offset: int, limit: int = None) -> int:
+def vectorize_batch(limit: int = None) -> int:
     """
-    處理單一批次
+    處理單一批次：每次撈取「下一批」未嵌入的職缺（不依賴 offset，避免結果集縮小時錯位）。
 
     Args:
-        offset: 起始位置
         limit: 批次大小（預設使用 settings.BATCH_SIZE）
 
     Returns:
-        成功處理的筆數
+        成功處理的筆數；0 表示沒有未嵌入的資料或本批無效。
     """
     if limit is None:
         limit = settings.BATCH_SIZE
 
-    # ========== Step 1: 從 Supabase 提取資料 ==========
+    # ========== Step 1: 從 Supabase 提取「下一批」未嵌入資料（固定 limit + order 穩定排序）==========
     try:
         response = (
             supabase.table("job_posting")
@@ -137,7 +136,8 @@ def vectorize_batch(offset: int, limit: int = None) -> int:
                 "job_id, job_title, job_description, requirements, city, district, remote_option, salary_min, salary_max"
             )
             .eq("is_embedded", False)
-            .range(offset, offset + limit - 1)
+            .order("job_id")
+            .limit(limit)
             .execute()
         )
 
@@ -146,7 +146,7 @@ def vectorize_batch(offset: int, limit: int = None) -> int:
             return 0
 
     except Exception as e:
-        logger.error(f"❌ Supabase 查詢失敗 (offset={offset}): {e}")
+        logger.error(f"❌ Supabase 查詢失敗: {e}")
         return 0
 
     # ========== Step 2: 批次向量化與準備 Points ==========
@@ -267,22 +267,20 @@ def main():
         logger.info("❌ 使用者取消作業")
         return
 
-    # ========== 批次處理（可依 MAX_BATCHES 只跑 1 批或跑完全部）==========
+    # ========== 批次處理（每次撈「下一批」未嵌入，直到 0 筆或達 run_limit）==========
     total_processed = 0
-    offset = 0
     batch_count = 0
 
     with tqdm(total=run_limit, desc="向量化進度") as pbar:
         while total_processed < run_limit:
-            processed = vectorize_batch(offset, settings.BATCH_SIZE)
+            processed = vectorize_batch(settings.BATCH_SIZE)
 
             if processed == 0:
-                logger.warning(f"⚠️  offset {offset} 處理失敗，嘗試跳過...")
-                offset += settings.BATCH_SIZE
-                continue
+                # 沒有未嵌入的資料了，正常結束
+                logger.info("✅ 已無未處理職缺，本輪結束")
+                break
 
             total_processed += processed
-            offset += settings.BATCH_SIZE
             batch_count += 1
             pbar.update(processed)
 
@@ -290,7 +288,7 @@ def main():
                 f"📈 進度: {total_processed}/{run_limit} ({total_processed / run_limit * 100:.1f}%)"
             )
 
-            # 只跑單批時，跑完 100 筆就結束
+            # 只跑單批時，跑完一批就結束
             if settings.MAX_BATCHES > 0 and batch_count >= settings.MAX_BATCHES:
                 logger.info(f"🔹 已跑完 {settings.MAX_BATCHES} 批，依設定自動終止")
                 break
