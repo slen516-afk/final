@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Radar,
@@ -12,17 +12,14 @@ import {
   ExternalLink,
   Info,
   ArrowLeft,
-  ScanSearch,
-  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ContentTransition } from "@/components/loading/LoadingStates";
-import { motion, AnimatePresence } from "framer-motion";
-import logoImage from "@/assets/logo.png";
+import { AILoadingSpinner, ContentTransition } from "@/components/loading/LoadingStates";
+import { motion } from "framer-motion";
 import {
   RadarChart,
   PolarGrid,
@@ -32,24 +29,9 @@ import {
   Legend,
   Radar as RechartsRadar,
 } from "recharts";
-import { useResumes } from "@/contexts/ResumeContext";
-import { getMyUserId } from "@/services/memberService";
-import { generateAnalysis } from "@/services/analysisService";
-import type { AnalysisResult } from "@/types/analysis";
-// Fallback mock data for download report when no API result yet
-import { radarTemplates as mockRadarTemplates, gapAnalysis as mockGapAnalysis, learningResources as mockLearningResources, sideProjects as mockSideProjects } from "@/mocks/analysis";
+import { radarTemplates, gapAnalysis, learningResources, sideProjects } from "@/mocks/analysis";
 
-const ANALYSIS_DONE_KEY = "skills-analysis-done";
-
-const loadingMessages = [
-  "正在解析履歷關鍵字...",
-  "正在匹配人格特質...",
-  "正在比對目標職位需求...",
-  "正在計算職能落差...",
-  "正在生成個人化建議...",
-];
-
-type AnalysisPhase = "idle" | "loading" | "done";
+// All mock data imported from src/mocks/analysis.ts
 
 // Skeleton components
 const RadarChartSkeleton = () => (
@@ -82,90 +64,29 @@ const GapAnalysisSkeleton = () => (
   </div>
 );
 
+const careerTypeKeys = Object.keys(radarTemplates) as Array<keyof typeof radarTemplates>;
+
 // ── Sub-view type ──
 type SubView = "main" | "learning" | "sideproject";
 
-const ANALYSIS_RESULT_KEY = "skills-analysis-result";
-
 const Skills = () => {
   const navigate = useNavigate();
-  const { resumes } = useResumes();
 
-  // Determine initial phase from localStorage
-  const [phase, setPhase] = useState<AnalysisPhase>(() =>
-    localStorage.getItem(ANALYSIS_DONE_KEY) === "true" ? "done" : "idle"
-  );
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCareer, setSelectedCareer] = useState<string>("frontend");
   const [subView, setSubView] = useState<SubView>("main");
   const [subViewLoading, setSubViewLoading] = useState(false);
-  const [loadingMsg, setLoadingMsg] = useState(loadingMessages[0]);
 
-  // Analysis result state – load persisted result or fall back to mocks
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult>(() => {
-    try {
-      const saved = localStorage.getItem(ANALYSIS_RESULT_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return {
-      radarTemplates: mockRadarTemplates,
-      gapAnalysis: mockGapAnalysis,
-      learningResources: mockLearningResources,
-      sideProjects: mockSideProjects,
+  // Load data
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setIsLoading(false);
     };
-  });
+    loadData();
+  }, []);
 
-  // Derived data from analysis result
-  const radarTemplates = analysisResult.radarTemplates;
-  const gapAnalysis = analysisResult.gapAnalysis;
-  const learningResources = analysisResult.learningResources;
-  const sideProjects = analysisResult.sideProjects;
-  const careerTypeKeys = Object.keys(radarTemplates);
-
-  // Get latest resume_id (most recent updatedAt)
-  const latestResumeId = useMemo(() => {
-    if (resumes.length === 0) return null;
-    const sorted = [...resumes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-    return sorted[0].id;
-  }, [resumes]);
-
-  // Branded loading sequence + API call
-  const startAnalysis = useCallback(async () => {
-    setPhase("loading");
-
-    // Fetch user_id and prepare payload
-    const userId = await getMyUserId();
-    const resumeId = latestResumeId;
-
-    // Start loading messages animation concurrently with API call
-    const animationPromise = (async () => {
-      for (let i = 0; i < loadingMessages.length; i++) {
-        setLoadingMsg(loadingMessages[i]);
-        await new Promise((r) => setTimeout(r, 1200));
-      }
-    })();
-
-    // API call runs in parallel with animation
-    const apiPromise = generateAnalysis({
-      user_id: userId,
-      resume_id: resumeId ?? 0,
-    });
-
-    // Wait for both animation and API to complete
-    const [, result] = await Promise.all([animationPromise, apiPromise]);
-
-    // Persist result and update state
-    setAnalysisResult(result);
-    localStorage.setItem(ANALYSIS_RESULT_KEY, JSON.stringify(result));
-    localStorage.setItem(ANALYSIS_DONE_KEY, "true");
-    setPhase("done");
-  }, [latestResumeId]);
-
-  // Re-analyse
-  const handleReAnalyse = useCallback(() => {
-    localStorage.removeItem(ANALYSIS_DONE_KEY);
-    localStorage.removeItem(ANALYSIS_RESULT_KEY);
-    startAnalysis();
-  }, [startAnalysis]);
 
   const currentTemplate = radarTemplates[selectedCareer];
 
@@ -251,10 +172,7 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
             </div>
 
             {subViewLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <img src={logoImage} alt="載入中" className="h-16 w-16 object-contain animate-pulse" />
-                <p className="mt-4 text-[#8d4903] animate-pulse">正在載入學習資源...</p>
-              </div>
+              <AILoadingSpinner message="正在載入學習資源..." />
             ) : (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <h1 className="text-2xl font-bold text-foreground">學習資源推薦</h1>
@@ -323,10 +241,7 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
             </div>
 
             {subViewLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <img src={logoImage} alt="載入中" className="h-16 w-16 object-contain animate-pulse" />
-                <p className="mt-4 text-[#8d4903] animate-pulse">正在載入 Side Project 推薦...</p>
-              </div>
+              <AILoadingSpinner message="正在載入 Side Project 推薦..." />
             ) : (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <h1 className="text-2xl font-bold text-foreground">Side Project 推薦</h1>
@@ -371,133 +286,28 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
     );
   }
 
-  // ── Pre-Analysis (idle) State ──
-  if (phase === "idle") {
-    return (
-      <div className="min-h-screen">
-        <div className="container py-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mb-6">
-              <Radar className="h-8 w-8 text-primary" />
-            </div>
-            <h1 className="text-3xl font-bold mb-4">職能圖譜</h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              深入分析您的技能優勢與發展潛力
-            </p>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col items-center justify-center py-16"
-          >
-            <Card className="max-w-lg w-full shadow-warm">
-              <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-6">
-                <div className="h-20 w-20 rounded-full bg-[#fbf1e8] flex items-center justify-center">
-                  <ScanSearch className="h-10 w-10 text-[#8d4903]" />
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-xl font-bold">準備分析</h2>
-                  <p className="text-muted-foreground text-sm leading-relaxed max-w-sm">
-                    系統將根據您的履歷、職涯問卷與人格特質進行綜合分析。
-                  </p>
-                </div>
-                <button
-                  onClick={startAnalysis}
-                  className="px-8 py-4 rounded-xl font-semibold text-white gradient-primary shadow-medium
-                    transition-all duration-300 hover:-translate-y-1 hover:shadow-large
-                    hover:brightness-110 flex items-center justify-center gap-3"
-                >
-                  <Radar className="h-5 w-5" />
-                  開始職能深度分析
-                </button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Loading State ──
-  if (phase === "loading") {
-    return (
-      <div className="min-h-screen">
-        <div className="container py-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mb-6">
-              <Radar className="h-8 w-8 text-primary" />
-            </div>
-            <h1 className="text-3xl font-bold mb-4">職能圖譜</h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              深入分析您的技能優勢與發展潛力
-            </p>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-20 space-y-8"
-          >
-            <motion.img
-              src={logoImage}
-              alt="分析中"
-              className="h-24 w-24 object-contain"
-              animate={{ scale: [1, 1.08, 1] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={loadingMsg}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="text-lg font-medium text-[#8d4903]"
-              >
-                {loadingMsg}
-              </motion.p>
-            </AnimatePresence>
-            <div className="w-64 h-2 rounded-full bg-[#fbf1e8] overflow-hidden">
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, #8d4903, #c4742b)" }}
-                initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: loadingMessages.length * 1.2, ease: "linear" }}
-              />
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Main View (phase === "done") ──
+  // ── Main View ──
   return (
     <>
       <div className="min-h-screen">
         {/* Header */}
-        <div className="container py-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mb-6">
-              <Radar className="h-8 w-8 text-primary" />
+        <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-30">
+          <div className="container py-6">
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mb-6">
+                <Radar className="h-8 w-8 text-primary" />
+              </div>
+              <h1 className="text-3xl font-bold mb-4">職能圖譜</h1>
+              <p className="text-muted-foreground max-w-2xl mx-auto">深入分析您的技能優勢與發展潛力</p>
             </div>
-            <h1 className="text-3xl font-bold mb-4">職能圖譜</h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              深入分析您的技能優勢與發展潛力
-            </p>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" className="gap-2" onClick={handleReAnalyse}>
-              <RefreshCw className="h-4 w-4" />
-              重新分析
-            </Button>
-            <Button className="gradient-primary gap-2 hidden sm:flex" onClick={handleDownloadReport}>
-              <FileText className="h-4 w-4" />
-              下載分析報告
-            </Button>
+            <div className="flex justify-end mt-4">
+              {!isLoading && (
+                <Button className="gradient-primary gap-2 hidden sm:flex" onClick={handleDownloadReport}>
+                  <FileText className="h-4 w-4" />
+                  下載分析報告
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -505,7 +315,8 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
         <div className="container py-8 space-y-16">
           {/* Section 1: Radar Chart */}
           <section id="radar" className="scroll-mt-32">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+            <ContentTransition isLoading={isLoading} skeleton={<RadarChartSkeleton />}>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-background">
                     <Radar className="h-5 w-5 text-primary" />
@@ -530,9 +341,9 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
 
                 <Card className="transition-all duration-300 hover:shadow-medium">
                   <CardContent className="pt-6">
-                    <div className="flex flex-row items-center gap-4 md:gap-8">
-                      {/* Radar chart - always takes priority */}
-                      <div className="h-64 sm:h-80 flex-1 min-w-0">
+                    <div className="flex flex-col md:flex-row items-center gap-8">
+                      {/* Radar chart */}
+                      <div className="h-80 w-full md:flex-1">
                         <ResponsiveContainer width="100%" height="100%">
                           <RadarChart data={currentTemplate.data}>
                             <PolarGrid stroke="#dabea8" />
@@ -571,15 +382,15 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
                         </ResponsiveContainer>
                       </div>
 
-                      {/* Mascot - beside radar, shrinks on mobile */}
-                      <div className="shrink-0 flex flex-col items-center gap-2 w-20 sm:w-32 md:w-48">
+                      {/* Mascot - right side */}
+                      <div className="shrink-0 flex flex-col items-center gap-3 md:w-48">
                         <img
                           src={currentTemplate.mascot}
                           alt={currentTemplate.label}
-                          className="w-20 h-20 sm:w-32 sm:h-32 md:w-48 md:h-48 object-contain"
+                          className="w-48 h-48 object-contain"
                         />
 
-                        <span className="text-xs sm:text-sm font-semibold text-muted-foreground text-center">{currentTemplate.label}</span>
+                        <span className="text-sm font-semibold text-muted-foreground">{currentTemplate.label}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -602,10 +413,12 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
                   </CardContent>
                 </Card>
               </motion.div>
-           </section>
+            </ContentTransition>
+          </section>
 
           {/* Section 2: Gap Analysis (落差分析報告) */}
           <section id="gap" className="scroll-mt-32">
+            <ContentTransition isLoading={isLoading} skeleton={<GapAnalysisSkeleton />}>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -717,10 +530,20 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
                   </CardContent>
                 </Card>
               </motion.div>
+            </ContentTransition>
           </section>
 
           {/* Section 3: 推薦行動計畫 (below 目標職位) */}
           <section id="action-plan" className="scroll-mt-32">
+            <ContentTransition
+              isLoading={isLoading}
+              skeleton={
+                <div className="space-y-4">
+                  <Skeleton className="h-8 w-48" />
+                  <Skeleton className="h-24 w-full rounded-lg" />
+                </div>
+              }
+            >
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -745,9 +568,11 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
                   </CardContent>
                 </Card>
               </motion.div>
+            </ContentTransition>
           </section>
 
           {/* Section 4: Bottom Action Buttons */}
+          {!isLoading && (
             <section className="pb-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -775,14 +600,17 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
                 </button>
               </motion.div>
             </section>
+          )}
 
           {/* Mobile Download Button */}
+          {!isLoading && (
             <div className="sm:hidden pt-4">
               <Button className="w-full gradient-primary gap-2" onClick={handleDownloadReport}>
                 <Download className="h-4 w-4" />
                 下載分析報告
               </Button>
             </div>
+          )}
         </div>
       </div>
     </>

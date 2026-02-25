@@ -13,18 +13,18 @@ const Team = () => {
       role: "UI / UX / 前端開發",
       description: "負責使用者介面設計、前端互動與使用體驗優化",
       icon: Palette,
-      members: [
-        {
-          name: "Alice",
-          role: "Frontend Engineer",
-          avatar: "/avatars/alice.png",
-        },
-        {
-          name: "Bob",
-          role: "UI Designer",
-          avatar: "/avatars/bob.png",
-        },
-      ],
+      // members: [
+      //   {
+      //     name: "Alice",
+      //     role: "Frontend Engineer",
+      //     avatar: "/avatars/alice.png",
+      //   },
+      //   {
+      //     name: "Bob",
+      //     role: "UI Designer",
+      //     avatar: "/avatars/bob.png",
+      //   },
+      // ],
     },
     {
       key: "backend",
@@ -32,18 +32,18 @@ const Team = () => {
       role: "API / 系統架構",
       description: "負責伺服器、API、資料流程與系統穩定性",
       icon: Server,
-      members: [
-        {
-          name: "Alice",
-          role: "Frontend Engineer",
-          avatar: "/avatars/alice.png",
-        },
-        {
-          name: "Bob",
-          role: "UI Designer",
-          avatar: "/avatars/bob.png",
-        },
-      ],
+      // members: [
+      //   {
+      //     name: "Alice",
+      //     role: "Frontend Engineer",
+      //     avatar: "/avatars/alice.png",
+      //   },
+      //   {
+      //     name: "Bob",
+      //     role: "UI Designer",
+      //     avatar: "/avatars/bob.png",
+      //   },
+      // ],
     },
     {
       key: "model",
@@ -51,18 +51,18 @@ const Team = () => {
       role: "AI / ML / Recommendation",
       description: "負責模型訓練、推論與推薦邏輯設計",
       icon: Brain,
-      members: [
-        {
-          name: "Alice",
-          role: "Frontend Engineer",
-          avatar: "/avatars/alice.png",
-        },
-        {
-          name: "Bob",
-          role: "UI Designer",
-          avatar: "/avatars/bob.png",
-        },
-      ],
+      // members: [
+      //   {
+      //     name: "Alice",
+      //     role: "Frontend Engineer",
+      //     avatar: "/avatars/alice.png",
+      //   },
+      //   {
+      //     name: "Bob",
+      //     role: "UI Designer",
+      //     avatar: "/avatars/bob.png",
+      //   },
+      // ],
     },
     {
       key: "data",
@@ -70,18 +70,18 @@ const Team = () => {
       role: "Data / ETL / Analysis",
       description: "負責資料清洗、分析與特徵工程",
       icon: Database,
-      members: [
-        {
-          name: "Alice",
-          role: "Frontend Engineer",
-          avatar: "/avatars/alice.png",
-        },
-        {
-          name: "Bob",
-          role: "UI Designer",
-          avatar: "/avatars/bob.png",
-        },
-      ],
+      // members: [
+      //   {
+      //     name: "Alice",
+      //     role: "Frontend Engineer",
+      //     avatar: "/avatars/alice.png",
+      //   },
+      //   {
+      //     name: "Bob",
+      //     role: "UI Designer",
+      //     avatar: "/avatars/bob.png",
+      //   },
+      // ],
     },
   ];
   return (

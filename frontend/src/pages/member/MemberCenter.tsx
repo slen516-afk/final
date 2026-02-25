@@ -56,11 +56,8 @@ const MemberCenter = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8 md:mb-12">
-            <div className="inline-flex items-center justify-center h-14 w-14 md:h-16 md:w-16 rounded-full bg-primary/10 mb-4 md:mb-6">
-              <User className="h-7 w-7 md:h-8 md:w-8 text-primary" />
-            </div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">會員中心</h1>
-            <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto">管理您的帳戶與職涯資訊</p>
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">會員中心</h1>
+            <p className="text-muted-foreground text-sm md:text-base">管理您的帳戶與職涯資訊</p>
           </div>
 
           {/* ── Profile Name Card ── */}
@@ -115,7 +112,7 @@ const MemberCenter = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => setPasswordModalOpen(true)}
-                    className="border-primary text-foreground hover:bg-primary hover:text-primary-foreground hover:shadow-[0_0_10px_hsl(var(--primary)/0.35)] hover:-translate-y-0.5 transition-all"
+                    className="border-primary/40 text-primary hover:bg-primary/5 hover:shadow-[0_0_8px_hsl(var(--primary)/0.15)] hover:-translate-y-0.5 transition-all"
                   >
                     <Lock className="h-4 w-4 mr-1.5" />
                     變更密碼

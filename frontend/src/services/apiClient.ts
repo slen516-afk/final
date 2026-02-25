@@ -8,7 +8,7 @@
  */
 
 const BASE_URL: string =
-  import.meta.env.VITE_API_BASE_URL ?? (window.location.origin + '/api');
+  import.meta.env.VITE_API_BASE_URL ?? '/api';
 
 /** Simulate network latency for mock mode (ms) */
 const MOCK_DELAY = 400;
@@ -27,27 +27,18 @@ async function request<T>(
   endpoint: string,
   { body, params, headers, ...init }: RequestOptions = {},
 ): Promise<T> {
-  // Ensure endpoint doesn't have a leading slash if BASE_URL already has /api
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  const baseUrlWithSlash = BASE_URL.endsWith('/') ? BASE_URL : `${BASE_URL}/`;
-  const url = new URL(cleanEndpoint, baseUrlWithSlash);
+  const url = new URL(endpoint, BASE_URL);
   if (params) {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   }
 
-  // Get token from localStorage (common for Supabase or custom auth)
-  const token = localStorage.getItem('sb-access-token');
-
-  const isFormData = body instanceof FormData;
-
   const res = await fetch(url.toString(), {
     ...init,
     headers: {
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      'Content-Type': 'application/json',
       ...headers,
     },
-    body: isFormData ? (body as FormData) : (body ? JSON.stringify(body) : undefined),
+    body: body ? JSON.stringify(body) : undefined,
   });
 
   if (!res.ok) {

@@ -1,87 +1,94 @@
+# 後端入口統一變更為main.py，app.py僅保留Flask入口
+# 組裝 Flask App、註冊路由與掛載 OCR 模型
+
 import sys
 import os
-import uuid
 
+import uuid
+from flask import Flask, app, jsonify
+from flask_cors import CORS
 
 
 # ====== 1. 解決路徑問題 (修正版) =================
-# 取得目前 app.py 的資料夾路徑 (backend/flask)
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
-# 取得 backend 資料夾路徑
 backend_dir = os.path.dirname(current_dir)
-
-if backend_dir not in sys.path:
-    sys.path.append(backend_dir)
-
-# 取得 service 資料夾路徑
-service_dir = os.path.join(backend_dir, 'service')
-# 🔥 關鍵修正：因為你的 .py 檔躲在 service 裡面的一個子資料夾，我們要指到那裡
-ocr_inner_dir = os.path.join(service_dir, 'ocr_service')
-
-# 把這兩個路徑都加入搜尋清單 (保險起見)
+service_dir = os.path.join(backend_dir, "service")
 sys.path.append(service_dir)
-sys.path.append(ocr_inner_dir)  # <--- 加入這行，Python 就能直接找到裡面的 ocr_service.py 了！
 
+def create_app():
+    app = Flask(__name__)
+    CORS(app, origins=["http://localhost:3000"])  # 啟用 CORS
 
+    # --- Celery 配置 ---
+    app.config.update(
+        CELERY_BROKER_URL='redis://localhost:6379/0',
+        CELERY_RESULT_BACKEND='redis://localhost:6379/0'
+    )
 
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-# from core.supabase_client import supabase
-from datetime import datetime
-from api.auth import auth_bp
-from api.user_preference import user_preference_bp
-from api.resume import resume_bp
-from api.analysis import analysis_bp
-from api.resume_processing import resume_proc_bp 
-from api.recommendation import rec_bp
-from api.ocr import ocr_bp       
-
-try:
-    from ocr_service import load_model, extract_text_from_image
-    print(f"[System] 成功引入 OCR Service")
-except ImportError as e:
-    print(f"[Critical] 無法引入 ocr_service！請檢查路徑。錯誤: {e}")
-    # 這裡不 exit，避免為了 OCR 讓整個 App 掛掉
-    load_model = None
-    extract_text_from_image = None
-
-
-
-
-app = Flask(__name__)
-CORS(app)
-app.extract_text_from_image = extract_text_from_image  # 把 OCR 的核心函式掛到 app 上，讓 Blueprint 可以呼叫
-UPLOAD_FOLDER = os.path.join(current_dir, 'uploads')
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-print("------------------------------------------------")
-print("[System] 正在初始化 Flask 伺服器...")
-if load_model:
+    # --- OCR模型預載入 ---
     try:
-        print("[System] 正在預載入 Qwen 模型...")
-        load_model()  # <-讓模型在伺服器一啟動就載入進顯示卡/記憶體
-        print("[System]  模型載入完成！")
+        from service.ocr_service.ocr_service import load_model, extract_text_from_image
+
+        print("[System] 正在初始化 OCR 模型...")
+        load_model()
+        app.config["OCR_HANDLER"] = extract_text_from_image
+        print(f"[System] 成功引入 OCR Service")
+    except ImportError as e:
+        print(f"[Critical] 無法引入 ocr_service！請檢查路徑。錯誤: {e}")
+        # 這裡不 exit，避免為了 OCR 讓整個 App 掛掉
+        app.config["OCR_HANDLER"] = None
     except Exception as e:
-        print(f"[System] 模型載入失敗: {e}")
-print("------------------------------------------------")
+        print(f"[Error] OCR 模型初始化失敗: {e}")
+        app.config["OCR_HANDLER"] = None
+
+    # --- 註冊路由 ---
+    from api.auth import auth_bp
+    from api.user_preference import user_preference_bp
+    from api.resume import resume_bp
+    from api.ocr import ocr_bp
+    from api.analysis import analysis_bp
+    from api.resume_processing import resume_proc_bp
+    from api.recommendation import rec_bp
+    from api.async_tasks import api_bp as async_tasks_bp
+
+    # 1. 認證功能模組
+    app.register_blueprint(auth_bp, url_prefix="/api/auth")
+
+    # 2. 履歷核心模組
+    app.register_blueprint(resume_bp, url_prefix="/api/resumes")
+
+    # 3. 履歷處理模組
+    app.register_blueprint(resume_proc_bp, url_prefix="/api/resume_process")
+
+    # 4. 分析報告模組
+    app.register_blueprint(ocr_bp, url_prefix="/api/ocr")
+    app.register_blueprint(analysis_bp, url_prefix="/api/analysis")
+
+    # 5. 使用者偏好與推薦模組
+    app.register_blueprint(user_preference_bp, url_prefix="/api/preferences")
+    app.register_blueprint(rec_bp, url_prefix="/api/recommend")
+
+    # 6. 非同步任務模組
+    app.register_blueprint(async_tasks_bp, url_prefix="/api/tasks")
+
+    # --- 系統健康檢查 ---
+    @app.route("/health", methods=["GET"])
+    def health_check():
+        return (
+            jsonify(
+                {
+                    "status": "healthy",
+                    "service": "Career Pilot API",
+                    "ocr_loaded": (
+                        "ready" if app.config.get("OCR_HANDLER") else "offline"
+                    ),
+                }
+            ),
+            200,
+        )
+
+    return app
 
 
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
-# 履歷分析
-app.register_blueprint(user_preference_bp, url_prefix='/api')
-app.register_blueprint(resume_bp, url_prefix='/api/resumes')
-app.register_blueprint(analysis_bp, url_prefix='/api/analysis')
-# 履歷處理
-app.register_blueprint(resume_proc_bp, url_prefix='/api/resumes')
-# 推薦系統
-app.register_blueprint(rec_bp, url_prefix='/api')
-app.register_blueprint(ocr_bp, url_prefix='/api/ocr')
 
-
-if __name__ == '__main__':
-    print("\n====== 目前註冊的所有 API 路徑 ======")
-    for rule in app.url_map.iter_rules():
-        print(f"{rule.endpoint}: {rule}") 
-    app.run(debug=False)
-    

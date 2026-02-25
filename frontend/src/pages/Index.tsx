@@ -1,7 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useAppState } from "@/contexts/AppContext";
-import { useState } from "react";
-import AuthModal from "@/components/auth/AuthModal";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileText, BarChart3, Target, ArrowRight, Mail, Phone, MapPin, Upload } from "lucide-react";
@@ -16,17 +13,6 @@ const DiamondStar = ({ className = "h-4 w-4" }: { className?: string }) => (
 );
 
 const Index = () => {
-  const { isLoggedIn } = useAppState();
-  const navigate = useNavigate();
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-
-  const handleQuickStart = () => {
-    if (isLoggedIn) {
-      navigate('/member/center');
-    } else {
-      setAuthModalOpen(true);
-    }
-  };
   // Core features config (contains component references, kept inline)
   const coreFeatures = [
     {
@@ -50,7 +36,6 @@ const Index = () => {
   ];
 
   return (
-    <>
     <div className="animate-fade-in">
       {/* Hero Section */}
       <section className="relative overflow-hidden hero-bg">
@@ -141,14 +126,15 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="flex justify-center mb-16"
             >
-              <Button
+              <Link to="/jobs/skill-search">
+                <Button
                   size="lg"
-                  onClick={handleQuickStart}
                   className="bg-primary hover:bg-primary-dark text-primary-foreground gap-2 font-semibold px-10 py-6 text-base rounded-xl shadow-warm"
                 >
                   快速體驗
                   <ArrowRight className="h-4 w-4" />
                 </Button>
+              </Link>
             </motion.div>
 
             {/* Bottom Stats */}
@@ -319,8 +305,6 @@ const Index = () => {
         </div>
       </section>
     </div>
-    <AuthModal open={authModalOpen} onOpenChange={setAuthModalOpen} />
-    </>
   );
 };
 
