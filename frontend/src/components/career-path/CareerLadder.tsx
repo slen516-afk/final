@@ -34,16 +34,16 @@ const ChevronArrow = ({
   const pathD = `M0,0 L${w - point},0 L${w},${h / 2} L${w - point},${h} L0,${h} L${point},${h / 2} Z`;
 
   const fillColor = isCurrentStep
-    ? 'hsl(152 69% 45%)'
+    ? 'hsl(27 95% 28%)'
     : isReal
-      ? 'hsl(152 55% 82%)'
-      : 'hsl(150 12% 92%)';
+      ? 'hsl(30 40% 85%)'
+      : 'hsl(30 15% 92%)';
 
   const strokeColor = isCurrentStep
-    ? 'hsl(152 65% 35%)'
+    ? 'hsl(27 90% 22%)'
     : isReal
-      ? 'hsl(152 45% 68%)'
-      : 'hsl(150 10% 82%)';
+      ? 'hsl(30 35% 72%)'
+      : 'hsl(30 10% 82%)';
 
   const textColor = isCurrentStep
     ? 'text-white font-bold'
@@ -143,7 +143,7 @@ const ContentBlock = ({
           )}>
             <span className={cn(
               'h-1 w-1 rounded-full mt-[5px] shrink-0',
-              isCurrentStep ? 'bg-primary' : isReal ? 'bg-primary/50' : 'bg-muted-foreground/40'
+              isCurrentStep ? 'bg-primary' : isReal ? 'bg-primary/40' : 'bg-muted-foreground/40'
             )} />
             {duty}
           </li>
@@ -302,7 +302,7 @@ const CareerLadder = ({ isLoading }: { isLoading: boolean }) => {
         {/* Legend */}
         <div className="flex items-center gap-4 mt-3 text-[10px] md:text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: 'hsl(152 55% 82%)' }} />
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: 'hsl(30 40% 85%)' }} />
             真實經歷
           </span>
           <span className="flex items-center gap-1.5">
@@ -310,7 +310,7 @@ const CareerLadder = ({ isLoading }: { isLoading: boolean }) => {
             建議路徑
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-primary" style={{ boxShadow: '0 0 6px hsl(152 69% 45% / 0.5)' }} />
+            <span className="h-2.5 w-2.5 rounded-sm bg-primary" style={{ boxShadow: '0 0 6px hsl(27 95% 28% / 0.5)' }} />
             當前位置
           </span>
         </div>

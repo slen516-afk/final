@@ -525,7 +525,7 @@ const InitialPhase = ({
     className="space-y-6"
   >
     {/* Resume Version Selector */}
-    <Card className="border-primary/30 shadow-[0_0_12px_rgba(34,197,94,0.1)]">
+    <Card className="border-primary/30 shadow-[0_0_12px_rgba(141,73,3,0.1)]">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
@@ -755,7 +755,7 @@ const ResumeEditMode = ({
         </Button>
       </div>
 
-      <Card className="ring-2 ring-primary/30 shadow-[0_0_20px_rgba(34,197,94,0.15)]">
+      <Card className="ring-2 ring-primary/30 shadow-[0_0_20px_rgba(141,73,3,0.15)]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Edit3 className="h-5 w-5 text-primary" />
@@ -782,7 +782,7 @@ const ResumeEditMode = ({
                     value={value}
                     onChange={(e) => handleFieldChange(field.key as keyof OriginalResumeData, e.target.value)}
                     placeholder={`請輸入${field.label}`}
-                    className="ring-1 ring-primary/20 focus:ring-primary/50 shadow-[0_0_8px_rgba(34,197,94,0.1)] focus:shadow-[0_0_12px_rgba(34,197,94,0.2)] transition-all"
+                    className="ring-1 ring-primary/20 focus:ring-primary/50 shadow-[0_0_8px_rgba(141,73,3,0.1)] focus:shadow-[0_0_12px_rgba(141,73,3,0.2)] transition-all"
                     rows={4}
                   />
                 ) : (
@@ -790,7 +790,7 @@ const ResumeEditMode = ({
                     value={value}
                     onChange={(e) => handleFieldChange(field.key as keyof OriginalResumeData, e.target.value)}
                     placeholder={`請輸入${field.label}`}
-                    className="ring-1 ring-primary/20 focus:ring-primary/50 shadow-[0_0_8px_rgba(34,197,94,0.1)] focus:shadow-[0_0_12px_rgba(34,197,94,0.2)] transition-all"
+                    className="ring-1 ring-primary/20 focus:ring-primary/50 shadow-[0_0_8px_rgba(141,73,3,0.1)] focus:shadow-[0_0_12px_rgba(141,73,3,0.2)] transition-all"
                   />
                 )}
               </div>
@@ -1027,7 +1027,7 @@ const ResultPhase = ({
         </div>
       </div>
 
-      <Card className={isEditing ? 'ring-2 ring-primary/50 shadow-[0_0_20px_rgba(34,197,94,0.15)]' : ''}>
+      <Card className={isEditing ? 'ring-2 ring-primary/50 shadow-[0_0_20px_rgba(141,73,3,0.15)]' : ''}>
         <CardContent className="p-6">
           <div ref={resumeRef} className="pdf-container bg-white text-foreground">
             {selectedTemplate === 'corporate' && (
@@ -1106,7 +1106,7 @@ const EditableField = ({
     return <span className={`whitespace-pre-line ${className}`}>{value}</span>;
   }
 
-  const editClass = 'ring-1 ring-primary/30 shadow-[0_0_8px_rgba(34,197,94,0.2)] transition-shadow';
+  const editClass = 'ring-1 ring-primary/30 shadow-[0_0_8px_rgba(141,73,3,0.2)] transition-shadow';
 
   if (multiline) {
     return (

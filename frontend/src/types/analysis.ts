@@ -53,3 +53,17 @@ export interface SideProject {
   highlights: string;
   difficulty: number;
 }
+
+/** Payload sent to POST /analysis/generate */
+export interface AnalysisRequest {
+  user_id: string;
+  resume_id: number;
+}
+
+/** Full result returned from the analysis API */
+export interface AnalysisResult {
+  radarTemplates: Record<string, RadarTemplate>;
+  gapAnalysis: GapAnalysisData;
+  learningResources: LearningResource[];
+  sideProjects: SideProject[];
+}
