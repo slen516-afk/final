@@ -35,6 +35,18 @@ BATCH_SIZE = 1   # 一次拉1筆
 _running = True
 
 
+def _run_analysis(survey_data: dict) -> dict:
+    """
+    Stub wrapper — 測試時會被 monkeypatch 覆蓋，不會真正呼叫 LLM。
+    正式環境才會執行 API_test_main.run_analysis。
+    """
+    # from API_test_main import run_analysis
+    # return run_analysis(survey_data)
+    raise NotImplementedError(
+        "_run_analysis 尚未注入實作，請確認 API_test_main 是否可匯入"
+    )
+
+
 def _signal_handler(sig, frame):
     global _running
     print(f"[Worker {CONSUMER_NAME}] 收到終止信號，準備關閉...")
@@ -57,9 +69,9 @@ def ensure_group():
             raise
 
 
-# 核心處理邏輯（目前 mock，之後替換成真正的 LLM 呼叫）
+# 核心處理邏輯
 
-def process_job(job_id: str) -> dict:
+def process_job(job_id: str, task_type: str) -> dict:
 
     hash_key = f"job:{job_id}"
     job_data = redis_client.hgetall(hash_key)
@@ -67,11 +79,23 @@ def process_job(job_id: str) -> dict:
     if not job_data:
         raise ValueError(f"Job {job_id} not found in Redis")
 
-    # --- Mock：模擬 AI 分析耗時 ---
-    print(f"[Worker {CONSUMER_NAME}] 開始處理 job={job_id} ...")
-    time.sleep(3)  # 模擬 LLM 回應時間
+    print(f"[Worker {CONSUMER_NAME}] 開始處理 job={job_id} task_type={task_type} ...")
 
-    # --- Mock 結果 ---
+    # ===== survey_analysis: 呼叫 run_analysis =====
+    if task_type == "survey_analysis":
+        # --- 測試時用 mock 取代，不真的呼叫 LLM ---
+        # from API_test_main import run_analysis
+
+        survey_data = json.loads(job_data.get("survey_data", "{}"))
+        report = _run_analysis(survey_data)
+
+        if "error" in report:
+            raise RuntimeError(report["error"])
+
+        return {"result": report, "suggestions": {}}
+
+    # ===== cv_analysis: mock（之後替換成真正的 LLM 呼叫）=====
+
     result = {
         "career_readiness_score": 85.0,
         "market_insights": {
@@ -107,6 +131,7 @@ def process_job(job_id: str) -> dict:
 def handle_message(msg_id: str, fields: dict):
     """處理一筆 stream message。"""
     job_id = fields.get("job_id", "")
+    task_type = fields.get("task_type", "cv_analysis")
     retry_count = int(fields.get("retry_count", "0"))
     hash_key = f"job:{job_id}"
     now = datetime.now(timezone.utc).isoformat()
@@ -117,7 +142,7 @@ def handle_message(msg_id: str, fields: dict):
             "updated_at": now,
         })
 
-        output = process_job(job_id)
+        output = process_job(job_id, task_type)
 
         redis_client.hset(hash_key, mapping={
             "status": "done",
@@ -128,11 +153,11 @@ def handle_message(msg_id: str, fields: dict):
 
         # ACK
         redis_client.xack(STREAM_NAME, GROUP_NAME, msg_id)
-        print(f"[Worker {CONSUMER_NAME}] ✅ job={job_id} 完成")
+        print(f"[Worker {CONSUMER_NAME}] job={job_id} 完成")
 
     except Exception as e:
         retry_count += 1
-        print(f"[Worker {CONSUMER_NAME}] ❌ job={job_id} 失敗 (retry={retry_count}/{MAX_RETRY}): {e}")
+        print(f"[Worker {CONSUMER_NAME}] job={job_id} 失敗 (retry={retry_count}/{MAX_RETRY}): {e}")
 
         if retry_count >= MAX_RETRY:
             # 超過重試上限 → DLQ
@@ -165,7 +190,7 @@ def handle_message(msg_id: str, fields: dict):
             })
             # ACK 掉舊訊息
             redis_client.xack(STREAM_NAME, GROUP_NAME, msg_id)
-            print(f"[Worker {CONSUMER_NAME}] 🔄 job={job_id} 重新排隊 (retry={retry_count})")
+            print(f"[Worker {CONSUMER_NAME}] job={job_id} 重新排隊 (retry={retry_count})")
 
 
 
