@@ -1,0 +1,20 @@
+# --- 核心框架 (你的程式碼有用到) ---
+langchain
+langchain-core
+langchain-community
+langchain-classic  <-- ★ 必須加回來，因為你的 code 有 import 它
+
+# --- Google Gemini 模型 ---
+langchain-google-genai
+
+# --- 向量資料庫與 Embedding (RAG 必備) ---
+faiss-cpu          <-- 用來跑 FAISS 向量庫
+sentence-transformers <-- 用來跑 HuggingFaceEmbeddings
+
+# --- 網頁服務 (讓 Docker 跑起來) ---
+fastapi
+uvicorn
+python-multipart
+
+# --- 環境變數 ---
+python-dotenv
