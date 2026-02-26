@@ -1,0 +1,20 @@
+[
+    {
+        "course_id": 11,
+        "course_name": "Machine Learning with Python",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "課程技能重點在機器學習相關的演算法與模型，如決策樹、迴歸分析和特徵工程，符合AI/演算法工程師的專業領域。",
+        "processed_at": "2026-02-26T12:06:07.250880+08:00",
+        "execution_duration_seconds": 2.86
+    },
+    {
+        "course_id": 25,
+        "course_name": "Java Programming and Software Engineering Fundamentals",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "該課程結合了前端基礎技能（JavaScript、HTML、CSS）以及Java程式設計與軟體工程核心概念，涵蓋前後端技術，適合培養全端開發能力，因此歸類為全端工程師。",
+        "processed_at": "2026-02-26T12:06:18.009236+08:00",
+        "execution_duration_seconds": 10.44
+    }
+]

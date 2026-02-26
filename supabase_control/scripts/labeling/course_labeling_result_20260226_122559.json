@@ -1,0 +1,29 @@
+[
+    {
+        "course_id": 50,
+        "course_name": "C Programming with Linux",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "這門課程著重於在Linux環境下使用C語言進行系統程式設計，包括記憶體管理、指標、檔案操作等，這些都是後端工程中常見的低階程式設計技能，因此最適合歸類為後端工程師。",
+        "processed_at": "2026-02-26T12:25:45.255830+08:00",
+        "execution_duration_seconds": 5.97
+    },
+    {
+        "course_id": 70,
+        "course_name": "Ruby Fundamentals and Basic Programming Concepts",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "此課程專注於 Ruby 基礎與物件導向編程，這些技能通常用於後端開發，因此歸類為後端工程師較為適合。",
+        "processed_at": "2026-02-26T12:25:51.279100+08:00",
+        "execution_duration_seconds": 5.59
+    },
+    {
+        "course_id": 90,
+        "course_name": "Programming Fundamentals in Swift",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程著重於 Swift、iOS 以及行動應用程式開發，這些技能主要與前端展示與 UI/UX 開發相關，因此歸類為前端工程師。",
+        "processed_at": "2026-02-26T12:25:58.857693+08:00",
+        "execution_duration_seconds": 7.23
+    }
+]

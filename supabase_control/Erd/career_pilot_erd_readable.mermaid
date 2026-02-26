@@ -216,6 +216,8 @@ erDiagram
         text course_information
         string duration_suggested "VARCHAR(100)"
         jsonb skills "技能陣列"
+        string role_type "六大職類 A-F 貼標"
+        text role_name "對應職類名稱"
         string source_platform "VARCHAR(50) DEFAULT 'Coursera'"
         datetime created_at "DEFAULT now()"
     }

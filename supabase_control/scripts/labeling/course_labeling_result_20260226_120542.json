@@ -1,0 +1,29 @@
+[
+    {
+        "course_id": 1,
+        "course_name": "Introduction to Data Analysis Using Python",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "The course emphasizes data analysis using Python along with libraries like Pandas and NumPy, which are key tools for data manipulation and analytical tasks, making it most suitable for a data analysis role.",
+        "processed_at": "2026-02-26T12:05:28.742115+08:00",
+        "execution_duration_seconds": 4.77
+    },
+    {
+        "course_id": 2,
+        "course_name": "Python for Data Science, AI & Development",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程內容涵蓋了Pandas、NumPy、Jupyter和Data Analysis等關鍵數據科學技能，這些技能在資料分析工作中非常常見，故將此課程歸類為資料科學家/數據分析師.",
+        "processed_at": "2026-02-26T12:05:36.938568+08:00",
+        "execution_duration_seconds": 7.78
+    },
+    {
+        "course_id": 3,
+        "course_name": "Python for Everybody",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "此課程聚焦於利用 Python 進行資料結構、資料庫存取、網頁爬蟲以及資料視覺化與分析，技能重點符合資料科學家/數據分析師的要求，因此最適合歸類於此職類。",
+        "processed_at": "2026-02-26T12:05:42.181649+08:00",
+        "execution_duration_seconds": 4.79
+    }
+]

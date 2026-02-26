@@ -557,6 +557,8 @@ ADD COLUMN job_details JSONB;
 | course_information | 課程資訊 | Course Information | TEXT | 大綱/模組 | - |
 | duration_suggested | 建議學習時間 | Duration Suggested | VARCHAR(100) | 標準化字串（如 "1-3 months"） | - |
 | skills | 技能列表 | Skills | JSONB | 技能名稱陣列，供推薦匹配 | - |
+| role_type | 職務類型 | Role Type | TEXT | 六大職類貼標代碼（A-F），與 job_posting 一致 | - |
+| role_name | 職務名稱標籤 | Role Name | TEXT | 對應職類名稱（如前端工程師、後端工程師） | - |
 | source_platform | 來源平台 | Source Platform | VARCHAR(50) | 如 'Coursera' | DEFAULT 'Coursera' |
 | created_at | 建立時間 | Created At | TIMESTAMPTZ | 寫入時間 | DEFAULT now() |
 
