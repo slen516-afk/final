@@ -48,12 +48,10 @@ erDiagram
 
     SKILL_MASTER ||--o{ JOB_SKILL_REQUIREMENT : defines
     SKILL_MASTER ||--o{ USER_SKILL : defines
-    SKILL_MASTER ||--o{ SKILL_GAP : identifies
     SKILL_MASTER ||--o{ COURSE : "primary_skill"
 
-    CAREER_ANALYSIS_REPORT ||--o{ SKILL_GAP : identifies
+    CAREER_ANALYSIS_REPORT ||--o{ SIDE_PROJECT_RECOMMENDATION : suggests
     CAREER_ANALYSIS_REPORT ||--o| AGENT_SESSION : generated_by
-    SKILL_GAP ||--o{ SIDE_PROJECT_RECOMMENDATION : suggests
 
     AGENT_SESSION ||--o{ COVER_LETTER : generates
 
@@ -292,20 +290,10 @@ erDiagram
         jsonb action_plan
     }
 
-    SKILL_GAP {
-        int gap_id PK "🟠 職能分析"
-        int report_id FK
-        int skill_id FK
-        int current_level
-        int target_level
-        int priority_rank
-        float time_investment_hours
-        float skill_roi_score
-    }
-
     SIDE_PROJECT_RECOMMENDATION {
         int recommendation_id PK "🟠 職能分析"
-        int gap_id FK
+        int report_id FK "→ CAREER_ANALYSIS_REPORT"
+        int user_id FK "冗餘，→ USER"
         string project_name "VARCHAR(200)"
         jsonb tech_stack "完整技術棧 List[str]"
         text difficulty "難度等級 | 預估開發週期"

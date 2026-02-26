@@ -48,13 +48,12 @@
 | 15 | 媒合分數 | MATCH_SCORE | 🟢 職缺推薦 | 儲存配適度評分細節 |
 | 16 | 投遞記錄 | APPLICATION_RECORD | 🟢 職缺推薦 | 追蹤求職投遞狀態 |
 | 17 | 職涯分析報告 | CAREER_ANALYSIS_REPORT | 🟠 職能分析 | 儲存 AI 生成的分析報告 |
-| 18 | 技能落差 | SKILL_GAP | 🟠 職能分析 | 識別技能缺口 |
-| 19 | Side Project 推薦 | SIDE_PROJECT_RECOMMENDATION | 🟠 職能分析 | 推薦學習專案 |
-| 20 | 課程主表 | COURSE | 🟣 課程推薦 | 儲存推薦用課程（如 Coursera），依技能與職缺/技能落差匹配 |
-| 21 | 履歷分析報告 | RESUME_ANALYSIS | 🔵 履歷生成 | 儲存 AI 對履歷的完整診斷分析結果，含各區塊問題清單（critical_issues） |
-| 22 | 履歷優化結果 | RESUME_OPTIMIZATION | 🔵 履歷生成 | 儲存 AI 優化後的完整履歷內容 |
-| 23 | 求職信 | COVER_LETTER | 🟢 職缺推薦 | 儲存針對特定職缺 AI 生成的求職信 |
-| 24 | Agent 調用記錄 | AGENT_SESSION | ⚙️ 系統追蹤 | 記錄每次 Agent 調用的工具使用情況與效能指標 |
+| 18 | Side Project 推薦 | SIDE_PROJECT_RECOMMENDATION | 🟠 職能分析 | 推薦學習專案 |
+| 19 | 課程主表 | COURSE | 🟣 課程推薦 | 儲存推薦用課程（如 Coursera），依技能與職缺/職能落差分析匹配 |
+| 20 | 履歷分析報告 | RESUME_ANALYSIS | 🔵 履歷生成 | 儲存 AI 對履歷的完整診斷分析結果，含各區塊問題清單（critical_issues） |
+| 21 | 履歷優化結果 | RESUME_OPTIMIZATION | 🔵 履歷生成 | 儲存 AI 優化後的完整履歷內容 |
+| 22 | 求職信 | COVER_LETTER | 🟢 職缺推薦 | 儲存針對特定職缺 AI 生成的求職信 |
+| 23 | Agent 調用記錄 | AGENT_SESSION | ⚙️ 系統追蹤 | 記錄每次 Agent 調用的工具使用情況與效能指標 |
 
 ---
 
@@ -568,7 +567,7 @@ ADD COLUMN job_details JSONB;
 - **course_type 說明**（由來源 Metadata 拆出）：`Course` 單一課程、`Specialization` 專項課程、`Professional Certificate` 專業認證、`Guided Project` 導引專案；供篩選或顯示課程類型。
 - **與其他表之邏輯關聯（無直接 FK）**:
   - **職缺推薦**: 由 JOB_SKILL_REQUIREMENT 取得職缺所需技能，與 COURSE 的 primary_skill_name / primary_skill_id 或 skills(JSONB) 匹配後排序推薦（如依 rating、review_count）。
-  - **技能落差推薦**: 由 SKILL_GAP 或 CAREER_SURVEY.skill_self_assessment 取得要補的技能，與 COURSE 技能欄位匹配後推薦課程。
+  - **技能落差推薦**: 由 CAREER_ANALYSIS_REPORT.gap_analysis 或 CAREER_SURVEY.skill_self_assessment 取得要補的技能，與 COURSE 技能欄位匹配後推薦課程。
 
 ---
 
@@ -729,36 +728,15 @@ ADD COLUMN job_details JSONB;
 
 ---
 
-### 9.2 SKILL_GAP(技能落差)🟠
-
-**功能說明**:識別技能缺口與學習優先順序
-
-| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
-|---------|---------|-----|---------|------|---------|
-| gap_id | 落差識別碼 | Gap ID | INT | 落差識別碼 | PRIMARY KEY |
-| report_id | 報告識別碼 | Report ID | INT | 關聯分析報告 | FOREIGN KEY |
-| skill_id | 技能識別碼 | Skill ID | INT | 關聯技能 | FOREIGN KEY |
-| current_level | 目前等級 | Current Level | INT | 目前等級 (1-10) | - |
-| target_level | 目標等級 | Target Level | INT | 目標等級 (1-10) | - |
-| priority_rank | 優先順序 | Priority Rank | INT | 優先順序 | - |
-| time_investment_hours | 預估投入時間 | Time Investment Hours | FLOAT | 預估投入時間 | - |
-| skill_roi_score | 技能投資報酬率 | Skill ROI Score | FLOAT | 技能投資報酬率 | - |
-
-**設計說明**:
-- 對應 Work Flow 的「Step1: 技能落差分析」
-- 由 AI 計算技能缺口優先排序
-- **skill_roi_score**:評估學習該技能對職涯發展的投資報酬率
-
----
-
-### 9.3 SIDE_PROJECT_RECOMMENDATION（Side Project 推薦）🟠
+### 9.2 SIDE_PROJECT_RECOMMENDATION（Side Project 推薦）🟠
 
 **功能說明**：推薦學習專案以填補技能落差，對應 SideProject 輸出結構，含完整的分階段實作規劃
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
 | recommendation_id | 推薦識別碼 | Recommendation ID | INT | 推薦識別碼 | PRIMARY KEY |
-| gap_id | 落差識別碼 | Gap ID | INT | 關聯技能落差 | FOREIGN KEY → skill_gap(gap_id) |
+| report_id | 報告識別碼 | Report ID | INT | 關聯職涯分析報告 | FOREIGN KEY → CAREER_ANALYSIS_REPORT(report_id) |
+| user_id | 使用者識別碼 | User ID | INT | 關聯使用者（冗餘欄位，便於依使用者查詢與 RLS） | FOREIGN KEY → USER(user_id) |
 | project_name | 專案名稱 | Project Name | VARCHAR(200) | 專案名稱，需具專業感能清楚體現核心價值 | - |
 | tech_stack | 使用技術清單 | Tech Stack | JSONB | 完整技術棧清單（後端、資料庫、部署、容器化等）List[str] | - |
 | difficulty | 實作困難程度 | Difficulty | TEXT | 格式：'難度等級 (低/中/高) \| 預估開發週期（含部署與測試）'，並簡述主要挑戰點 | - |
@@ -797,7 +775,7 @@ ADD COLUMN job_details JSONB;
   ```json
   ["FastAPI", "PostgreSQL", "Redis", "Docker", "GitHub Actions"]
   ```
-- **推薦邏輯**：根據 SKILL_GAP 的優先順序，由 AI 產生對應難度與技術棧的專案規劃
+- **推薦邏輯**：根據 CAREER_ANALYSIS_REPORT.gap_analysis 中的職能落差優先順序，由 AI 產生對應難度與技術棧的專案規劃
 
 ---
 
@@ -868,8 +846,7 @@ ADD COLUMN job_details JSONB;
 | RESUME | Resume | RESUME_OPTIMIZATION | Resume Optimization | 一份原始履歷可產生多份優化版本 |
 | RESUME_VERSION | Resume Version | RESUME_OPTIMIZATION | Resume Optimization | 一個版本可對應一份 AI 優化結果（可選） |
 | CAREER_SURVEY | Career Survey | CAREER_ANALYSIS_REPORT | Career Analysis Report | 一份問卷可生成多次分析報告 |
-| CAREER_ANALYSIS_REPORT | Career Analysis Report | SKILL_GAP | Skill Gap | 一份報告可識別多個技能落差 |
-| SKILL_GAP | Skill Gap | SIDE_PROJECT_RECOMMENDATION | Side Project Recommendation | 一個技能落差可推薦多個專案 |
+| CAREER_ANALYSIS_REPORT | Career Analysis Report | SIDE_PROJECT_RECOMMENDATION | Side Project Recommendation | 一份職涯報告可推薦多個 Side Project |
 | JOB_POSTING | Job Posting | JOB_MATCHING | Job Matching | 一個職缺可被多位求職者匹配 |
 | JOB_POSTING | Job Posting | APPLICATION_RECORD | Application Record | 一個職缺可被多人投遞 |
 | JOB_POSTING | Job Posting | RESUME_ANALYSIS | Resume Analysis | 一個職缺可對應多份履歷分析（選擇性關聯） |
@@ -899,7 +876,7 @@ ADD COLUMN job_details JSONB;
 | USER_PROFILE | User Profile | USER_SKILL | User Skill | SKILL_MASTER | Skill Master | 使用者可擁有多種技能 |
 
 **邏輯關聯（無中介表，依欄位匹配）**:
-- **COURSE** 與 **JOB_SKILL_REQUIREMENT** / **SKILL_GAP**：透過 COURSE.primary_skill_id、COURSE.skills(JSONB) 與技能主檔對應，供「依職缺所需技能」或「依技能落差」推薦課程；實作時由應用層依 skill_id 或技能名稱匹配。
+- **COURSE** 與 **JOB_SKILL_REQUIREMENT** / **CAREER_ANALYSIS_REPORT.gap_analysis**：透過 COURSE.primary_skill_id、COURSE.skills(JSONB) 與技能主檔對應，供「依職缺所需技能」或「依職能落差分析結果」推薦課程；實作時由應用層依 skill_id 或技能名稱匹配。
 
 ---
 
@@ -926,9 +903,9 @@ ADD COLUMN job_details JSONB;
 ```
 1. RESUME + CAREER_SURVEY
    ↓
-2. 生成 CAREER_ANALYSIS_REPORT
+2. 生成 CAREER_ANALYSIS_REPORT（含 gap_analysis 職能落差結構）
    ↓
-3. SKILL_GAP 識別技能落差
+3. 根據 gap_analysis 識別技能落差與優先順序
    ↓
 4. SIDE_PROJECT_RECOMMENDATION 推薦專案
    ↓

@@ -310,27 +310,13 @@
 
 ---
 
-### 9.2 SKILL_GAP(技能落差)🟠
-
-| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
-|---------|---------|-----|---------|------|---------|
-| gap_id | 落差識別碼 | Gap ID | INT | 落差識別碼 | PRIMARY KEY |
-| report_id | 報告識別碼 | Report ID | INT | 關聯分析報告 | FOREIGN KEY |
-| skill_id | 技能識別碼 | Skill ID | INT | 關聯技能 | FOREIGN KEY |
-| current_level | 目前等級 | Current Level | INT | 目前等級 (1-10) | - |
-| target_level | 目標等級 | Target Level | INT | 目標等級 (1-10) | - |
-| priority_rank | 優先順序 | Priority Rank | INT | 優先順序 | - |
-| time_investment_hours | 預估投入時間 | Time Investment Hours | FLOAT | 預估投入時間 | - |
-| skill_roi_score | 技能投資報酬率 | Skill ROI Score | FLOAT | 技能投資報酬率 | - |
-
----
-
-### 9.3 SIDE_PROJECT_RECOMMENDATION（Side Project 推薦）🟠
+### 9.2 SIDE_PROJECT_RECOMMENDATION（Side Project 推薦）🟠
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
 | recommendation_id | 推薦識別碼 | Recommendation ID | INT | 推薦識別碼 | PRIMARY KEY |
-| gap_id | 落差識別碼 | Gap ID | INT | 關聯技能落差 | FOREIGN KEY → skill_gap(gap_id) |
+| report_id | 報告識別碼 | Report ID | INT | 關聯職涯分析報告 | FOREIGN KEY → career_analysis_report(report_id) |
+| user_id | 使用者識別碼 | User ID | INT | 關聯使用者（冗餘欄位，便於查詢與 RLS） | FOREIGN KEY → user(user_id) |
 | project_name | 專案名稱 | Project Name | VARCHAR(200) | 專案名稱，需具專業感能清楚體現核心價值 | - |
 | tech_stack | 使用技術清單 | Tech Stack | JSONB | 完整技術棧清單（後端、資料庫、部署、容器化等）List[str] | - |
 | difficulty | 實作困難程度 | Difficulty | TEXT | 格式：'難度等級 (低/中/高) \| 預估開發週期（含部署與測試）'，並簡述主要挑戰點 | - |
