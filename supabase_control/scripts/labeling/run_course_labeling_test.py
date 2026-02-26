@@ -231,9 +231,17 @@ def process_specific_courses(
 if __name__ == "__main__":
     # 在此填入要貼標的 course_id
     test_ids = [
-        50,
-        70,
-        90,
+        101,
+        111,
+        121,
+        131,
+        141,
+        151,
+        161,
+        171,
+        181,
+        191,
+        201,
     ]
 
     if not test_ids:

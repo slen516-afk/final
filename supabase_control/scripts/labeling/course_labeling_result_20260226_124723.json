@@ -1,0 +1,101 @@
+[
+    {
+        "course_id": 101,
+        "course_name": "Programming Fundamentals in Kotlin",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "技能中包含 Mobile Development 與 Android Development，這些技能主要與前端應用程式和使用者介面相關，因此歸類到前端工程師職類最為貼切。",
+        "processed_at": "2026-02-26T12:46:32.425475+08:00",
+        "execution_duration_seconds": 7.61
+    },
+    {
+        "course_id": 111,
+        "course_name": "Create the User Interface in Android Studio",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程重點在用Android Studio與Kotlin建立使用者介面，涉及UI設計和元件，屬於前端工程師所需的UI/UX技能，即使應用於移動平台，也符合前端工程師的職類定義。",
+        "processed_at": "2026-02-26T12:46:37.230400+08:00",
+        "execution_duration_seconds": 4.42
+    },
+    {
+        "course_id": 121,
+        "course_name": "IBM Full Stack Software Developer",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "課程涵蓋前端、後端、雲端部署與CI/CD等多個面向，且名稱明確指出全端訓練，因此最適合歸類為全端工程師。",
+        "processed_at": "2026-02-26T12:46:40.225724+08:00",
+        "execution_duration_seconds": 2.56
+    },
+    {
+        "course_id": 131,
+        "course_name": "Design and Render a 3D Urban Duplex in SketchUp",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "該課程強調使用SketchUp進行3D建模與視覺化設計，與前端工程師在UI/UX與視覺呈現層面的技能較為相似，因此選擇歸類到前端工程師。",
+        "processed_at": "2026-02-26T12:46:46.804166+08:00",
+        "execution_duration_seconds": 6.19
+    },
+    {
+        "course_id": 141,
+        "course_name": "Mastering Angular – Interview Prep & E-commerce App",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "課程內容除了涵蓋 Angular 與前端開發，也提到後端及全端開發技能，因此最適合歸類為全端工程師。",
+        "processed_at": "2026-02-26T12:46:50.816707+08:00",
+        "execution_duration_seconds": 3.56
+    },
+    {
+        "course_id": 151,
+        "course_name": "Python - Complete Python, Django, Data Science and ML Guide",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程內容涵蓋Python基礎、Django網頁開發及進階的資料科學與機器學習主題，同時技能列表中包含資料視覺化、預測建模、特徵工程等與數據分析相關的技能，因此最適合歸類為資料科學家/數據分析師。",
+        "processed_at": "2026-02-26T12:47:03.561265+08:00",
+        "execution_duration_seconds": 12.42
+    },
+    {
+        "course_id": 161,
+        "course_name": "Introduction to Flask framework",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程主題是Flask framework，而Flask主要用於後端應用程式與API的建構，故歸類於後端工程師。",
+        "processed_at": "2026-02-26T12:47:06.217762+08:00",
+        "execution_duration_seconds": 2.29
+    },
+    {
+        "course_id": 171,
+        "course_name": "Full-Stack React with Spring Boot",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "課程名稱及技能清單顯示同時涵蓋前端與後端技術，包括React前端與Spring Boot後端，符合全端工程師的定義。",
+        "processed_at": "2026-02-26T12:47:08.963605+08:00",
+        "execution_duration_seconds": 2.42
+    },
+    {
+        "course_id": 181,
+        "course_name": "Adobe Content Creator: Launching Your Creative Career",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程強調創意思維與數位設計技能，包括視覺設計、內容創作與品牌策略，與前端工程師在UI/UX與數位內容設計上的職能較為契合，因此選擇歸類為前端工程師類.",
+        "processed_at": "2026-02-26T12:47:14.418383+08:00",
+        "execution_duration_seconds": 5.13
+    },
+    {
+        "course_id": 191,
+        "course_name": "ChatGPT Voice-Powered Chatbot Build with React and FastAPI",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "此課程融合了前端 (React, UI Components) 與後端 (FastAPI, API) 技能，並涵蓋全端網頁開發，最適合面向全端工程師的學員。",
+        "processed_at": "2026-02-26T12:47:18.626232+08:00",
+        "execution_duration_seconds": 3.86
+    },
+    {
+        "course_id": 201,
+        "course_name": "Fullstack Development",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "課程涵蓋前端（HTML, CSS, React, Tailwind, UI Design等）與後端（Node.js, Express.js, SQL, Database Design）技術，符合全端工程師的多面向技能要求，因此歸類為全端工程師。",
+        "processed_at": "2026-02-26T12:47:23.005891+08:00",
+        "execution_duration_seconds": 4.04
+    }
+]
