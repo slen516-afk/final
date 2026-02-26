@@ -46,11 +46,12 @@ app = create_app()
 
 
 if __name__ == "__main__":
+    
     # 啟動 Flask App
     print("=" * 60)
     print("Career Pilot API啟動中")
     print("=" * 60)
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True, use_reloader=False)
 
 """   
     # 印出所有所有可用的路由資訊，便於debug和測試

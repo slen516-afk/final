@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { Progress } from '@/components/ui/progress';
 import { TAIWAN_CITIES } from '@/data/taiwanAddresses';
 import SyncRadio from '@/components/survey/SyncRadio';
+import { uploadResumeAPI } from '@/services/api';
 
 /* ── Mock profile data (mirrors MemberCenter) ── */
 const mockUserId = '5F82A';
@@ -62,7 +63,7 @@ const UploadResume = () => {
   const [uploadedFileName, setUploadedFileName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Form state
   const [formData, setFormData] = useState<ResumeData>({
     avatar: '',
@@ -94,13 +95,13 @@ const UploadResume = () => {
   const simulateAnalysis = async () => {
     setIsAnalyzing(true);
     setAnalysisProgress(0);
-    
+
     // Simulate progress
     for (let i = 0; i <= 100; i += 10) {
       await new Promise(resolve => setTimeout(resolve, 300));
       setAnalysisProgress(i);
     }
-    
+
     await new Promise(resolve => setTimeout(resolve, 500));
     setIsAnalyzing(false);
     setShowResult(true);
@@ -122,33 +123,54 @@ const UploadResume = () => {
     }
 
     setUploadedFileName(file.name);
-    
-    // Simulate PDF parsing result
-    setResultData({
-      avatar: '',
-      name: '王小明',
-      bio: '擁有 5 年軟體開發經驗的全端工程師，專精於 React 與 Node.js 開發，熱愛學習新技術並解決複雜問題。',
-      phone: '0912-345-678',
-      email: 'example@email.com',
-      addressCity: '台北市',
-      addressDistrict: '大安區',
-      addressDetail: '忠孝東路三段1號',
-      education: '國立台灣大學 資訊工程學系 碩士 (2018-2020)',
-      experience: '資深前端工程師 - ABC科技公司 (2020-至今)\n前端工程師 - XYZ新創 (2018-2020)',
-      skills: 'React, TypeScript, Node.js, Python, SQL, Git, Docker',
-      languages: [
-        { language: '中文', proficiency: '3' },
-        { language: '英文', proficiency: '2' },
-        { language: '台語', proficiency: '2' },
-      ],
-      certifications: 'AWS Certified Developer, Google Cloud Professional',
-      projects: '電商平台重構專案、企業內部管理系統開發',
-      other: '',
-    });
 
-    await simulateAnalysis();
+    // Real PDF parsing result
+    setIsAnalyzing(true);
+    setAnalysisProgress(20); // 先跑 20% 讓使用者知道有在動
+
+    try {
+      // 呼叫後端 API 送出履歷
+      const response = await uploadResumeAPI(file);
+      setAnalysisProgress(80); // 後端回傳了，進度飆到 80%
+
+      // 假設你的 Flask 後端回傳的 JSON 結構叫做 response.data
+      // 這裡我們把後端抓到的真實資料，塞進畫面的 State 裡
+      // 如果後端沒抓到某些欄位，就給空字串當作預設值
+      const realData = response.data || response;
+
+      setResultData({
+        avatar: '',
+        name: realData.name || '未辨識',
+        bio: realData.bio || '',
+        phone: realData.phone || '',
+        email: realData.email || '',
+        addressCity: realData.addressCity || '',
+        addressDistrict: realData.addressDistrict || '',
+        addressDetail: realData.addressDetail || '',
+        education: realData.education || '',
+        experience: realData.experience || '',
+        skills: realData.skills || '',
+        languages: realData.languages || [{ language: '中文', proficiency: '3' }],
+        certifications: realData.certifications || '',
+        projects: realData.projects || '',
+        other: realData.other || '',
+      });
+
+      setAnalysisProgress(100);
+      await new Promise(resolve => setTimeout(resolve, 500)); // 停頓一下讓動畫跑完
+      setIsAnalyzing(false);
+      setShowResult(true);
+      setIsResumeUploaded(true);
+
+    } catch (error) {
+      console.error("履歷上傳失敗:", error);
+      setIsAnalyzing(false);
+      setValidationMessage('後端 AI 分析失敗，請檢查終端機的錯誤訊息。');
+      setShowValidationError(true);
+    }
+
   };
-
+  //結束點
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -196,7 +218,7 @@ const UploadResume = () => {
   const updateLanguage = (index: number, field: 'language' | 'proficiency', value: string) => {
     setFormData(prev => ({
       ...prev,
-      languages: prev.languages.map((lang, i) => 
+      languages: prev.languages.map((lang, i) =>
         i === index ? { ...lang, [field]: value } : lang
       ),
     }));
@@ -320,8 +342,8 @@ const UploadResume = () => {
             }
           >
             {showResult && resultData ? (
-              <ResultView 
-                data={resultData} 
+              <ResultView
+                data={resultData}
                 onReset={handleReset}
                 onNavigate={() => navigate('/career-quiz')}
                 onSave={(updated) => {
@@ -358,7 +380,7 @@ const UploadResume = () => {
                         onChange={handleFileSelect}
                         className="hidden"
                       />
-                      <div 
+                      <div
                         className="border-2 border-dashed border-primary/30 rounded-xl p-8 md:p-12 text-center hover:border-primary/60 hover:bg-primary/5 transition-all cursor-pointer group"
                         onClick={() => fileInputRef.current?.click()}
                         onDrop={handleDrop}
@@ -381,7 +403,7 @@ const UploadResume = () => {
                 </TabsContent>
 
                 <TabsContent value="form">
-                  <ResumeForm 
+                  <ResumeForm
                     formData={formData}
                     setFormData={setFormData}
                     avatarInputRef={avatarInputRef}
@@ -520,7 +542,7 @@ const ResumeForm = ({
             onChange={handleAvatarChange}
             className="hidden"
           />
-          <div 
+          <div
             className="relative h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-2 border-dashed border-primary/30 flex items-center justify-center cursor-pointer hover:border-primary/60 transition-colors overflow-hidden group"
             onClick={() => avatarInputRef.current?.click()}
           >
@@ -831,9 +853,8 @@ const EditableField = ({
   required?: boolean;
   isInvalid?: boolean;
 }) => (
-  <div className={`space-y-2 p-3 rounded-lg border transition-all ${
-    isInvalid ? 'border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.25)]' : 'border-transparent'
-  }`}>
+  <div className={`space-y-2 p-3 rounded-lg border transition-all ${isInvalid ? 'border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.25)]' : 'border-transparent'
+    }`}>
     <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
       {icon} {isEditing && required && <span className="text-destructive">*</span>} {label}
     </h4>
@@ -981,11 +1002,10 @@ const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Avatar and Basic Info */}
-          <div className={`flex flex-col md:flex-row items-center md:items-start gap-4 p-4 bg-background rounded-lg border transition-all duration-300 ${
-            isEditing && (invalidFields.has('name') || invalidFields.has('phone') || invalidFields.has('email'))
-              ? 'border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.25)]'
-              : ''
-          }`}>
+          <div className={`flex flex-col md:flex-row items-center md:items-start gap-4 p-4 bg-background rounded-lg border transition-all duration-300 ${isEditing && (invalidFields.has('name') || invalidFields.has('phone') || invalidFields.has('email'))
+            ? 'border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.25)]'
+            : ''
+            }`}>
             {displayData.avatar ? (
               <img src={displayData.avatar} alt="Avatar" className="h-20 w-20 rounded-full object-cover border-2 border-primary/20" />
             ) : (
@@ -1074,7 +1094,7 @@ const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
                   </div>
                 </div>
               ) : (
-              <div className="flex flex-col md:flex-row gap-2 md:gap-4 text-sm text-muted-foreground flex-wrap">
+                <div className="flex flex-col md:flex-row gap-2 md:gap-4 text-sm text-muted-foreground flex-wrap">
                   <span className="flex items-center justify-center md:justify-start gap-1">
                     <Phone className="h-4 w-4" /> {displayData.phone}
                   </span>

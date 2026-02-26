@@ -10,6 +10,7 @@ from transformers import Qwen2VLForConditionalGeneration, AutoProcessor, TextStr
 from qwen_vl_utils import process_vision_info
 from dotenv import load_dotenv
 
+
 # 嘗試引入 Supabase
 try:
     from supabase import create_client, Client
