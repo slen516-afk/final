@@ -43,7 +43,6 @@ services:
     build:
       context: ./backend/service/ocr_service # 告訴 Docker 去哪裡找 Dockerfile
       dockerfile: Dockerfile
-      provenance: false
     command: sleep infinity # 依然讓它發呆，方便你進去操作
     volumes:
       # 1. 程式碼掛載：讓你在本機改 code，容器內同步生效
