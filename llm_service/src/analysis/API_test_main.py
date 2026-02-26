@@ -63,39 +63,47 @@ TEST_DATA = {
   }
 }
 
-
-def run_analysis(user_data: dict) -> dict:
-  
-    # --- 1. 計算能力向量 ---
-    analyzer = CareerAnalyzer(user_data)
+def main():
+    print("--- 1. 開始計算能力向量 (Calculated Vectors) ---")
+    analyzer = CareerAnalyzer(TEST_DATA)
     analyzer.calculate_vectors()
     vectors = analyzer.scores
+    print(f"向量計算結果: {vectors}")
 
-    # --- 2. 計算目標職位匹配度 ---
-    target_role = user_data['module_c']['q17_target_role']
+    print("\n--- 2. 計算目標職位匹配度 (Match Score) ---")
+    # 從使用者資料中獲取目標職位代碼 (例如 'data_scientist')
+    target_role = TEST_DATA['module_c']['q17_target_role']
+    
+    # 呼叫 JobMatcher 計算百分比
     real_match_score = JobMatcher.calculate_match_score(vectors, target_role)
 
-    # --- 3. 取得履歷文字 ---
+    # 2. [修改] 直接從 SQL 模擬層撈資料
     retriever = ResumeRetriever()
-    resume_text = retriever.get_resume_text_by_user(user_data.get("user_id", ""))
+    # 這裡的邏輯是：直接指定 user_id 拿文字，不經過向量轉換
+    resume_text = retriever.get_resume_text_by_user(TEST_DATA["user_id"])
 
-    # --- 4. 生成 AI 分析報告 ---
+    print(f"目標職位 [{target_role}] 匹配度: {real_match_score}")
+
+    print("\n--- 3. 生成 AI 分析報告 ---")
+    # 準備資料包
     processed_data = {
         "calculated_vectors": vectors,
-        "user_raw_input": user_data
+        "user_raw_input": TEST_DATA
     }
-
+    
     generator = CareerReportGenerator(model_name="o3-mini")
-    report = generator.generate_report(
-        processed_data,
-        match_score=real_match_score,
-        resume_content=resume_text
-    )
+    
+    # [關鍵]: 將算好的 real_match_score 傳給 generator
+    report = generator.generate_report(processed_data, match_score=real_match_score,
+    resume_content=resume_text)
 
-    # 錯誤檢查
+    # [修改開始] --- 加入錯誤檢查邏輯 ---
     if "error" in report:
-        return report
-
+        print("\n[!] 報告生成失敗，原因如下：")
+        print(report["error"])
+        # 如果是 JSON 解析錯誤，通常是因為模型輸出了 Markdown (```json ... ```)
+        return  # 直接結束，避免後續報錯
+    
     # 覆蓋雷達圖數據 (雙重保險)
     if "radar_chart" in report:
         report['radar_chart']['dimensions'] = [
@@ -104,20 +112,8 @@ def run_analysis(user_data: dict) -> dict:
             {"axis": "運維部署", "score": vectors.get("D3", 0)},
             {"axis": "AI與數據", "score": vectors.get("D4", 0)},
             {"axis": "工程品質", "score": vectors.get("D5", 0)},
-            {"axis": "軟實力",   "score": vectors.get("D6", 0)},
+            {"axis": "軟實力", "score": vectors.get("D6", 0)},
         ]
-
-    return report
-
-
-def main():
-    print("--- 1. 開始計算能力向量 (Calculated Vectors) ---")
-    report = run_analysis(TEST_DATA)
-
-    if "error" in report:
-        print("\n[!] 報告生成失敗，原因如下：")
-        print(report["error"])
-        return
 
     print("\n--- 最終報告 (可回傳前端) ---")
     print(json.dumps(report, indent=2, ensure_ascii=False))

@@ -1,0 +1,28 @@
+# Add any other dependencies for your LangChain modules here
+# 核心框架
+langchain>=0.1.0
+langchain-community>=0.0.10
+
+# OpenAI 專用整合包
+langchain-openai>=0.0.5
+openai>=1.10.0
+
+# 環境變數管理
+python-dotenv>=1.0.0
+
+# 資料處理與格式校驗
+pandas>=2.0.0
+pydantic>=2.0.0
+
+# FAISS 資料庫
+faiss-cpu>=1.7.4
+
+# 數值計算
+numpy>=1.24.0
+
+# 資料庫
+supabase
+qdrant-client
+
+crewai
+crewai-tools
