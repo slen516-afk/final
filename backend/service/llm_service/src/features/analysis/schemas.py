@@ -2,7 +2,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 # ==========================================
-# 基礎元件
+# 差距分析報告基礎元件
 # ==========================================
 
 # 定義標準的六大維度名稱
@@ -11,17 +11,26 @@ ALLOWED_AXES = [
     "AI與數據", "工程品質", "軟實力"
 ]
 
+# 定義標準職涯階段清單 (與 Q16 選項一致)
+STANDARD_CAREER_STAGES = [
+    "轉職中/學習中 (Entry Level)",
+    "初階工程師 (Junior)",
+    "中階工程師 (Mid Level)",
+    "資深工程師 (Senior)",
+    "技術主管/架構師 (Lead architect)"
+]
+
 # 定義標準職稱清單 (讓 LLM 參考)
 STANDARD_ROLES = [
     "前端工程師", "後端工程師", "全端工程師", 
-    "資料科學家", "AI 工程師", "DevOps/SRE 工程師"
+    "資料科學家/數據分析師", "AI 工程師", "DevOps/SRE 工程師"
 ]
 
 # ★ 新增：定義 Metadata 的嚴格結構
 class ReportMetadata(BaseModel):
     user_id: str = Field(description="使用者 ID (需與輸入資料一致)")
     timestamp: str = Field(description="報告生成當下的 ISO 8601 時間戳記 (包含毫秒與時區 Z)")
-    version: str = Field(default="1.0", description="報告版本號，固定輸出 '1.0'")
+    version: str = Field(description="動態生成的報告版本號，反映該使用者的報告計數 (例如: 1.0, 2.0)")
 
 class RadarDimension(BaseModel):
     axis: str = Field(description=f"維度名稱，必須嚴格從此清單選取: {ALLOWED_AXES}")
@@ -34,12 +43,12 @@ class RadarChart(BaseModel):
 # 狀態分析元件
 # ==========================================
 class CurrentStatus(BaseModel):
-    self_assessment: str = Field(description="使用者自評的職級 (請將英文代碼轉譯為中文，如 '入門/轉職中')")
-    actual_level: str = Field(description="系統根據 D1-D6 分數評估的實際職級 (必須使用固定格式，如 '初階 (Junior)')")
-    cognitive_bias: str = Field(description="分析使用者的自我認知與實際分數是否存在落差 (Cognitive Gap)")
+    self_assessment: str = Field(description= f"使用者問卷自評的職涯階段。必須嚴格從此清單完全複製：{STANDARD_CAREER_STAGES}，不可簡寫")
+    actual_level: str = Field(description= f"系統根據 D1-D6 分數評估的實際職級 必須嚴格從此清單完全複製：{STANDARD_CAREER_STAGES}，不可簡寫")
+    cognitive_bias: str = Field(description="針對『硬實力』的認知落差分析與補強建議。請具體對比使用者的『自評職級』與『實際 D1-D6 技術分數』。指出落差在哪裡(例如：自評 Senior 但缺乏雲端維運經驗)，並提供具體該學什麼框架或工具的補強建議。字數約 100 字。")
 
 class TargetPosition(BaseModel):
-    role: str = Field(description="""
+    role: str = Field(description=f"""
     使用者的目標職位名稱。
     1. **格式強制 (MANDATORY)**：
         - 若使用者有指定目標：直接填寫職位名稱 (如 '後端工程師')。
@@ -76,7 +85,7 @@ class PreliminarySummary(BaseModel):
 
 # 最終輸出的完整報告結構
 class CareerReport(BaseModel):
-    report_metadata: dict = Field(description="報告的元數據")
+    report_metadata: ReportMetadata = Field(description="報告的元數據")
     preliminary_summary: PreliminarySummary
     radar_chart: RadarChart
     gap_analysis: GapAnalysis
