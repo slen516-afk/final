@@ -1,16 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
     /* Earth Tone Palette from 網頁最終配色.png */
-    --background: 27 73% 95%;        /* #fbf1e8 beige */
-    --foreground: 0 0% 0%;            /* #000000 pure black for titles */
+    --background: 27 73% 95%;
+    /* #fbf1e8 beige */
+    --foreground: 0 0% 0%;
+    /* #000000 pure black for titles */
 
-    --card: 0 0% 100%;                /* #ffffff white cards */
+    --card: 0 0% 100%;
+    /* #ffffff white cards */
     --card-foreground: 0 0% 0%;
 
     --popover: 0 0% 100%;
@@ -28,7 +31,8 @@
     --secondary-foreground: 23 21% 33%;
 
     --muted: 27 30% 91%;
-    --muted-foreground: 23 21% 33%;    /* #675143 */
+    --muted-foreground: 23 21% 33%;
+    /* #675143 */
 
     --accent: 30 96% 28%;
     --accent-foreground: 0 0% 100%;
@@ -70,7 +74,8 @@
     --stat-number: 17 31% 46%;
     /* Icon on light bg #8d4903, icon on dark bg light */
     --icon-dark: 30 96% 28%;
-    --icon-light: 26 42% 76%;         /* #dabea8 */
+    --icon-light: 26 42% 76%;
+    /* #dabea8 */
 
     --sidebar-background: 27 40% 97%;
     --sidebar-foreground: 23 21% 33%;
@@ -160,7 +165,12 @@
     width: 100% !important;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-semibold tracking-tight;
     font-family: 'Noto Sans TC', system-ui, sans-serif;
   }
@@ -222,8 +232,15 @@
 
   /* Floating animation for hero cards */
   @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
   }
 
   .animate-float {
@@ -268,14 +285,17 @@
 .career-ladder-scroll::-webkit-scrollbar {
   height: 6px;
 }
+
 .career-ladder-scroll::-webkit-scrollbar-track {
   background: hsl(var(--muted));
   border-radius: 3px;
 }
+
 .career-ladder-scroll::-webkit-scrollbar-thumb {
   background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 3px;
 }
+
 .career-ladder-scroll::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
 }

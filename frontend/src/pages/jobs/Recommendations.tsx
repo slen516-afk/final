@@ -25,6 +25,8 @@ import AlertModal from "@/components/modals/AlertModal";
 import icon104 from "@/assets/104-icon.png";
 import type { JobData } from "@/types/job";
 import { generateMockJobs } from "@/mocks/jobs";
+import { getJobRecommendationsAPI } from "@/services/api";
+
 
 // Job Card Skeleton
 const JobCardSkeleton = () => (
@@ -130,13 +132,38 @@ const Recommendations = () => {
     }
   }, [isJobPreferenceQuizDone]);
 
-  // Load jobs
-  const loadJobs = (page: number) => {
+  // Load jobs (完全真實連線版)
+  const loadJobs = async (page: number) => {
     setIsLoading(true);
-    setTimeout(() => {
-      setJobs(generateMockJobs(page));
+    try {
+      // 🌟 從瀏覽器拿出剛剛存的真實問卷資料！
+      const savedData = localStorage.getItem('userJobSurvey');
+      const realQuestionnaireData = savedData ? JSON.parse(savedData) : {};
+
+      // 把真實資料當成包裹打給後端 API
+      const response = await getJobRecommendationsAPI(realQuestionnaireData, page);
+
+      // (後面的翻譯蒟蒻和 setJobs 照舊...)
+      const backendJobs = response.recommendations || [];
+      const mappedJobs = backendJobs.map((bJob: any) => ({
+        id: bJob.id,
+        title: bJob.title,
+        company: bJob.company,
+        description: bJob.description,
+        city: bJob.location,
+        salary: bJob.salary_range,
+        industry: "資訊軟體業",
+        externalUrl: `https://www.104.com.tw/jobs/search/?keyword=${encodeURIComponent(bJob.title)}`
+      }));
+
+      setJobs(mappedJobs);
+
+    } catch (error) {
+      console.error("無法載入推薦職缺:", error);
+      setJobs([]);
+    } finally {
       setIsLoading(false);
-    }, 1200);
+    }
   };
 
   useEffect(() => {
@@ -162,7 +189,9 @@ const Recommendations = () => {
   };
 
   // Survey complete → loading → results
-  const handleSurveyComplete = () => {
+  const handleSurveyComplete = (surveyData: any) => { //<-加上surveyData參數
+    // 將真實問卷資料存入瀏覽器Local Storage
+    localStorage.setItem('userJobSurvey', JSON.stringify(surveyData));
     setStage("loading");
     window.scrollTo({ top: 0, behavior: "smooth" });
 

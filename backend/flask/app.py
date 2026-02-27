@@ -67,7 +67,7 @@ def create_app():
 
     # 5. 使用者偏好與推薦模組
     app.register_blueprint(user_preference_bp, url_prefix="/api/preferences")
-    app.register_blueprint(rec_bp, url_prefix="/api/recommend")
+    app.register_blueprint(rec_bp, url_prefix="/api")
 
     # 6. 非同步任務模組
     app.register_blueprint(async_tasks_bp, url_prefix="/api/tasks")

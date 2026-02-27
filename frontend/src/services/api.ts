@@ -31,3 +31,51 @@ export const uploadResumeAPI = async (file: File) => {
         throw error;
     }
 };
+
+// 根據問卷結果獲取推薦職缺 (POST 請求)
+export const getJobRecommendationsAPI = async (questionnaireData: any, page: number = 1) => {
+    try {
+        const response = await fetch(`/api/jobs/recommendations?page=${page}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(questionnaireData),
+        });
+
+        if (!response.ok) {
+            throw new Error(`伺服器回應錯誤: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("取得職缺推薦失敗:", error);
+        throw error;
+    }
+};
+
+// 取得專屬 Side Project 推薦 (POST 請求)
+export const getProjectSuggestionsAPI = async (userData: any = {}) => {
+    try {
+        // 假設你的 Flask 藍圖有加 /api 前綴
+        const response = await fetch(`/api/projects/suggestions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // 這裡可以把使用者填過的問卷資料傳過去，讓 AI 參考
+            body: JSON.stringify(userData),
+        });
+
+        if (!response.ok) {
+            throw new Error(`伺服器回應錯誤: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("取得 Side Project 推薦失敗:", error);
+        throw error;
+    }
+};

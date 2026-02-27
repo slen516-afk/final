@@ -23,7 +23,7 @@ const workModes = [
 ];
 
 interface EmbeddedPreferenceSurveyProps {
-  onComplete: () => void;
+  onComplete: (surveyData: any) => void;
 }
 
 const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps) => {
@@ -50,7 +50,15 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
       setShowIncompleteAlert(true);
       return;
     }
-    onComplete();
+
+    const realSurveyData = {
+      region: regionType,
+      city: selectedCity,
+      minSalary: salaryRange[0],
+      maxSalary: salaryRange[1],
+      workMode: workMode
+    };
+    onComplete(realSurveyData);
   };
 
   return (
@@ -158,11 +166,10 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
               {workModes.map((mode) => (
                 <div
                   key={mode.id}
-                  className={`flex items-center space-x-3 p-3 md:p-4 rounded-lg transition-colors cursor-pointer border ${
-                    workMode === mode.id
-                      ? 'bg-primary/10 border-primary/30'
-                      : 'border-transparent hover:bg-muted'
-                  }`}
+                  className={`flex items-center space-x-3 p-3 md:p-4 rounded-lg transition-colors cursor-pointer border ${workMode === mode.id
+                    ? 'bg-primary/10 border-primary/30'
+                    : 'border-transparent hover:bg-muted'
+                    }`}
                   onClick={() => setWorkMode(mode.id)}
                 >
                   <RadioGroupItem value={mode.id} id={`pref-${mode.id}`} />

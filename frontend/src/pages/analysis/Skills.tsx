@@ -30,7 +30,7 @@ import {
   Radar as RechartsRadar,
 } from "recharts";
 import { radarTemplates, gapAnalysis, learningResources, sideProjects } from "@/mocks/analysis";
-
+import { getProjectSuggestionsAPI } from "@/services/api";
 // All mock data imported from src/mocks/analysis.ts
 
 // Skeleton components
@@ -76,6 +76,18 @@ const Skills = () => {
   const [selectedCareer, setSelectedCareer] = useState<string>("frontend");
   const [subView, setSubView] = useState<SubView>("main");
   const [subViewLoading, setSubViewLoading] = useState(false);
+  // 🌟 用來裝真實後端資料的箱子 (預設先給原本的 mock 資料保底)
+  const [dynamicSideProjects, setDynamicSideProjects] = useState<any[]>(sideProjects);
+
+  // 🌟 難度轉換器：把後端的英文變成前端的星星數 (1~5)
+  const mapDifficultyToStars = (diffString: string) => {
+    const lower = diffString.toLowerCase();
+    if (lower.includes("beginner") || lower.includes("easy")) return 2;
+    if (lower.includes("intermediate") || lower.includes("medium")) return 3;
+    if (lower.includes("advanced") || lower.includes("hard")) return 4;
+    if (lower.includes("expert")) return 5;
+    return 3; // 預設 3 顆星
+  };
 
   // Load data
   useEffect(() => {
@@ -91,10 +103,36 @@ const Skills = () => {
   const currentTemplate = radarTemplates[selectedCareer];
 
   // Navigate to sub-view with loading
+  // Navigate to sub-view with API fetching
   const openSubView = async (view: SubView) => {
     setSubViewLoading(true);
     setSubView(view);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+
+    if (view === "sideproject") {
+      try {
+        // 1. 呼叫後端 API
+        const res = await getProjectSuggestionsAPI({});
+
+        // 2. 如果成功拿到資料，開始翻譯！
+        if (res.status === "success" && res.projects) {
+          const mappedProjects = res.projects.map((p: any) => ({
+            name: p.title,                     // 對接名稱
+            technologies: p.tech_stack,        // 對接技術標籤
+            highlights: `${p.reason} (預估實作時間: ${p.estimated_hours}小時)`, // 組合亮點與時間
+            difficulty: mapDifficultyToStars(p.difficulty) // 轉換星星數
+          }));
+
+          // 3. 把翻譯好的完美資料塞給畫面
+          setDynamicSideProjects(mappedProjects);
+        }
+      } catch (error) {
+        console.error("無法載入推薦專案，使用預設資料", error);
+      }
+    } else {
+      // 如果是點別的按鈕，就維持原本的假 loading
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    }
+
     setSubViewLoading(false);
   };
 
@@ -222,7 +260,7 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
   if (subView === "sideproject") {
     return (
       <>
-        
+
         <div className="min-h-screen bg-card">
           <div className="container py-8">
             {/* Top bar */}
@@ -251,7 +289,7 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sideProjects.map((project, index) => (
+                  {dynamicSideProjects.map((project, index) => (
                     <motion.div
                       key={project.name}
                       initial={{ opacity: 0, y: 20 }}

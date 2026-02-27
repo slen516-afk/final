@@ -27,6 +27,16 @@ def recommend_jobs():
             "match_score": 88,
             "required_skills": ["React", "Node.js", "Python"],
             "description": "全端開發，需熟悉前後端整合..."
+        },
+        {
+            "id": "job_101",
+            "title": "Python Backend Engineer",
+            "company": "TechStart Inc.",
+            "location": "Taipei, Taiwan",
+            "salary_range": "60k - 80k TWD",
+            "match_score": 95,
+            "required_skills": ["Python", "Flask", "PostgreSQL"],
+            "description": "負責後端 API 開發與維護..."
         }
     ]
 
