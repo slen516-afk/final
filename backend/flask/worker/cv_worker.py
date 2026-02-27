@@ -19,6 +19,12 @@ for p in [flask_dir, backend_dir]:
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
+llm_service_dir = backend_dir / "service" / "llm_service" / "restructure"
+if str(llm_service_dir) not in sys.path:
+    sys.path.insert(0, str(llm_service_dir))
+
+from src.core.agent_engine.manager import CareerAgentManager
+
 from core.redis_client import (
     redis_client,
     STREAM_NAME,
@@ -83,55 +89,55 @@ def process_job(job_id: str, task_type: str) -> dict:
 
     # ===== survey_analysis: 呼叫 run_analysis =====
     if task_type == "survey_analysis":
-        # --- 測試時用 mock 取代，不真的呼叫 LLM ---
-        # from API_test_main import run_analysis
+        payload = json.loads(job_data.get("survey_data", "{}"))
+        user_id = job_data.get("user_id", "")
+        
+        survey_json_str = json.dumps(payload.get("survey_data", payload), ensure_ascii=False)
+        trait_json_str = json.dumps(payload.get("trait_data", {}), ensure_ascii=False)
+        
+        user_input = {
+            "user_id": user_id,
+            "survey_json": survey_json_str,
+            "trait_json": trait_json_str
+        }
 
-        survey_data = json.loads(job_data.get("survey_data", "{}"))
-        report = _run_analysis(survey_data)
+        manager = CareerAgentManager()
+        report = manager.run_task(task_type_str="career_analysis", user_id=user_id, user_input=user_input)
 
-        if "error" in report:
-            raise RuntimeError(report["error"])
+        if report.get("status") == "error":
+            raise RuntimeError(report.get("message", "Unknown error in LLM"))
 
         return {"result": report, "suggestions": {}}
 
-    # ===== cv_analysis: mock（之後替換成真正的 LLM 呼叫）=====
+    elif task_type == "resume_analysis":
+        user_id = job_data.get("user_id", "")
+        user_input = {"user_id": user_id}
+        manager = CareerAgentManager()
 
-    result = {
-        "career_readiness_score": 85.0,
-        "market_insights": {
-            "summary": "後端工程師職缺近期需求增加，特別是熟悉雲端架構的人才。",
-            "matched_keywords": ["Python", "Flask", "API Design"],
-            "missing_keywords": ["Docker", "Kubernetes", "CI/CD"],
-        },
-    }
+        # 1. 取得履歷分析 (D-03 Suggestions)
+        report_analysis = manager.run_task(task_type_str="resume_analysis", user_id=user_id, user_input=user_input)
+        if isinstance(report_analysis, dict) and report_analysis.get("status") == "error":
+            raise RuntimeError(report_analysis.get("message", "Unknown error in LLM (resume_analysis)"))
 
-    suggestions = {
-        "career_path_suggestions": {
-            "section_improvements": [
-                {
-                    "section": "Experience",
-                    "suggestion": "建議在工作經歷中加入具體的量化數據（例如：提升了 20% 的效能）。",
-                },
-                {
-                    "section": "Skills",
-                    "suggestion": "建議將技能依照熟練度進行分類，讓閱讀者更容易掌握重點。",
-                },
-            ],
-            "overall_feedback": "整體履歷結構清晰，但在個人專案部分的描述可以更具體一些。",
-        },
-        "skill_gap_analysis": [
-            {"skill": "Kubernetes", "priority": "High"},
-            {"skill": "React", "priority": "Medium"},
-        ],
-    }
+        return {"result": {}, "suggestions": report_analysis}
 
-    return {"result": result, "suggestions": suggestions}
+    elif task_type == "resume_opt":
+        user_id = job_data.get("user_id", "")
+        user_input = {"user_id": user_id}
+        manager = CareerAgentManager()
+
+        # 2. 取得履歷優化 (D-04 Results)
+        report_opt = manager.run_task(task_type_str="resume_opt", user_id=user_id, user_input=user_input)
+        if isinstance(report_opt, dict) and report_opt.get("status") == "error":
+            raise RuntimeError(report_opt.get("message", "Unknown error in LLM (resume_opt)"))
+
+        return {"result": report_opt, "suggestions": {}}
 
 
 def handle_message(msg_id: str, fields: dict):
     """處理一筆 stream message。"""
     job_id = fields.get("job_id", "")
-    task_type = fields.get("task_type", "cv_analysis")
+    task_type = fields.get("task_type", "resume_analysis")
     retry_count = int(fields.get("retry_count", "0"))
     hash_key = f"job:{job_id}"
     now = datetime.now(timezone.utc).isoformat()

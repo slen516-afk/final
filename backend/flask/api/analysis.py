@@ -12,7 +12,7 @@ from core.redis_client import (
 
 analysis_bp = Blueprint("analysis", __name__)
 
-def _create_job(user_id: str, resume_id: str, survey_id: str) -> str:
+def _create_job(user_id: str, resume_id: str, survey_id: str, task_type: str = "cv_analysis") -> str:
     """
     建立 job hash 在 Redis 並 XADD 到 stream。
     回傳 job_id。
@@ -26,6 +26,7 @@ def _create_job(user_id: str, resume_id: str, survey_id: str) -> str:
         "user_id": user_id,
         "resume_id": resume_id,
         "survey_id": survey_id,
+        "task_type": task_type,
         "result": "",
         "suggestions": "",
         "error": "",
@@ -37,7 +38,7 @@ def _create_job(user_id: str, resume_id: str, survey_id: str) -> str:
     # XADD 到 cv_jobs stream
     redis_client.xadd(STREAM_NAME, {
         "job_id": job_id,
-        "task_type": "cv_analysis",
+        "task_type": task_type,
         "retry_count": "0",
     })
 
@@ -61,7 +62,8 @@ def start_analysis_task():
         if "resume_id" not in data or "survey_id" not in data:
             return jsonify({"error": "Missing resume_id or survey_id"}), 400
 
-        job_id = _create_job(user_id, data["resume_id"], data["survey_id"])
+        task_type = data.get("task_type", "resume_analysis")
+        job_id = _create_job(user_id, data["resume_id"], data["survey_id"], task_type)
 
         return jsonify({
             "job_id": job_id,
@@ -110,22 +112,7 @@ def get_analysis_status(task_id):
     }), 200
 
 
-# D-03 取得履歷優化結果
-@analysis_bp.route("/tasks/<task_id>/results", methods=["GET"])
-@login_required
-def get_optimization_results(task_id):
-    job = _get_job(task_id)
-    if not job:
-        return jsonify({"error": "Job not found"}), 404
-
-    if job["status"] != "done":
-        return jsonify({"task_id": task_id, "status": job["status"], "message": "尚未完成"}), 202
-
-    result = json.loads(job["result"]) if job.get("result") else {}
-    return jsonify(result), 200
-
-
-# D-04 取得履歷優化建議
+# D-03 取得履歷優化建議
 @analysis_bp.route("/tasks/<task_id>/suggestions", methods=["GET"])
 @login_required
 def get_optimization_suggestions(task_id):
@@ -138,3 +125,17 @@ def get_optimization_suggestions(task_id):
 
     suggestions = json.loads(job["suggestions"]) if job.get("suggestions") else {}
     return jsonify(suggestions), 200
+
+# D-04 取得履歷優化結果
+@analysis_bp.route("/tasks/<task_id>/results", methods=["GET"])
+@login_required
+def get_optimization_results(task_id):
+    job = _get_job(task_id)
+    if not job:
+        return jsonify({"error": "Job not found"}), 404
+
+    if job["status"] != "done":
+        return jsonify({"task_id": task_id, "status": job["status"], "message": "尚未完成"}), 202
+
+    result = json.loads(job["result"]) if job.get("result") else {}
+    return jsonify(result), 200

@@ -139,22 +139,124 @@ class CareerAgentManager:
         final_tasks = crew_tasks + [qa_task]
         final_agents = worker_agents + [qa_agent]
 
-        # 4. 組建 Crew 並執行
-        crew = Crew(
-            agents=final_agents,
-            tasks=final_tasks,
-            process=Process.sequential, # 確保依序執行：Worker 1 -> Worker 2 -> ... -> QA
-            verbose=True
-        )
+        # 4. 組建 Crew 並執行 (改走 Mock 模式)
+        # crew = Crew(
+        #     agents=final_agents,
+        #     tasks=final_tasks,
+        #     process=Process.sequential,
+        #     verbose=True
+        # )
 
-        result = crew.kickoff(inputs=user_input)
+        # result = crew.kickoff(inputs=user_input)
         
-        # 5. 回傳 Pydantic 模型轉出的 Dict
-        try:
-            return result.pydantic.model_dump()
-        except AttributeError:
-             # Fallback: 如果沒有成功轉成 Pydantic (極少發生)，回傳 raw text
-            return {"status": "partial_success", "raw_content": result.raw}
+        # # 5. 回傳 Pydantic 模型轉出的 Dict
+        # try:
+        #     return result.pydantic.model_dump()
+        # except AttributeError:
+        #     return {"status": "partial_success", "raw_content": result.raw}
+
+        # ---------------- MOCK 模式 ----------------
+        print(f"⚠️ 啟動 MOCK 模式：不調用實體模型以節省 Token ({task_type_str})")
+        import time
+        time.sleep(2)  # 模擬運算
+
+        if "career_analysis" in task_type_str:
+            return {
+                "report_metadata": {
+                    "version": user_input.get("report_version", "1.0"),
+                    "timestamp": user_input.get("current_timestamp", datetime.datetime.now(datetime.timezone.utc).isoformat()),
+                    "user_id": user_id
+                },
+                "preliminary_summary": {
+                    "core_insight": "[MOCK] 具備後端架構強項，但缺乏運維經驗。"
+                },
+                "radar_chart": {
+                    "dimensions": [
+                        {"axis": "前端開發", "score": 3.0},
+                        {"axis": "後端開發", "score": 4.5},
+                        {"axis": "運維部署", "score": 2.0},
+                        {"axis": "AI與數據", "score": 3.0},
+                        {"axis": "工程品質", "score": 4.0},
+                        {"axis": "軟實力", "score": 3.5}
+                    ]
+                },
+                "gap_analysis": {
+                    "current_status": {
+                        "self_assessment": "D. 資深工程師 (Senior)",
+                        "actual_level": "Mid-to-Senior",
+                        "cognitive_bias": "[MOCK] 認知準確。"
+                    },
+                    "target_position": {
+                        "role": "E. 技術主管(Lead)",
+                        "match_score": "65%",
+                        "gap_description": "[MOCK] 尚缺運維與軟實力提升。"
+                    }
+                },
+                "action_plan": {
+                    "priority_items": [
+                        {"category": "技術提升", "action": "[MOCK] 加強 Kubernetes", "recommendation_type": "實作專案"}
+                    ],
+                    "learning_resource_preference": "[MOCK] 實作專案做中學。"
+                }
+            }
+        elif "resume_analysis" in task_type_str:
+            return {
+                "candidate_positioning": "[MOCK] 資深後端開發工程師，具備雲端與微服務架構潛力",
+                "target_role_gap_summary": "[MOCK] 與目標職缺技術相符，但缺乏具體量化成果展現。",
+                "overall_strengths": [
+                    "[MOCK] 具備紮實的 Python 與 Flask 開發經驗",
+                    "[MOCK] 曾參與過系統重構與效能優化專案"
+                ],
+                "overall_weaknesses": [
+                    "[MOCK] 履歷多採條列式描述職責，缺乏具體成效數據",
+                    "[MOCK] 在系統部署與 CI/CD 部分的描述較為薄弱"
+                ],
+                "critical_issues": [
+                    {
+                        "section": "工作經歷",
+                        "original_text": "負責優化後端 API 效能，重構舊有系統",
+                        "issue_type": ["描述模糊", "缺乏量化證據"],
+                        "severity": ["可優化"],
+                        "diagnosis_dimension": "技術深度",
+                        "issue_reason": "企業無法透過純文字衡量優化效益",
+                        "improvement_direction": [
+                            "具體列出優化前的瓶頸，以及優化後提升多少 % 效能"
+                        ]
+                    }
+                ],
+                "ats_risk_level": "[MOCK] 中",
+                "screening_outcome_prediction": "[MOCK] 可通過初步自動篩選，但人資審核可能會將優先級排後。",
+                "recommended_next_actions": [
+                    "[MOCK] 將工作經歷改以 STAR 原則重新撰寫"
+                ]
+            }
+        elif "resume_opt" in task_type_str:
+            return {
+                "name": "[MOCK] 王小明",
+                "phone": "0912345678",
+                "email": "xiaoming@example.com",
+                "linkedln": "https://linkedin.com/in/xiaoming",
+                "github": "https://github.com/xiaoming",
+                "professional_summary": "[MOCK] 具備 5 年以上後端開發經驗，專精於 Python 與高效能雲端架構設計。擅長重構遺留系統並導入 CI/CD 流程。",
+                "professional_experience": [
+                    "[MOCK] X科技股份有限公司 | 資深後端工程師 | 2021-Present\n- 透過導入 Redis Cache，提升 API 讀取效能達 40%。\n- 規劃微服務架構，成功將單一節點系統拆分為 5 個核心服務。"
+                ],
+                "core_skills": [
+                    "Python", "Flask", "Docker", "Kubernetes", "Redis", "PostgreSQL"
+                ],
+                "projects": [
+                    "[MOCK] 電商高併發結帳系統\n- 使用 RabbitMQ 處理秒殺活動訂單，成功消化每秒 10,000 筆請求。"
+                ],
+                "education": [
+                    "[MOCK] 國立台灣大學 | 資訊工程學系 | 學士 | 2015-2019"
+                ],
+                "autobiography": "[MOCK] 由於對技術的熱愛，我經常參與開源社群，期望能透過自身後端領域的專長，為產品創造真正的價值。"
+            }
+        else:
+            return {
+                "status": "mock_success",
+                "message": f"[MOCK] 這是 {task_type_str} 的 Mock 產出。"
+            }
 
     def _get_process_config(self, task_type: TaskType, inputs: Dict[str, Any]) -> Optional[Dict]:
         """
