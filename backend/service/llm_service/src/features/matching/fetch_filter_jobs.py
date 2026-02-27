@@ -1,23 +1,17 @@
 import os
 import json
 from dotenv import load_dotenv
-from supabase import create_client, Client
+from src.core.database.supabase_client import get_supabase_client
 
 # 1. 載入環境變數 (確保你有 .env 檔案存放 URL 和 KEY)
 load_dotenv()
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("請檢查 .env 檔案，確保 SUPABASE_URL 與 SUPABASE_KEY 已設定。")
 
 class JobFilterTester:
     """
     用於測試 Supabase 硬篩選邏輯的獨立類別
     """
     def __init__(self):
-        self.supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        self.supabase = get_supabase_client()
 
     def fetch_filtered_jobs(self, filters: dict):
         """

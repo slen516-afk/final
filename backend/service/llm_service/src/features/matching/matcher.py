@@ -1,9 +1,12 @@
 # src/features/matching/matcher.py
 import math
 import statistics
+import logging
 import numpy as np
 from typing import List, Dict, Any
 
+# 設定日誌記錄器
+logger = logging.getLogger(__name__)
 
 # ==========================================
 # Part 1: 資料轉換層 (ETL) - 負責處理問卷原始資料
@@ -162,30 +165,48 @@ class JobMatcher:
         "devops_sre":     np.array([1.0, 3.5, 5.0, 2.0, 4.5, 4.0])
     }
 
-    @staticmethod
-    def calculate_match_score(user_vectors: dict, target_role_key: str) -> str:
+    @classmethod
+    def _get_safe_score(cls, data: dict, *keys) -> float:
+        """
+        安全獲取數值分數，處理缺失值與格式異常，並記錄日誌。
+        """
+        for k in keys:
+            val = data.get(k)
+            if val is not None:
+                try:
+                    return float(val)
+                except (ValueError, TypeError):
+                    logger.error(f"❌ 資料格式異常: Key '{k}' 的值為 '{val}' (型別: {type(val)})，無法轉換為數字。")
+                    return 0.0
+        
+        # 遍歷所有 Key 都沒找到有效值
+        main_key = keys[0] if keys else "Unknown"
+        logger.warning(f"⚠️ 資料缺失: 找不到維度 '{main_key}' (嘗試過: {keys})，預設為 0.0。")
+        return 0.0
+
+    @classmethod
+    def calculate_match_score(cls, user_vectors: dict, target_role_key: str) -> str:
         """
         實作 PDF 4.3 節：混合距離算法
         """
         # 1. 準備向量
-        # 將 user_vectors (dict) 轉為 numpy array，順序必須固定
         u_vec = np.array([
-            user_vectors.get('D1', 0.0), user_vectors.get('D2', 0.0),
-            user_vectors.get('D3', 0.0), user_vectors.get('D4', 0.0),
-            user_vectors.get('D5', 0.0), user_vectors.get('D6', 0.0)
+            cls._get_safe_score(user_vectors, 'D1', 'd1_frontend'),
+            cls._get_safe_score(user_vectors, 'D2', 'd2_backend'),
+            cls._get_safe_score(user_vectors, 'D3', 'd3_devops'),
+            cls._get_safe_score(user_vectors, 'D4', 'd4_ai_data', 'd4_data'),
+            cls._get_safe_score(user_vectors, 'D5', 'd5_quality'),
+            cls._get_safe_score(user_vectors, 'D6', 'd6_soft_skills', 'd6_soft')
         ])
         
         # 取得目標職位的標準向量
-        t_vec = JobMatcher.ROLE_PROFILES.get(target_role_key)
+        t_vec = cls.ROLE_PROFILES.get(target_role_key)
         if t_vec is None: return "N/A"
 
         # 2. 計算歐幾里得距離 (Euclidean Distance)
-        # PDF 公式: sqrt(sum((v_job - v_user)^2))
-        # 這裡簡化權重 w_i 全部為 1 (若依照 PDF 需定義 w 矩陣)
         dist = np.linalg.norm(t_vec - u_vec)
         
-        # 正規化距離 (假設最大可能距離約為 10，將其壓在 0-1 之間)
-        # 兩個 6維向量 (0-5分) 的最大歐氏距離約為 sqrt(6 * 5^2) = sqrt(150) = 12.24
+        # 正規化距離 (假設最大可能距離約為 12)
         max_dist = 12.0
         norm_dist = min(dist / max_dist, 1.0)
 
@@ -199,6 +220,38 @@ class JobMatcher:
 
         final_score = (0.7 * (1 - norm_dist)) + (0.3 * similarity)
         return f"{int(final_score * 100)}%"
+
+    @classmethod
+    def calculate_dynamic_job_gap(cls, user_6d: dict, job_payload: dict) -> float:
+        """
+        [職缺匹配專用]：針對真實職缺計算「硬實力契合度」。
+        邏輯：計算六維能力的歐幾里得距離，並轉化為 0-1 分數。
+        """
+        # 使用者向量 (D1~D6)
+        u_vec = np.array([
+            cls._get_safe_score(user_6d, 'D1', 'd1_frontend'),
+            cls._get_safe_score(user_6d, 'D2', 'd2_backend'),
+            cls._get_safe_score(user_6d, 'D3', 'd3_devops'),
+            cls._get_safe_score(user_6d, 'D4', 'd4_ai_data', 'd4_data'),
+            cls._get_safe_score(user_6d, 'D5', 'd5_quality'),
+            cls._get_safe_score(user_6d, 'D6', 'd6_soft_skills', 'd6_soft')
+        ])
+        
+        # 職缺向量 (對應資料庫欄位)
+        j_vec = np.array([
+            cls._get_safe_score(job_payload, 'd1_frontend'),
+            cls._get_safe_score(job_payload, 'd2_backend'),
+            cls._get_safe_score(job_payload, 'd3_devops'),
+            cls._get_safe_score(job_payload, 'd4_ai_data'),
+            cls._get_safe_score(job_payload, 'd5_quality'),
+            cls._get_safe_score(job_payload, 'd6_soft_skills')
+        ])
+
+        dist = np.linalg.norm(j_vec - u_vec)
+        max_dist = math.sqrt(6 * (5 ** 2)) 
+        
+        match_score = max(0.0, 1.0 - (dist / max_dist))
+        return float(match_score)
 
 # ==========================================
 # Part 3: [NEW] 職缺推薦層 (Recommendation) - 混合檢索漏斗
