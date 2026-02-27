@@ -1,0 +1,11 @@
+[
+    {
+        "course_id": 141,
+        "course_name": "Mastering Angular – Interview Prep & E-commerce App",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "雖然課程名稱和主要技術 Angular 表現出前端特色，但技能列表中同時明確列出了 Front-End Web Development、Back-End Web Development 與 Full-Stack Web Development，暗示課程內容涵蓋前後端開發，因此歸類為全端工程師。",
+        "processed_at": "2026-02-26T21:19:22.168861+08:00",
+        "execution_duration_seconds": 9.35
+    }
+]

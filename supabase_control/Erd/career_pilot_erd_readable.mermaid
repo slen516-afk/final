@@ -179,6 +179,7 @@ erDiagram
         text requirements "⚡ 需向量化"
         uuid vector_id "Qdrant Point ID"
         boolean is_embedded "DEFAULT FALSE"
+        boolean is_labeled "是否已完成 D1–D6 能力貼標；DEFAULT FALSE"
         int salary_min
         int salary_max
         string full_address "VARCHAR(200)"
@@ -276,7 +277,7 @@ erDiagram
         int report_id PK "🟠 職能分析"
         int survey_id FK
         int resume_id FK
-        string target_position "VARCHAR(200) LLM分析報告中識別出的目標職位資訊"
+        jsonb target_position "LLM分析報告中識別出的目標職位資訊"
         jsonb skill_gap_analysis
         jsonb career_path_suggestions
         jsonb market_insights

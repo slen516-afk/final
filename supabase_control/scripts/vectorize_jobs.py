@@ -102,7 +102,7 @@ def prepare_job_text(job: Dict) -> str:
 
 def prepare_payload(job: Dict) -> Dict:
     """
-    準備 Qdrant Payload（符合 ERD 設計，含薪資範圍）
+    準備 Qdrant Payload（符合 ERD 設計，含薪資範圍與貼標欄位）
     """
     return {
         "job_id": job["job_id"],
@@ -112,6 +112,16 @@ def prepare_payload(job: Dict) -> Dict:
         "remote_option": job.get("remote_option"),
         "salary_min": job.get("salary_min"),
         "salary_max": job.get("salary_max"),
+        # 貼標相關欄位
+        "is_labeled": job.get("is_labeled", False),
+        "role_type": job.get("role_type"),
+        "role_name": job.get("role_name"),
+        "d1_frontend": job.get("d1_frontend"),
+        "d2_backend": job.get("d2_backend"),
+        "d3_devops": job.get("d3_devops"),
+        "d4_ai_data": job.get("d4_ai_data"),
+        "d5_quality": job.get("d5_quality"),
+        "d6_soft_skills": job.get("d6_soft_skills"),
     }
 
 
@@ -133,7 +143,8 @@ def vectorize_batch(limit: int = None) -> int:
         response = (
             supabase.table("job_posting")
             .select(
-                "job_id, job_title, job_description, requirements, city, district, remote_option, salary_min, salary_max"
+                "job_id, job_title, job_description, requirements, city, district, remote_option, salary_min, salary_max, "
+                "is_labeled, role_type, role_name, d1_frontend, d2_backend, d3_devops, d4_ai_data, d5_quality, d6_soft_skills"
             )
             .eq("is_embedded", False)
             .order("job_id")

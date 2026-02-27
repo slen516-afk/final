@@ -114,15 +114,21 @@ system_prompt_text = """
 同時，請判斷該職缺最接近哪一個角色分類 (A-F)：
 - **A**: 前端工程師
 - **B**: 後端工程師
-- **C**: 全端工程師
+- **C**: 全端工程師（職缺**明確要求**同時具備前後端能力、或前後端技能在 JD/需求中**並重**。若僅以單一端為主、另一端僅輕微提及，應歸類為 A 或 B，不選 C。）
 - **D**: 資料科學家/數據分析師
 - **E**: AI/演算法工程師
 - **F**: DevOps/SRE
+
+**角色分類 A 與 C 的取捨（全端 vs 前端）**：
+- **主次原則**：若職缺**以單一職類技能為主**，僅在技能需求或描述中**輕微提及**另一職類，應歸類為**主要職類**。例如：以前端框架（React/Vue/Angular）與 UI 為主，需求僅列出少數後端關鍵字、且 JD 未強調全端或並重 → 歸類為 **A 前端工程師**。僅當職缺**明確以「前後端並重」或「全端」為主要要求**時，才選擇 **C 全端工程師**。
+- **比重原則**：若技能需求中**前端相關明顯多於後端**（或 JD 明顯偏向前端主題），則選 **A**。僅當需求或 JD 中前後端技能**數量與權重相當**，或職缺名稱／描述**明確出現 Full-Stack、全端、前後端並重**時，才選 **C**。
 
 **評分原則**：
 - 請嚴格基於 JD 內容進行推斷。
 - 若 JD **未提及**某項技能，請給予該職位類型的「預設基礎分」(通常是 1.0，若是全端則可能是 1.5)。
 - 若 JD 提到「加分項目 (Nice to have)」，可酌量加 0.5 分。
+
+**輸出格式重要**：reasoning 欄位內請勿使用半形雙引號 `"`，否則會導致 JSON 解析失敗。若需引用職缺名稱或專有名詞，請使用全形引號「」或單引號 ' 代替。
 
 {format_instructions}
 """
@@ -205,7 +211,8 @@ def process_specific_jobs(target_ids: List[int], table_name="job_posting"):
                 "d3_devops": result["d3_devops"],
                 "d4_ai_data": result["d4_ai_data"],
                 "d5_quality": result["d5_quality"],
-                "d6_soft_skills": result["d6_soft_skills"]
+                "d6_soft_skills": result["d6_soft_skills"],
+                "is_labeled": True  # 六維分數成功寫入時一併標記已貼標
                 # 注意：這裡不包含 reasoning 與 processed_at
             }
             
@@ -260,7 +267,7 @@ if __name__ == "__main__":
     # 【請在這裡填入你想測試的 10 筆 ID】
     # 你可以去 Supabase Table Editor 複製 10 個 ID 過來
     test_ids = [
-        11,
+    29154,
         12,
         13,
         14,

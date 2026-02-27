@@ -166,6 +166,7 @@
 | requirements | 職缺要求 | Requirements | TEXT | 職缺要求 |
 | vector_id | 向量識別碼 | Vector ID | UUID | 對應 Qdrant 中的 Point ID |
 | is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 預設為 FALSE，代表是否已完成向量化 |
+| is_labeled | 是否已完成貼標 | Is Labeled | BOOLEAN | 是否已完成 D1–D6 能力貼標，預設為 FALSE |
 | salary_min | 最低薪資 | Minimum Salary | INT | 最低薪資 |
 | salary_max | 最高薪資 | Maximum Salary | INT | 最高薪資 |
 | full_address | 完整地址 | Full Address | VARCHAR(200) | 職缺完整地址資訊 |
@@ -295,7 +296,7 @@
 | report_id | 報告識別碼 | Report ID | INT | 報告識別碼 | PRIMARY KEY |
 | survey_id | 問卷識別碼 | Survey ID | INT | 關聯問卷 | FOREIGN KEY |
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯履歷 | FOREIGN KEY |
-| target_position | 目標職位 | Target Position | VARCHAR(200) | LLM 分析報告中識別出的目標職位資訊 | - |
+| target_position | 目標職位 | Target Position | JSONB | LLM 分析報告中識別出的目標職位資訊 | - |
 | skill_gap_analysis | 技能落差分析 | Skill Gap Analysis | JSONB | 技術性技能缺口細節 | - |
 | career_path_suggestions | 職涯路徑建議 | Career Path Suggestions | JSONB | 職涯路徑多條選項 | - |
 | market_insights | 市場洞察 | Market Insights | JSONB | 市場洞察 | - |

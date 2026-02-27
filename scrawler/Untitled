@@ -1,0 +1,2 @@
+from qdrant_client import QdrantClient, models
+from config.settings import settings  # 直接用你專案裡的設定

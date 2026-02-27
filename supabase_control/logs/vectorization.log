@@ -33921,3 +33921,24 @@
 2026-02-25 14:23:11,820 - INFO - 🎉 本輪向量化作業完成！
 2026-02-25 14:23:11,820 - INFO - ✅ 成功處理: 8100 筆（已寫入 Qdrant 並回寫 Supabase vector_id / is_embedded）
 2026-02-25 14:23:11,820 - INFO - ============================================================
+2026-02-27 13:35:43,520 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-02-27 13:35:43,526 - INFO - ============================================================
+2026-02-27 13:35:43,527 - INFO - Career Pilot 職缺向量化作業
+2026-02-27 13:35:43,527 - INFO - 執行時間: 2026-02-27 13:35:43
+2026-02-27 13:35:43,527 - INFO - ============================================================
+2026-02-27 13:35:45,681 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/job_posting?select=job_id&is_embedded=eq.False "HTTP/2 200 OK"
+2026-02-27 13:35:45,682 - INFO - 📊 待處理職缺總數: 1
+2026-02-27 13:35:45,682 - INFO - ⚙️  批次大小: 100
+2026-02-27 13:35:45,682 - INFO - 🔹 模式: 跑完全部
+2026-02-27 13:35:45,682 - INFO - 💰 本輪預估成本: $0.00 USD
+2026-02-27 13:36:38,958 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/job_posting?select=job_id%2Cjob_title%2Cjob_description%2Crequirements%2Ccity%2Cdistrict%2Cremote_option%2Csalary_min%2Csalary_max%2Cis_labeled%2Crole_type%2Crole_name%2Cd1_frontend%2Cd2_backend%2Cd3_devops%2Cd4_ai_data%2Cd5_quality%2Cd6_soft_skills&is_embedded=eq.False&order=job_id.asc&limit=100 "HTTP/2 200 OK"
+2026-02-27 13:36:41,740 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-02-27 13:36:42,620 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/job_vectors/points?wait=true "HTTP/1.1 200 OK"
+2026-02-27 13:36:42,621 - INFO - ✅ Qdrant 寫入 1 筆
+2026-02-27 13:36:42,973 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/job_posting?job_id=eq.29621 "HTTP/2 200 OK"
+2026-02-27 13:36:42,973 - INFO - ✅ Supabase 更新 1/1 筆
+2026-02-27 13:36:42,974 - INFO - 📈 進度: 1/1 (100.0%)
+2026-02-27 13:36:42,974 - INFO - ============================================================
+2026-02-27 13:36:42,974 - INFO - 🎉 本輪向量化作業完成！
+2026-02-27 13:36:42,974 - INFO - ✅ 成功處理: 1 筆（已寫入 Qdrant 並回寫 Supabase vector_id / is_embedded）
+2026-02-27 13:36:42,974 - INFO - ============================================================
