@@ -7,6 +7,7 @@
 - git clone本專案後，透過VS Code Dev containers連線進個別容器內，如有追加套件應維護至requirements.txt
 
 **Docker啟用方式：**
+
 方式一:
    * 1. 開啟 Docker ，確認Docker Compose已啟用，Docker Compose啟用指令:`docker compose up -d`。
    * 2. 點選 VS Code 左下角 `><`  -> 選擇 `Reopen in Container`。
