@@ -10,7 +10,7 @@
 
 方式一:
    * 1.開啟 Docker ，確認Docker Desktop已下載並開啟。
-   * 2.點選 VS Code 左下角 `><`  -> 選擇 `Reopen in Container`，如果是初次啟動，Docker會在這時候建置容器，因為內含大型套件所以初次下載會比較久，建議電腦效能要達到一定程度。
+   * 2.點選 VS Code 左下角 `><`  -> 選擇 `Reopen in Container`，如果是初次啟動，Docker會在這時候建置容器，因為內含大型套件所以初次下載會比較久，建議電腦效能要達到一定程度且網路要穩定或甚至是快速。
    * 3.於選單中選擇對應容器(Backend / Frontend)再開始開發。
     
 方式二:
