@@ -16,7 +16,7 @@
 方式二:
    * 1.Terminal輸入:`docker compose up -d`啟動Docker Compose。
    * 2.按下F1選擇 `Attach to Running Container` -> 選擇想要進入的容器。
-   * 3.進入容器介面後選擇Open Folder , 如果路徑顯示/root , 點擊`..` , 將路徑重新選擇到 `/app`。
+   * 3.進入容器介面後選擇Open Folder , 如果路徑顯示`/root` , 點擊`..` , 將路徑重新選擇到 `/app`。
 
 **重要資訊：**
 * Erd圖位置: 在 資料夾內, 有含說明文件。
