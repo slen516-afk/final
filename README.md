@@ -9,9 +9,9 @@
 **Docker啟用方式：**
 
 方式一:
-   * 1. 開啟 Docker ，確認Docker Compose已啟用，Docker Compose啟用指令:`docker compose up -d`。
-   * 2. 點選 VS Code 左下角 `><`  -> 選擇 `Reopen in Container`。
-   * 3. 於選單中選擇對應容器(Backend / Frontend)再開始開發。
+   * 1.開啟 Docker ，確認Docker Compose已啟用，Docker Compose啟用指令:`docker compose up -d`。
+   * 2.點選 VS Code 左下角 `><`  -> 選擇 `Reopen in Container`。
+   * 3.於選單中選擇對應容器(Backend / Frontend)再開始開發。
     
 方式二:
    * 1.Terminal輸入:`docker compose up -d`啟動Docker Compose。
