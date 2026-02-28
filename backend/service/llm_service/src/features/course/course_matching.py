@@ -1,7 +1,6 @@
 from typing import List, Dict, Any, Optional
 import math
 import os
-from .schemas import CourseItem, CourseRecommendationResponse
 from src.core.database.supabase_client import get_supabase_client
 
 # =========================
@@ -30,7 +29,7 @@ class CourseRecommendationService:
     def __init__(self, supabase_client=None):
         self.supabase = supabase_client or get_supabase_client()
 
-    def fetch_user_gap(self, user_id: str) -> Optional[Dict]:
+    def fetch_user_gap(self, user_id: str) -> Dict:
         """
         從 Supabase 撈取該使用者的最新技能分析結果。
         """
@@ -38,20 +37,20 @@ class CourseRecommendationService:
             # 根據 Schema 結構，欄位名稱應為 role 與 match_score
             resp = (
                 self.supabase
-                .table("user_skill")
-                .select("role, match_score")
-                .eq("user_id", user_id)
-                .order("created_at", desc=True)
-                .limit(1)
+                .table("career_analysis_report") \
+                .select("target_position") \
+                .eq("user_id", user_id) \
+                .order("generated_at", desc=True) \
+                .limit(1) \
+                .single() \
                 .execute()
             )
             
             if not resp.data:
                 return None
             
-            data = resp.data[0]
-            raw_role = data.get("role", "backend")
-            raw_score = data.get("match_score", "40%")
+            raw_role = resp.data["target_position"]["role"]
+            raw_score = resp.data["target_position"]["match_score"]
             
             # 清理資料：移除 AI 產生的前綴與百分比符號
             # 1. 處理 Role (提取關鍵字)
@@ -88,8 +87,9 @@ class CourseRecommendationService:
             # 目前初步以全體課程為準，未來可依 job_category 篩選
             resp = (
                 self.supabase
-                .table("course")
-                .select("course_id, course_name, url, rating, review_count, level, course_type, duration_suggested")
+                .table("course") \
+                .select("course_id, course_name, url, rating, review_count, level, course_type, duration_suggested") \
+                .eq("role_name", job_category) \
                 .execute()
             )
             return resp.data
@@ -97,10 +97,26 @@ class CourseRecommendationService:
             print(f"⚠️ 獲取候選課程失敗: {e}")
             return []
 
+    def normalize_course_difficulty(courses: List[Dict]) -> List[Dict]:
+        """
+        將課程的中文字難易度轉換為數值，方便後續計算。
+        """
+        result = []
+
+        for c in courses:
+            level = COURSE_LEVEL_MAP.get(c.get("level"))
+            if level is None:
+                continue
+
+            c["course_level"] = level
+            result.append(c)
+
+        return result
+
     @staticmethod
     def score_to_user_level(match_score: int) -> int:
         """
-        將 0-100 的 match_score 映射到 1-5 等級。
+        將使用者的 0-100 的 match_score 映射到 1-5 等級。
         """
         if match_score <= 20: return 1
         elif match_score <= 40: return 2
@@ -113,7 +129,8 @@ class CourseRecommendationService:
         """
         將 0-100 的 match_score 映射到課程難度空間 (1.0-3.0)。
         """
-        return round(1.0 + (match_score / 100) * 2.0, 3)
+        cursor = 1.0 + (match_score / 100) * 2.0
+        return round(cursor, 3)
 
     def calculate_scores(self, courses: List[Dict], match_score: int, user_level: int) -> List[Dict]:
         """
@@ -139,7 +156,7 @@ class CourseRecommendationService:
             quality_score = (rating / 5 * 0.7) + (min(reviews, 1000) / 1000 * 0.3)
 
             # 更新課程資訊
-            c["course_level_val"] = level_val
+            c["course_level"] = level_val
             c["priority_score"] = priority_score
             c["quality_score"] = quality_score
             processed_courses.append(c)
@@ -177,27 +194,4 @@ class CourseRecommendationService:
         # 假設 ranked 已經算好了
         top_courses_raw = ranked[:top_k]
         
-        # 轉換為 CourseItem 清單
-        recommendations = []
-        for r in top_courses_raw:
-            recommendations.append(CourseItem(
-                course_id=str(r["course_id"]),
-                course_name=r["course_name"],
-                url=r["url"],
-                level=r["level"],
-                course_type=r.get("course_type"),
-                priority_score=r["priority_score"],
-                quality_score=r["quality_score"],
-                recommendation_reason=r.get("recommendation_reason") # 預留 AI 產出的欄位
-            ))
-
-        # 封裝成標準 Response
-        response_data = CourseRecommendationResponse(
-            user_id=user_id,
-            user_level=user_level,
-            match_score=match_score,
-            recommendations=recommendations
-        )
-
-        # 轉成字典回傳給前端
-        return response_data.model_dump()
+        return top_courses_raw
