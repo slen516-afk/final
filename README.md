@@ -16,4 +16,4 @@
 * 連線 supabase 需 copy .env_example 成 .env 檔案
     然後手動輸入 project_url =    - > 哪裡找 : SUPABASE首頁專案裡面 最左邊 project settings  -> Data API -> Project_URL
                 service_role_key =  - > 哪裡找 : SUPABASE首頁專案裡面 最左邊 project settings  -> API Keys -> Secret_keys
-* 前端啟用: 進入前端容器後，先執行npm i，再輸入npm run dev開啟前端連線，輸入ctrl + c以關閉連線
+* 前端啟用: 進入前端容器後輸入npm run dev開啟前端連線，輸入ctrl + c以關閉連線
