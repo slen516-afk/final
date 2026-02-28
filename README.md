@@ -8,13 +8,14 @@
 
 **Docker啟用方式：**
 方式一:
-    1. 開啟 Docker ，確認Docker Compose已啟用，Docker Compose啟用指令:`docker compose up -d`。
-    2. 點選 VS Code 左下角 `><`  -> 選擇 `Reopen in Container`。
-    3. 於選單中選擇對應容器(Backend / Frontend)再開始開發。
+   * 1. 開啟 Docker ，確認Docker Compose已啟用，Docker Compose啟用指令:`docker compose up -d`。
+   * 2. 點選 VS Code 左下角 `><`  -> 選擇 `Reopen in Container`。
+   * 3. 於選單中選擇對應容器(Backend / Frontend)再開始開發。
+    
 方式二:
-    1.Terminal輸入:`docker compose up -d`啟動Docker Compose。
-    2.按下F1選擇 `Attach to Running Container` -> 選擇想要進入的容器。
-    3.進入容器介面後選擇Open Folder , 如果路徑顯示/root , 點擊`..` , 將路徑重新選擇到 `/app`。
+   * 1.Terminal輸入:`docker compose up -d`啟動Docker Compose。
+   * 2.按下F1選擇 `Attach to Running Container` -> 選擇想要進入的容器。
+   * 3.進入容器介面後選擇Open Folder , 如果路徑顯示/root , 點擊`..` , 將路徑重新選擇到 `/app`。
 
 **重要資訊：**
 * Erd圖位置: 在 資料夾內, 有含說明文件。
