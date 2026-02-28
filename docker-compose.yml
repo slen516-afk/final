@@ -39,24 +39,24 @@ services:
     networks:
       - default
   # 專門負責 "眼睛" 的服務 (OCR)
-  ocr_service:
-    build:
-      context: ./backend/service/ocr_service # 告訴 Docker 去哪裡找 Dockerfile
-      dockerfile: Dockerfile
-    command: sleep infinity # 依然讓它發呆，方便你進去操作
-    volumes:
-      # 1. 程式碼掛載：讓你在本機改 code，容器內同步生效
-      - ./backend/service/ocr_service:/app
-      # 2. 模型快取掛載：這是之前卡死的地方，我們用 Volume 的方式給它，不放進 Build 過程
-      - ./backend/cache/hf_cache:/root/.cache/huggingface
-      - ./supabase_control:/app/supabase_control
-    ports:
-      - "5001:5000"
-    networks:
-      - default
-    environment:
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
+  # ocr_service:
+  #   build:
+  #     context: ./backend/service/ocr_service # 告訴 Docker 去哪裡找 Dockerfile
+  #     dockerfile: Dockerfile
+  #   command: sleep infinity # 依然讓它發呆，方便你進去操作
+  #   volumes:
+  #     # 1. 程式碼掛載：讓你在本機改 code，容器內同步生效
+  #     - ./backend/service/ocr_service:/app
+  #     # 2. 模型快取掛載：這是之前卡死的地方，我們用 Volume 的方式給它，不放進 Build 過程
+  #     - ./backend/cache/hf_cache:/root/.cache/huggingface
+  #     - ./supabase_control:/app/supabase_control
+  #   ports:
+  #     - "5001:5000"
+  #   networks:
+  #     - default
+  #   environment:
+  #     - SUPABASE_URL=${SUPABASE_URL}
+  #     - SUPABASE_KEY=${SUPABASE_KEY}
 
   llm_service:
     image: python:3.10-slim
