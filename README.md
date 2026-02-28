@@ -24,5 +24,5 @@
 * 連線 supabase 需 copy .env_example 成 .env 檔案
     然後手動輸入 project_url =    - > 哪裡找 : SUPABASE首頁專案裡面 最左邊 project settings  -> Data API -> Project_URL
                 service_role_key =  - > 哪裡找 : SUPABASE首頁專案裡面 最左邊 project settings  -> API Keys -> Secret_keys
-* 前端啟用: 進入前端容器後輸入npm run dev開啟前端連線，輸入ctrl + c以關閉連線
-* API測試與開發: 開兩個視窗Visual Studio Code視窗分別進入前、後端容器，後端Flask必須維持開啟著前端才可以做測試，後端Flask開啟方式 : Terminal輸入python main.py
+* 前端啟用: 進入前端容器後輸入`npm run dev`開啟前端連線，輸入`ctrl + c`以關閉連線
+* API測試與開發: 開兩個視窗Visual Studio Code視窗分別進入前、後端容器，後端Flask必須維持開啟著前端才可以做測試，後端Flask開啟方式 : Terminal輸入`python main.py`
