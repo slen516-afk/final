@@ -242,14 +242,17 @@ def process_specific_jobs(target_ids: List[int], table_name="job_posting"):
     # 最終步驟: 將完整紀錄寫入本地 JSON 檔案
     # -------------------------------------------------------
     if local_records:
-        # 1. 取得目前這支程式 (.py) 所在的資料夾絕對路徑
-        current_script_dir = os.path.dirname(os.path.abspath(__file__))
+        # 1. 取得目前這支程式 (.py) 所在的資料夾，並確保 logs 子資料夾存在
+        current_script_dir = Path(__file__).resolve().parent
+        logs_dir = current_script_dir / "logs"
+        logs_dir.mkdir(exist_ok=True)
+
         # 檔名範例: labeling_result_20231027_153001.json
         current_time_str = datetime.now(TW_TZ).strftime("%Y%m%d_%H%M%S")
         output_filename = f"labeling_result_{current_time_str}.json"
         
-        # 3. 組合完整的路徑 (資料夾 + 檔名)
-        output_filepath = os.path.join(current_script_dir, output_filename)
+        # 3. 組合完整的路徑 (logs 子資料夾 + 檔名)
+        output_filepath = logs_dir / output_filename
 
         with open(output_filepath, "w", encoding="utf-8") as f:
             json.dump(local_records, f, ensure_ascii=False, indent=4)

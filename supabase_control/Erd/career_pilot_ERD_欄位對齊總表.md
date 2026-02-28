@@ -11,6 +11,7 @@
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
 | user_id | 使用者識別碼 | User ID | INT | 使用者唯一識別碼 | PRIMARY KEY |
+| auth_uid | 認證 UID | Auth UID | UUID | 對應 Supabase auth.users.id，作為與認證系統的橋接欄位 | UNIQUE, NOT NULL |
 | email | 電子郵件 | Email | VARCHAR(255) | 使用者電子郵件 | UNIQUE, NOT NULL |
 | password_hash | 密碼雜湊值 | Password Hash | VARCHAR(255) | 密碼雜湊值 | NOT NULL |
 | auth_provider | 認證提供者 | Authentication Provider | VARCHAR(50) | 認證提供者 (Email/LinkedIn/Google) | DEFAULT 'Email' |
@@ -366,6 +367,7 @@
 | autobiography | 自傳 | Autobiography | TEXT | 保留原風格的優化後完整自傳 | - |
 | llm_model_used | 使用的 LLM 模型 | LLM Model Used | VARCHAR(100) | 產生此優化使用的 LLM 版本 | - |
 | optimization_version | 優化版本 | Optimization Version | VARCHAR(10) | Schema 版本 | DEFAULT '1.0' |
+| template_color | 顏色模板名稱 | Template Color | VARCHAR(50) | 用戶確認優化結果時選擇的顏色模板名稱（如：'深海藍經典'），前端依此名稱對應 hex 色碼渲染 | - |
 | created_at | 建立時間 | Created At | TIMESTAMPTZ | 優化產生時間 | NOT NULL, DEFAULT NOW() |
 
 ---

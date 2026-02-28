@@ -35,7 +35,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # 2. 隨機選取未貼標課程 ID
 # ==========================================
 def get_random_unprocessed_course_ids(
-    batch_size: int = 500,
+    batch_size: int = 600,
     pool_size: int = 1000,
     table_name: str = "course",
 ) -> List[int]:
@@ -73,7 +73,7 @@ def get_random_unprocessed_course_ids(
 # 3. 主程式
 # ==========================================
 if __name__ == "__main__":
-    random_ids = get_random_unprocessed_course_ids(batch_size=500, pool_size=1000)
+    random_ids = get_random_unprocessed_course_ids(batch_size=600, pool_size=1000)
 
     if random_ids:
         print(f"🚀 目標 course_id 數量: {len(random_ids)}")

@@ -60,6 +60,7 @@ erDiagram
     %% ========================================
     USER {
         int user_id PK
+        uuid auth_uid UK "UNIQUE, NOT NULL, Supabase auth.users.id"
         string email UK "VARCHAR(255)"
         string password_hash "VARCHAR(255)"
         string auth_provider "VARCHAR(50)"
@@ -335,6 +336,7 @@ erDiagram
         text autobiography "保留原風格的優化後完整自傳"
         string llm_model_used "VARCHAR(100)"
         string optimization_version "VARCHAR(10) DEFAULT '1.0'"
+        string template_color "VARCHAR(50) 顏色模板名稱"
         timestamptz created_at "NOT NULL, DEFAULT NOW()"
     }
 

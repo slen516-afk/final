@@ -213,9 +213,12 @@ def process_specific_courses(
 
     if local_records:
         script_dir = Path(__file__).resolve().parent
+        logs_dir = script_dir / "logs"
+        logs_dir.mkdir(exist_ok=True)
+
         current_time_str = datetime.now(TW_TZ).strftime("%Y%m%d_%H%M%S")
         output_filename = f"course_labeling_result_{current_time_str}.json"
-        output_filepath = script_dir / output_filename
+        output_filepath = logs_dir / output_filename
 
         with open(output_filepath, "w", encoding="utf-8") as f:
             json.dump(local_records, f, ensure_ascii=False, indent=4)

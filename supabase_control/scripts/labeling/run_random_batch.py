@@ -26,7 +26,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 # ==========================================
 # 2. 隨機選號函數 (大池子撈取法)
 # ==========================================
-def get_random_unprocessed_ids(batch_size=500, pool_size=1000) -> List[int]:
+def get_random_unprocessed_ids(batch_size=300, pool_size=1000) -> List[int]:
     """
     從資料庫中撈取未處理的職缺，並隨機選出 batch_size 筆。
     :param batch_size: 最終要貼標的筆數 (例如 500)
@@ -65,8 +65,8 @@ def get_random_unprocessed_ids(batch_size=500, pool_size=1000) -> List[int]:
 # 3. 主程式執行
 # ==========================================
 if __name__ == "__main__":
-    # 1. 取得隨機未貼標的職缺 ID（可改 batch_size 例如 500）
-    random_ids = get_random_unprocessed_ids(batch_size=500, pool_size=1000)
+    # 1. 取得隨機未貼標的職缺 ID（可改 batch_size 例如 300）
+    random_ids = get_random_unprocessed_ids(batch_size=300, pool_size=1000)
     
     # 2. 如果有 ID，就執行貼標
     if random_ids:

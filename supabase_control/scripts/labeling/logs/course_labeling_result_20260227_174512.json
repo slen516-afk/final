@@ -1,0 +1,902 @@
+[
+    {
+        "course_id": 4,
+        "course_name": "Crash Course on Python",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程重點在 Python 程式語言與基本程式設計原則，符合後端工程師所需的技能，如使用 Python 進行服務端開發等，因而歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:37:25.240840+08:00",
+        "execution_duration_seconds": 5.59
+    },
+    {
+        "course_id": 7,
+        "course_name": "Microsoft Python Development",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程主要聚焦於 Python 的後端應用，包括 Web 開發、資料分析與自動化等，雖然也涉及資料視覺化與 DevOps 技能，但重點並非前端設計，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:37:39.529013+08:00",
+        "execution_duration_seconds": 13.76
+    },
+    {
+        "course_id": 19,
+        "course_name": "HTML, CSS, and Javascript for Web Developers",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程聚焦在HTML、CSS、JavaScript及前端相關技術，技能列表明顯屬於前端領域，因此歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:37:42.830195+08:00",
+        "execution_duration_seconds": 2.9
+    },
+    {
+        "course_id": 20,
+        "course_name": "Introduction to JavaScript Programming",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程名稱與技能中明確出現 JavaScript，該語言主要應用於前端開發，故將此課程歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:37:48.988685+08:00",
+        "execution_duration_seconds": 5.71
+    },
+    {
+        "course_id": 23,
+        "course_name": "Learn JavaScript",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程技能主要強調 JavaScript、前端網頁開發與相關領域，符合前端工程師的定義，因此歸類為 A 前端工程師。",
+        "processed_at": "2026-02-27T17:37:51.969988+08:00",
+        "execution_duration_seconds": 2.63
+    },
+    {
+        "course_id": 32,
+        "course_name": "Object Oriented Programming in Java",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "主要技能和課程內容聚焦於Java、物件導向程式設計、資料結構與演算法，這些技能在後端開發中極為常見，因此判斷此課程最適合歸類至後端工程師。",
+        "processed_at": "2026-02-27T17:37:56.308817+08:00",
+        "execution_duration_seconds": 4.02
+    },
+    {
+        "course_id": 34,
+        "course_name": "Oracle Java Foundations",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程著重於Java程式語言、Oracle Cloud和物件導向編程等技能，這些都是後端開發常見的技術，使其最適合歸類在後端工程師領域。",
+        "processed_at": "2026-02-27T17:37:59.130163+08:00",
+        "execution_duration_seconds": 2.49
+    },
+    {
+        "course_id": 38,
+        "course_name": "Learn Typescript",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "雖然包含了 Node.JS 與 Server Side 等後端相關技能，但課程技能中有多項明顯的前端技術（例如 React.js、JavaScript、TypeScript、Web Design 和 Web Development），因此主要傾向於前端工程師。",
+        "processed_at": "2026-02-27T17:38:04.002583+08:00",
+        "execution_duration_seconds": 4.55
+    },
+    {
+        "course_id": 39,
+        "course_name": "AI Agents in Typescript/Javascript with Generative AI",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "技能列表中涵蓋 OpenAI API、Generative AI、Large Language Modeling 和 Prompt Engineering 等關鍵技術，這些都是 AI/演算法工程師的典型技能，且課程名稱也強調了 Generative AI 的應用，因此歸類為 E AI/演算法工程師。",
+        "processed_at": "2026-02-27T17:38:07.649618+08:00",
+        "execution_duration_seconds": 3.32
+    },
+    {
+        "course_id": 42,
+        "course_name": "TypeScript Variables and Data Types",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程標題明確聚焦於TypeScript的基本語法與資料類型，這是前端工程師常用的技能，因此歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:38:12.392064+08:00",
+        "execution_duration_seconds": 4.42
+    },
+    {
+        "course_id": 59,
+        "course_name": "Optimize Growth: Map and Evaluate ROI",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程技能聚焦於績效分析、變異數分析、營收預測和ROI評估，這些技能都屬於數據分析與決策支持的範疇，因此歸類為資料科學家/數據分析師。",
+        "processed_at": "2026-02-27T17:38:17.821699+08:00",
+        "execution_duration_seconds": 5.09
+    },
+    {
+        "course_id": 80,
+        "course_name": "Full-Stack Web Development: PHP, HTML, CSS & JavaScript",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "課程資訊與技能中同時涵蓋前端（HTML, CSS, JavaScript）和後端（PHP, Node.js, Express, MongoDB）技術，且技能列表中明確提及 Full-Stack Web Development，故歸類為全端工程師。",
+        "processed_at": "2026-02-27T17:38:20.571740+08:00",
+        "execution_duration_seconds": 2.4
+    },
+    {
+        "course_id": 97,
+        "course_name": "Swift Programming Fundamentals & Intro to SwiftUI",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程重點在於iOS的使用者介面開發與SwiftUI，屬於前端UI/UX和應用程式設計的範疇，因此最適合歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:38:25.555750+08:00",
+        "execution_duration_seconds": 4.66
+    },
+    {
+        "course_id": 105,
+        "course_name": "Meta Android Developer",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程內容主要聚焦於 Android 與 Mobile 前端開發，強調 UI/UX 設計、React Native 與相關前端技能，因此最符合前端工程師的職類。",
+        "processed_at": "2026-02-27T17:38:30.492276+08:00",
+        "execution_duration_seconds": 4.61
+    },
+    {
+        "course_id": 122,
+        "course_name": "Introduction to VueJS Framework",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程重點在於 Vue.js 框架以及前端相關技術如 HTML, CSS, JavaScript 與網頁元件，屬於前端技術範疇。",
+        "processed_at": "2026-02-27T17:38:32.677578+08:00",
+        "execution_duration_seconds": 1.85
+    },
+    {
+        "course_id": 125,
+        "course_name": "Palo Alto Networks Cybersecurity",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程內容與技能重點聚焦在網路安全、雲端部署和容器化等與基礎設施及運維相關的技術，這些與DevOps/SRE工程師在雲端基礎設施管理與安全維運領域的職能較為吻合，因此選擇F類。",
+        "processed_at": "2026-02-27T17:38:40.351446+08:00",
+        "execution_duration_seconds": 7.32
+    },
+    {
+        "course_id": 128,
+        "course_name": "Intro to Vite",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程技能主要集中於前端技術，包括 Build Tools、Frontend Performance、React.js、TypeScript 等，整體內容明顯偏向前端開發，因此歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:38:43.468968+08:00",
+        "execution_duration_seconds": 2.78
+    },
+    {
+        "course_id": 148,
+        "course_name": "Meta Back-End Developer",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程名稱與資訊均強調後端開發，包括 Python、Django、資料庫與 API 等技能，雖然也提及前端和全端，但主要重點是後端技術，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:38:47.127479+08:00",
+        "execution_duration_seconds": 3.33
+    },
+    {
+        "course_id": 149,
+        "course_name": "APIs",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "Skills包括 API設計、Restful API、Django以及相關的後端技術，顯示此課程主題在後端工程領域，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:38:49.381471+08:00",
+        "execution_duration_seconds": 1.94
+    },
+    {
+        "course_id": 150,
+        "course_name": "Build a user login system for a Django website",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程名稱提到使用 Django 建置使用者登入系統，Django 主打後端開發，因此該課程核心重點在後端技術，故歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:38:52.210355+08:00",
+        "execution_duration_seconds": 2.51
+    },
+    {
+        "course_id": 164,
+        "course_name": "Learn Spring Boot in 100 Steps - Beginner to Expert",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程以Spring Boot為主，專注於建立REST API、處理資料庫與後端邏輯，雖有提到UI相關概念但主要技能與內容均屬後端工程師範疇。",
+        "processed_at": "2026-02-27T17:38:55.774578+08:00",
+        "execution_duration_seconds": 3.25
+    },
+    {
+        "course_id": 166,
+        "course_name": "Spring Boot Web Development with Java",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程以Spring Boot與Java為主要技術，涵蓋微服務、MVC設計與部署等後端重點，雖稍提Ajax但主體集中在後端開發，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:38:58.721626+08:00",
+        "execution_duration_seconds": 2.63
+    },
+    {
+        "course_id": 172,
+        "course_name": "Spring Boot Foundations",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程名稱及技能中主要強調 Spring Boot、Hibernate、J2EE、Restful API 等後端技術，雖然也包含少量前端相關技能，但整體偏向後端工程領域，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:39:02.126114+08:00",
+        "execution_duration_seconds": 3.09
+    },
+    {
+        "course_id": 186,
+        "course_name": "Ultimate Guide to FastAPI and Backend Development",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程名稱和資訊均聚焦於 FastAPI 和後端開發，技能列表中大部分技能（如 SQL、資料庫管理、雲端部署、API 測試與 API 設計等）明顯與後端開發相關，雖然出現了少量前端相關技能，但主要目標和內容仍以後端為主，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:39:05.173886+08:00",
+        "execution_duration_seconds": 2.73
+    },
+    {
+        "course_id": 187,
+        "course_name": "Mastering REST APIs with FastAPI",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程著重於 RESTful API 設計與後端開發，Skills 中強調後端相關內容如 API 設計、資料庫開發及雲端部署，因此最符合後端工程師職類。",
+        "processed_at": "2026-02-27T17:39:08.664028+08:00",
+        "execution_duration_seconds": 3.18
+    },
+    {
+        "course_id": 196,
+        "course_name": "Introduction to Next.js",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程以Next.js為主，而Next.js是建立於React之上的前端框架，因此技能中以前端技術（如JavaScript框架、CSS及響應式設計等）為核心，雖然同時有API等提及，但主要聚焦在前端開發。",
+        "processed_at": "2026-02-27T17:39:11.565848+08:00",
+        "execution_duration_seconds": 2.55
+    },
+    {
+        "course_id": 204,
+        "course_name": "Node.js & MongoDB: Developing Back-end Database Applications",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程專注於後端開發技術，涵蓋 Node.js、MongoDB、API 設計及後端效能優化等技能，明顯偏向後端工程師職能。",
+        "processed_at": "2026-02-27T17:39:13.994265+08:00",
+        "execution_duration_seconds": 2.11
+    },
+    {
+        "course_id": 217,
+        "course_name": "Complete Git Guide: Understand and Master Git and GitHub",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "本課程聚焦於Git和GitHub的版本控制、分支管理、合併以及持續整合，這些技能均貼近DevOps/SRE工程師在應用部署和自動化流程中的需求。雖然技能中包含React.js，但整體內容重點在於提升軟體開發流程和版本管理，與DevOps/SRE職務較為契合。",
+        "processed_at": "2026-02-27T17:39:19.517992+08:00",
+        "execution_duration_seconds": 5.21
+    },
+    {
+        "course_id": 218,
+        "course_name": "Introduction to Containers w/ Docker, Kubernetes & OpenShift",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "該課程的技能列表包含 Docker、Kubernetes、OpenShift、CI/CD、容器化等，這些技能與持續整合/部署、雲端運維和基礎設施的管理密切相關，因此最適合歸類為 DevOps/SRE工程師。",
+        "processed_at": "2026-02-27T17:39:22.394232+08:00",
+        "execution_duration_seconds": 2.54
+    },
+    {
+        "course_id": 226,
+        "course_name": "IBM DevOps and Software Engineering",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程內容重點在DevOps相關技術，如CI/CD、雲端部署、容器化技術、Linux指令和持續整合等，這些都是DevOps/SRE工程師的重要技能，因此將課程歸類為F DevOps/SRE工程師。",
+        "processed_at": "2026-02-27T17:39:26.187738+08:00",
+        "execution_duration_seconds": 3.46
+    },
+    {
+        "course_id": 228,
+        "course_name": "Introduction to Container Basics",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "技能主要涵蓋容器化、Docker及部署相關知識，符合 DevOps/SRE 工程師的專業範疇。",
+        "processed_at": "2026-02-27T17:39:28.544924+08:00",
+        "execution_duration_seconds": 2.04
+    },
+    {
+        "course_id": 252,
+        "course_name": "Microsoft Azure Security Engineer Associate (AZ-500)",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程內容與技能主要集中在持續監控、威脅模型、基礎設施與雲端安全等主題，這些均屬於 DevOps/SRE 工程師在維運與安全防護層面的工作，因此歸類於 F DevOps/SRE工程師。",
+        "processed_at": "2026-02-27T17:39:32.132658+08:00",
+        "execution_duration_seconds": 3.27
+    },
+    {
+        "course_id": 253,
+        "course_name": "Microsoft Azure Developer Associate (AZ-204) Exam Prep",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程內容與技能重點在於 Azure 雲端開發、Serverless 應用、資料存儲與安全、以及部署與管理，這些均屬於後端工程師需要的技能，因此歸類為後端工程師較為合適。",
+        "processed_at": "2026-02-27T17:39:37.736503+08:00",
+        "execution_duration_seconds": 5.28
+    },
+    {
+        "course_id": 254,
+        "course_name": "Microsoft Azure Administrator (AZ-104)",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程聚焦於雲端管理、身份存取、容器化以及網路監控等技能，這些均為 DevOps/SRE 工程師所需的核心能力，故此分類最為適合。",
+        "processed_at": "2026-02-27T17:39:40.871312+08:00",
+        "execution_duration_seconds": 2.79
+    },
+    {
+        "course_id": 256,
+        "course_name": "Microsoft Azure SQL",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程技能明確涵蓋資料庫管理、SQL、MySQL、PostgreSQL 以及相關的雲端資料庫操作，這些皆屬於後端工程師所需的專業技能。",
+        "processed_at": "2026-02-27T17:39:43.970920+08:00",
+        "execution_duration_seconds": 2.77
+    },
+    {
+        "course_id": 265,
+        "course_name": "Cloud Computing and GCP Fundamentals",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "此課程技能涵蓋雲端基礎架構、雲端管理、部署與安全等與 DevOps/SRE 相關的核心技能，因此歸類為 F DevOps/SRE工程師。",
+        "processed_at": "2026-02-27T17:39:46.867952+08:00",
+        "execution_duration_seconds": 2.58
+    },
+    {
+        "course_id": 270,
+        "course_name": "GCP: Database, Storage, and Networking",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "技能清單中出現了大量關於雲端、虛擬化、資料庫管理、網路安全與負載平衡的相關工具與技術，這些都是 DevOps/SRE 工程師的核心技能，因此此課程最適合歸類到 F DevOps/SRE工程師類別。",
+        "processed_at": "2026-02-27T17:39:50.173248+08:00",
+        "execution_duration_seconds": 2.98
+    },
+    {
+        "course_id": 274,
+        "course_name": "Implement CI/CD Automation with Jenkins, Docker & Kubernetes",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程技能聚焦於CI/CD、Jenkins、Docker、Kubernetes等工具與自動化部署，明顯屬於DevOps/SRE工程師的範疇。",
+        "processed_at": "2026-02-27T17:39:53.496019+08:00",
+        "execution_duration_seconds": 3.0
+    },
+    {
+        "course_id": 275,
+        "course_name": "Jenkins training for Beginners",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "Jenkins 是一個常用於 CI/CD 流程的工具，課程所涵蓋的 RBAC、CI/CD、Continuous Deployment 等技能均屬於維運及自動化的範疇，符合 DevOps/SRE 工程師的職能，因此歸類到 F 類。",
+        "processed_at": "2026-02-27T17:39:57.108003+08:00",
+        "execution_duration_seconds": 3.28
+    },
+    {
+        "course_id": 280,
+        "course_name": "DevOps Complete Course",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程內容與技能列表皆強調DevOps工具、自動化部署、CI/CD等實務操作，明確對應於DevOps/SRE工程師的職責。",
+        "processed_at": "2026-02-27T17:39:59.595053+08:00",
+        "execution_duration_seconds": 2.16
+    },
+    {
+        "course_id": 281,
+        "course_name": "DevOps and Jenkins Fundamentals",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程著重於 Jenkins 和 CI/CD 等工具，這些技能與自動化部署及維運相關，符合 DevOps/SRE 工程師的職類定義。",
+        "processed_at": "2026-02-27T17:40:01.752420+08:00",
+        "execution_duration_seconds": 1.83
+    },
+    {
+        "course_id": 288,
+        "course_name": "Terraform Fundamentals",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "Terraform主要用於基礎設施的自動化管理與部署，屬於雲端/DevOps技能範疇，因此將此課程歸類為DevOps/SRE工程師。",
+        "processed_at": "2026-02-27T17:40:04.441966+08:00",
+        "execution_duration_seconds": 2.37
+    },
+    {
+        "course_id": 294,
+        "course_name": "Ansible for the Absolute Beginners",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程技能重點在 Ansible、Infrastructure as Code、Shell Script 及其他 DevOps 工具，明顯屬於維運自動化與基礎設施管理相關技能，因此歸類於 DevOps/SRE工程師。",
+        "processed_at": "2026-02-27T17:40:06.729719+08:00",
+        "execution_duration_seconds": 1.96
+    },
+    {
+        "course_id": 303,
+        "course_name": "Write basic ansible playbooks",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程名稱指向編寫基本的Ansible playbooks，這是自動化運維與配置管理常用的技術，因此最適合歸類為DevOps/SRE工程師。",
+        "processed_at": "2026-02-27T17:40:08.908542+08:00",
+        "execution_duration_seconds": 1.84
+    },
+    {
+        "course_id": 313,
+        "course_name": "PostgreSQL for Everybody",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程主要聚焦於資料庫設計、SQL、資料模型與資料庫管理等後端核心技能，儘管也提及 NLP 等技術，但這些並非主要內容，所以最適合歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:40:13.489372+08:00",
+        "execution_duration_seconds": 4.25
+    },
+    {
+        "course_id": 314,
+        "course_name": "Database Design and Basic SQL in PostgreSQL",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程內容及技能重點為資料庫設計、SQL、數據建模等後端核心技術，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:40:16.617336+08:00",
+        "execution_duration_seconds": 2.64
+    },
+    {
+        "course_id": 322,
+        "course_name": "IBM Relational Database Administrator with GenAI",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程內容與技能重點在關聯式資料庫、資料庫設計與管理、ETL、數據倉儲與數據工程，這些均屬於後端技術範疇，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:40:19.531905+08:00",
+        "execution_duration_seconds": 2.58
+    },
+    {
+        "course_id": 330,
+        "course_name": "Excel to MySQL: Analytic Techniques for Business",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程重點在於運用Excel、Tableau與SQL進行數據分析、視覺化及預測建模，這些核心技能符合資料科學家/數據分析師的職能描述。",
+        "processed_at": "2026-02-27T17:40:22.933244+08:00",
+        "execution_duration_seconds": 3.0
+    },
+    {
+        "course_id": 336,
+        "course_name": "MongoDB: The Complete Guide to NoSQL Database Development",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程主要聚焦於 MongoDB 及 NoSQL 資料庫相關設計、管理與效能調校，同時包含 API 設計與 Node.js，這些都是後端工程師工作範疇的核心技能，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:40:26.277874+08:00",
+        "execution_duration_seconds": 3.0
+    },
+    {
+        "course_id": 337,
+        "course_name": "Python NoSQL Data Engineering with MongoDB",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程著重於使用 MongoDB 進行 NoSQL 資料工程與 ETL 流程，包括資料驗證、管理、轉換與分析等技能，這與資料科學/數據分析領域高度相關，因此歸類為資料科學家/數據分析師。",
+        "processed_at": "2026-02-27T17:40:38.353804+08:00",
+        "execution_duration_seconds": 11.62
+    },
+    {
+        "course_id": 339,
+        "course_name": "NoSQL, Big Data, and Spark Foundations",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "課程涵蓋NoSQL、Big Data以及Spark相關的分散運算技術，並著重於機器學習算法、模型評估與監督式學習等技能，因此符合AI/演算法工程師的範疇。",
+        "processed_at": "2026-02-27T17:40:53.276393+08:00",
+        "execution_duration_seconds": 14.56
+    },
+    {
+        "course_id": 352,
+        "course_name": "Introduction to Oracle Cloud Essentials",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "該課程技能涵蓋了多項雲端基礎設施與管理相關的技能，如 Cloud Computing、Cloud Infrastructure、Virtual Machines、Virtual Networking 等，這些均與 DevOps/SRE 工程師的工作內容密切相關，因此將此課程歸類於 F DevOps/SRE工程師。",
+        "processed_at": "2026-02-27T17:40:58.214070+08:00",
+        "execution_duration_seconds": 4.58
+    },
+    {
+        "course_id": 361,
+        "course_name": "Leadership Skills",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "雖然此課程不涉及明確的前端或後端程式語言技能，但其內容著重領導與管理軟技能，而在軟體團隊中，全端工程師往往需要跨足多個技術領域以及領導協作。因此，綜合考量後將此課程歸類為全端工程師.",
+        "processed_at": "2026-02-27T17:41:12.486055+08:00",
+        "execution_duration_seconds": 13.86
+    },
+    {
+        "course_id": 373,
+        "course_name": "Business Communication",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "雖然課程內容主要在商業溝通與書寫技巧，但在軟體團隊中，前端工程師常需與設計、產品等跨部門合作，因此這些溝通與協作技能對前端工程師尤為重要，故歸類為A前端工程師。",
+        "processed_at": "2026-02-27T17:41:23.205845+08:00",
+        "execution_duration_seconds": 10.32
+    },
+    {
+        "course_id": 376,
+        "course_name": "Effective Communication: Writing, Design, and Presentation",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程主要涵蓋了視覺設計、商業撰寫與演示等軟性技能，其中的Graphic and Visual Design與Design等技能與前端工程師在UI/UX設計及視覺呈現上有關聯，因此歸類為 A 前端工程師。",
+        "processed_at": "2026-02-27T17:41:30.399287+08:00",
+        "execution_duration_seconds": 6.82
+    },
+    {
+        "course_id": 379,
+        "course_name": "Corporate Communications",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "雖然課程內容主要聚焦於企業內部與外部溝通策略，這與軟體開發六大職類並不直接對應，但在提供的選項中，該課程涵蓋的溝通、社交媒體與品牌形象管理等技能較可聯想到面向用戶的前端應用溝通，因此在必須在六大職類中歸類的情況下，選擇 A 前端工程師作為最接近的分類。",
+        "processed_at": "2026-02-27T17:41:39.579884+08:00",
+        "execution_duration_seconds": 8.83
+    },
+    {
+        "course_id": 381,
+        "course_name": "Active Listening: Enhancing Communication Skills",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程技能全部集中於溝通與人際關係等軟實力，並非傳統技術技能，但在六大職類中沒有專門針對軟技能的分類。考量到前端工程師除了技術外，亦需要使用者溝通與協作能力，因此暫以A前端工程師作為最接近該課程軟技能需求的分類。",
+        "processed_at": "2026-02-27T17:41:47.886615+08:00",
+        "execution_duration_seconds": 7.97
+    },
+    {
+        "course_id": 402,
+        "course_name": "Project Management Principles and Practices",
+        "role_type": "C",
+        "role_name": "全端工程師",
+        "reasoning": "雖然該課程主題為專案管理，不屬於傳統的軟體開發語言或技術，但從軟體專案的全流程來看，全端工程師往往需要同時了解前端與後端並擁有跨領域協作與管理專案的能力。該課程著重於專案啟動、規劃、風險、品質與變更管理等，對於需要全面掌握產品開發流程的全端工程師而言，這是一項重要技能，因此若必須從六大職類中歸類，則屬於全端工程師(C)。",
+        "processed_at": "2026-02-27T17:42:11.128376+08:00",
+        "execution_duration_seconds": 22.9
+    },
+    {
+        "course_id": 408,
+        "course_name": "Google Agile Essentials",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "此課程主要聚焦於敏捷專案管理、Scrum 與相關流程方法，儘管屬於管理與流程技能，但在六大職類中較接近DevOps/SRE工程師，此類角色常需要跨團隊協作及運用敏捷原則以確保持續交付與運維。",
+        "processed_at": "2026-02-27T17:42:22.170378+08:00",
+        "execution_duration_seconds": 10.7
+    },
+    {
+        "course_id": 411,
+        "course_name": "PMI Agile Certified Practitioner (PMI-ACP)",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "該課程強調敏捷方法、團隊建設、領導力與持續改進，這些都是現代DevOps/SRE團隊在軟體開發與維運中常見的核心能力，儘管課程屬於專案管理範疇，但在六大職類中最接近與反映其實踐精神的是DevOps/SRE工程師。",
+        "processed_at": "2026-02-27T17:42:31.823840+08:00",
+        "execution_duration_seconds": 9.29
+    },
+    {
+        "course_id": 415,
+        "course_name": "HTML and CSS in depth",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程主要聚焦在 HTML, CSS, UI 元件、響應式設計等前端技術，符合前端工程師的職類定義。",
+        "processed_at": "2026-02-27T17:42:34.165500+08:00",
+        "execution_duration_seconds": 1.99
+    },
+    {
+        "course_id": 419,
+        "course_name": "Web Development with HTML5, CSS, and JavaScript",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程內容與技能均明確針對前端技術（HTML5, CSS, JavaScript等）與網頁設計，故歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:42:37.105534+08:00",
+        "execution_duration_seconds": 2.61
+    },
+    {
+        "course_id": 420,
+        "course_name": "HTML, CSS, and Javascript for Web Developers",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程的技能列表明確聚焦於前端技術，如HTML, CSS, JavaScript，以及相關的前端工具與標準，故將此課程歸類為前端工程師 (A)。",
+        "processed_at": "2026-02-27T17:42:39.647578+08:00",
+        "execution_duration_seconds": 2.19
+    },
+    {
+        "course_id": 427,
+        "course_name": "Excel Skills for Business",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程內容與技能均聚焦於資料分析與商業分析，包含Excel進階應用、資料建模和數據呈現，明顯符合資料科學家/數據分析師的職能。",
+        "processed_at": "2026-02-27T17:42:43.160830+08:00",
+        "execution_duration_seconds": 3.18
+    },
+    {
+        "course_id": 428,
+        "course_name": "Analyze & Visualize Data Using Advanced Excel",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程主要聚焦於利用進階Excel功能進行數據分析與視覺化，明顯符合資料分析與商業分析的主題，因此歸類為資料科學家/數據分析師。",
+        "processed_at": "2026-02-27T17:42:45.900787+08:00",
+        "execution_duration_seconds": 2.42
+    },
+    {
+        "course_id": 446,
+        "course_name": "Learn Tailwind CSS",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "技能列表中包含網頁設計、HTML、CSS等前端相關技術，而Tailwind CSS本身集中於前端樣式設計，所以將此課程歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:42:49.029636+08:00",
+        "execution_duration_seconds": 2.81
+    },
+    {
+        "course_id": 448,
+        "course_name": "Improve your CSS",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程著重於 CSS、UI 設計、動畫與前端相關技術，符合前端工程師的技能需求。",
+        "processed_at": "2026-02-27T17:42:51.431610+08:00",
+        "execution_duration_seconds": 2.08
+    },
+    {
+        "course_id": 450,
+        "course_name": "Microsoft Back-End Developer",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程名稱與資訊均明確指向後端開發，主要涵蓋 C#、.NET、資料庫整合、安全性與效能優化等後端核心技術，且 Skills 中大量後端相關技能，如 SQL、Database Management、CI/CD 等，故歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:42:53.881165+08:00",
+        "execution_duration_seconds": 2.09
+    },
+    {
+        "course_id": 452,
+        "course_name": "Back-End Development with .NET",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程名稱與Skills均強調後端開發，包含 .NET Framework、ASP.NET、C# 及API等，明顯屬於後端工程師領域。",
+        "processed_at": "2026-02-27T17:42:57.149905+08:00",
+        "execution_duration_seconds": 2.94
+    },
+    {
+        "course_id": 456,
+        "course_name": "Complete ASP.NET Core and Entity Framework Development",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "本課程主要聚焦於 ASP.NET Core 及 Entity Framework 的後端開發與資料庫整合，即使技能清單中提及 HTML/CSS 與 Full-Stack，主要開發重點為後端架構與商業邏輯處理，因此歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:43:03.491266+08:00",
+        "execution_duration_seconds": 6.02
+    },
+    {
+        "course_id": 462,
+        "course_name": "JavaScript, jQuery, and JSON",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程內容主要聚焦於JavaScript、jQuery及JSON，這些技術大多屬於前端開發範疇；即使有提及PHP，也僅為輔助性技能，主焦點仍為前端技術。",
+        "processed_at": "2026-02-27T17:43:07.147939+08:00",
+        "execution_duration_seconds": 3.32
+    },
+    {
+        "course_id": 469,
+        "course_name": "Build Interactive Websites Using jQuery & Sliders",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程名稱強調使用 jQuery 與 Sliders 建構互動式網站，這都是前端開發的核心技能，符合前端工程師的工作範疇",
+        "processed_at": "2026-02-27T17:43:09.744920+08:00",
+        "execution_duration_seconds": 2.28
+    },
+    {
+        "course_id": 493,
+        "course_name": "IBM Generative AI Engineering",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "此課程的內容與技能主要集中在生成式 AI、深度學習、LLM 與 transformer 架構，明確符合 AI/演算法工程師的定位。",
+        "processed_at": "2026-02-27T17:43:12.041679+08:00",
+        "execution_duration_seconds": 1.98
+    },
+    {
+        "course_id": 496,
+        "course_name": "Generative AI and LLMs: Architecture and Data Preparation",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "這門課程聚焦於生成式 AI 與大型語言模型的架構和資料處理，技能涵蓋 NLP、生成模型架構、RNN、GAN、PyTorch 等，均明確與 AI/演算法工程師職能相關，因此歸類為 E.",
+        "processed_at": "2026-02-27T17:43:14.460141+08:00",
+        "execution_duration_seconds": 2.1
+    },
+    {
+        "course_id": 501,
+        "course_name": "End-to-End iOS Development Mastery",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "雖然標題標示『End-to-End』，但課程主要聚焦於 iOS 的 UI 設計、Swift/SwiftUI 與 UIKit，這些均屬於前端開發技術，因此歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:43:19.421130+08:00",
+        "execution_duration_seconds": 4.64
+    },
+    {
+        "course_id": 503,
+        "course_name": "PyTorch: Fundamentals",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "課程技能中明確包含 Machine Learning 和 Convolutional Neural Networks 等核心 AI 技術，符合 AI/演算法工程師職類。",
+        "processed_at": "2026-02-27T17:43:21.992206+08:00",
+        "execution_duration_seconds": 2.24
+    },
+    {
+        "course_id": 505,
+        "course_name": "Introduction to Neural Networks and PyTorch",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "課程名稱與技能均聚焦於神經網路與機器學習框架（如 Tensorflow 和 PyTorch），因此最適合歸類為 AI/演算法工程師。",
+        "processed_at": "2026-02-27T17:43:24.087635+08:00",
+        "execution_duration_seconds": 1.77
+    },
+    {
+        "course_id": 520,
+        "course_name": "ETL and Data Pipelines with Shell, Airflow and Kafka",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程內容聚焦於ETL、資料管道和大數據技術，如Data Transformation、Data Integration、Apache Airflow和Kafka，這些技能符合資料科學家/數據分析師在資料處理與整合方面的需求，因此歸類於此職類。",
+        "processed_at": "2026-02-27T17:43:30.158524+08:00",
+        "execution_duration_seconds": 5.75
+    },
+    {
+        "course_id": 521,
+        "course_name": "BI Foundations with SQL, ETL and Data Warehousing",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程內容聚焦於資料庫、SQL、ETL、Data Warehousing、BI Dashboards以及資料視覺化，這些皆為資料科學家/數據分析師的核心技能，因此歸類於此職類。",
+        "processed_at": "2026-02-27T17:43:35.154919+08:00",
+        "execution_duration_seconds": 4.62
+    },
+    {
+        "course_id": 529,
+        "course_name": "Microsoft Power BI Developer and Architect",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "該課程以 Power BI 為核心，涵蓋資料建模、DAX、互動數據視覺化、報表與分析，這些都與資料科學家/數據分析師的技能與工作重點非常吻合，因此歸類為 D 職類。",
+        "processed_at": "2026-02-27T17:43:39.418952+08:00",
+        "execution_duration_seconds": 3.94
+    },
+    {
+        "course_id": 538,
+        "course_name": "Unlock Business Insights with Microsoft Excel and Power BI",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程內容及技能主要集中在使用 Microsoft Excel 及 Power BI 實現數據分析、視覺化和商業智慧，這與資料科學家/數據分析師的職能非常吻合，因此將該課程歸類為 D。",
+        "processed_at": "2026-02-27T17:43:43.454759+08:00",
+        "execution_duration_seconds": 3.71
+    },
+    {
+        "course_id": 539,
+        "course_name": "BI Essentials for Finance Analysts (Power BI Edition)",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程內容主要聚焦於使用Power BI進行數據建模、視覺化和財務分析，搭配SQL與DAX技能，這些都屬於資料分析與商業智能的範疇，因此歸類於資料科學家/數據分析師。",
+        "processed_at": "2026-02-27T17:43:47.629752+08:00",
+        "execution_duration_seconds": 3.85
+    },
+    {
+        "course_id": 544,
+        "course_name": "Learning TensorFlow: the Hello World of Machine Learning",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "課程名稱強調 TensorFlow 與機器學習，這是 AI/演算法工程師主要關注的技能與領域，因此歸類為 AI/演算法工程師。",
+        "processed_at": "2026-02-27T17:43:50.430002+08:00",
+        "execution_duration_seconds": 2.48
+    },
+    {
+        "course_id": 549,
+        "course_name": "Advanced Computer Vision with TensorFlow",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "課程名稱與 Skills 均強調深度學習、神經網絡、TensorFlow 和電腦視覺領域，符合 AI/演算法工程師的職能。",
+        "processed_at": "2026-02-27T17:43:52.410282+08:00",
+        "execution_duration_seconds": 1.66
+    },
+    {
+        "course_id": 559,
+        "course_name": "Tableau Public for Beginners: Data Visualization Basics",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程名稱顯示使用 Tableau Public 進行資料視覺化，屬於資料分析與視覺化技能，符合資料科學家/數據分析師的職類。",
+        "processed_at": "2026-02-27T17:43:56.122878+08:00",
+        "execution_duration_seconds": 3.39
+    },
+    {
+        "course_id": 567,
+        "course_name": "Data Warehousing: Schema, ETL, Optimal Performance",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程技能涵蓋ETL、資料建模、星型/雪花模式及商業智慧，這些均屬於資料處理與分析，符合資料科學家/數據分析師的範疇。",
+        "processed_at": "2026-02-27T17:44:00.182682+08:00",
+        "execution_duration_seconds": 3.72
+    },
+    {
+        "course_id": 571,
+        "course_name": "Certified Cloud Security Professional (CCSP)",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "技能列表主要圍繞於雲端運算與基礎架構安全，如 Cloud Security、Cloud Infrastructure、IT Security Architecture 等，這與 DevOps/SRE 工程師在雲端與基礎設施安全管理上的職責較為貼近。",
+        "processed_at": "2026-02-27T17:44:05.570423+08:00",
+        "execution_duration_seconds": 5.02
+    },
+    {
+        "course_id": 575,
+        "course_name": "JSP: Build Dynamic Web Apps with Case Study",
+        "role_type": "B",
+        "role_name": "後端工程師",
+        "reasoning": "課程技能明確聚焦於後端開發（如J2EE、MVC、資料庫存取及伺服器端技術等），因此最適合歸類為後端工程師。",
+        "processed_at": "2026-02-27T17:44:08.249695+08:00",
+        "execution_duration_seconds": 2.33
+    },
+    {
+        "course_id": 581,
+        "course_name": "Build Wireframes and Low-Fidelity Prototypes",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程內容與技能主要聚焦於 UI/UX 設計、wireframing 和低保真原型製作，這些皆為前端開發的核心技能，因此歸類為 A 前端工程師。",
+        "processed_at": "2026-02-27T17:44:12.221071+08:00",
+        "execution_duration_seconds": 3.65
+    },
+    {
+        "course_id": 591,
+        "course_name": "Practical Data Science with MATLAB",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程內容聚焦於資料探索與分析、特徵工程以及應用機器學習等，技能列表中也涵蓋了數據視覺化與統計分析，這些均符合資料科學家/數據分析師的職能。",
+        "processed_at": "2026-02-27T17:44:16.891927+08:00",
+        "execution_duration_seconds": 4.35
+    },
+    {
+        "course_id": 592,
+        "course_name": "Modeling and Simulation with Simulink",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "雖然課程內容為系統模擬與控制系統，但課程技能中強調數學建模、模擬軟體與系統分析，這些都屬於演算法與工程模型設計的核心技能，因此歸類為E AI/演算法工程師。",
+        "processed_at": "2026-02-27T17:44:33.505755+08:00",
+        "execution_duration_seconds": 16.29
+    },
+    {
+        "course_id": 601,
+        "course_name": "Modern Frontend Web Development: Sass, JS & Typescript",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程名稱和技能皆清楚聚焦在前端技術，如 JavaScript、TypeScript、CSS等，所以將此課程歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:44:36.237462+08:00",
+        "execution_duration_seconds": 2.37
+    },
+    {
+        "course_id": 613,
+        "course_name": "Apply Flutter Fundamentals to Build Interactive Apps",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程標題與技能均集中於 UI/UX 與互動設計，Flutter 主要用於建立具有響應式互動的前端應用，因此歸類為前端工程師。",
+        "processed_at": "2026-02-27T17:44:40.205969+08:00",
+        "execution_duration_seconds": 3.65
+    },
+    {
+        "course_id": 615,
+        "course_name": "Flutter & Dart - Complete App Development Course",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程以Flutter進行App開發，重點在UI設計與狀態管理，即使也介紹Firebase整合，但主要側重前端開發。",
+        "processed_at": "2026-02-27T17:44:44.864802+08:00",
+        "execution_duration_seconds": 4.34
+    },
+    {
+        "course_id": 623,
+        "course_name": "Natural Language Processing",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "課程名稱及技能均明確聚焦在自然語言處理和機器學習相關技術，如深度學習、RNNs和機器學習方法，這些技能屬於 AI/演算法工程師的範疇。",
+        "processed_at": "2026-02-27T17:44:47.390197+08:00",
+        "execution_duration_seconds": 2.2
+    },
+    {
+        "course_id": 628,
+        "course_name": "Machine Learning and NLP Basics",
+        "role_type": "E",
+        "role_name": "AI/演算法工程師",
+        "reasoning": "課程主要涵蓋機器學習、深度學習與自然語言處理等技術，符合AI/演算法工程師的核心技能需求。",
+        "processed_at": "2026-02-27T17:44:50.261894+08:00",
+        "execution_duration_seconds": 2.54
+    },
+    {
+        "course_id": 634,
+        "course_name": "Jira for Quality Assurance Testing",
+        "role_type": "A",
+        "role_name": "前端工程師",
+        "reasoning": "課程主要介紹如何運用 Jira 進行軟體測試與品質保證，並包含 UI/UX 設計相關內容。雖然軟體測試屬於品質管理，但在六大職類中最接近的為前端工程師，因為課程技能中強調用戶介面、可用性測試與敏捷管理，這些都是前端工程師在開發時常會面臨的議題，因此歸類為 A 前端工程師。",
+        "processed_at": "2026-02-27T17:45:00.032790+08:00",
+        "execution_duration_seconds": 9.45
+    },
+    {
+        "course_id": 643,
+        "course_name": "Administering VMware vSphere: Setup and Configuration",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程內容主要涵蓋 VMware vSphere 的設置與管理，強調虛擬化、儲存、網路與系統監控等基礎設施管理技能，這與 DevOps/SRE 工程師在維運與監控基礎設施方面的技能較為吻合。",
+        "processed_at": "2026-02-27T17:45:03.852608+08:00",
+        "execution_duration_seconds": 3.46
+    },
+    {
+        "course_id": 648,
+        "course_name": "Migrating VMware Workloads to AWS",
+        "role_type": "F",
+        "role_name": "DevOps/SRE工程師",
+        "reasoning": "課程內容與技能主要圍繞AWS雲端管理、基礎架構、網路及虛擬機等技術，明顯符合DevOps/SRE工程師的職能範疇。",
+        "processed_at": "2026-02-27T17:45:07.626672+08:00",
+        "execution_duration_seconds": 3.44
+    },
+    {
+        "course_id": 657,
+        "course_name": "The R Programming Starter Course",
+        "role_type": "D",
+        "role_name": "資料科學家/數據分析師",
+        "reasoning": "課程主要聚焦於R程式設計、資料結構、資料轉換與資料操作，這些都是資料分析與數據處理的核心技能，因此歸類為資料科學家/數據分析師。",
+        "processed_at": "2026-02-27T17:45:12.088866+08:00",
+        "execution_duration_seconds": 4.12
+    }
+]
