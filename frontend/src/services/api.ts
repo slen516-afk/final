@@ -79,3 +79,25 @@ export const getProjectSuggestionsAPI = async (userData: any = {}) => {
         throw error;
     }
 };
+
+// 取得學習資源推薦 (POST 請求)
+export const getLearningRecommendationsAPI = async (userData: any = {}) => {
+  try {
+    const response = await fetch(`/api/learning/recommendations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData), 
+    });
+
+if (!response.ok) {
+      throw new Error(`伺服器回應錯誤: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("取得學習資源推薦失敗:", error);
+    throw error;
+  }
+};
+
