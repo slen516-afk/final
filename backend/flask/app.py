@@ -3,10 +3,12 @@
 
 import sys
 import os
-
+import json
+from crewai import Agent, Task, Crew
 import uuid
 from flask import Flask, app, jsonify
 from flask_cors import CORS
+from service.llm_service.src.features.course.tools import CourseRecommendationTool
 
 
 # ====== 1. 解決路徑問題 (修正版) =================
