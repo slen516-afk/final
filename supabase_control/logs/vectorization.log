@@ -33942,3 +33942,68 @@
 2026-02-27 13:36:42,974 - INFO - 🎉 本輪向量化作業完成！
 2026-02-27 13:36:42,974 - INFO - ✅ 成功處理: 1 筆（已寫入 Qdrant 並回寫 Supabase vector_id / is_embedded）
 2026-02-27 13:36:42,974 - INFO - ============================================================
+2026-03-01 15:20:15,964 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-01 15:20:15,969 - INFO - ============================================================
+2026-03-01 15:20:15,969 - INFO - Career Pilot 優化後履歷向量化作業
+2026-03-01 15:20:15,969 - INFO - 執行時間: 2026-03-01 15:20:15
+2026-03-01 15:20:15,970 - INFO - 模型: text-embedding-3-large，維度: 1536
+2026-03-01 15:20:15,970 - INFO - Collection: optimized_resume_vectors
+2026-03-01 15:20:15,970 - INFO - 本輪處理筆數上限: 10
+2026-03-01 15:20:15,970 - INFO - ============================================================
+2026-03-01 15:20:17,389 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?select=optimization_id&is_embedded=eq.False "HTTP/2 200 OK"
+2026-03-01 15:20:17,390 - INFO - 📊 待處理優化後履歷總數: 7，本輪將處理: 7 筆
+2026-03-01 15:20:36,786 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?select=optimization_id%2Cresume_id%2Cuser_id%2Cprofessional_summary%2Cprofessional_experience%2Ccore_skills%2Cprojects%2Ceducation%2Cautobiography&is_embedded=eq.False&order=optimization_id.asc&limit=7 "HTTP/2 200 OK"
+2026-03-01 15:20:40,857 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-01 15:20:43,573 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-01 15:20:43,840 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-01 15:20:44,103 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-01 15:20:44,347 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-01 15:20:44,626 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-01 15:20:44,880 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-01 15:20:46,272 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:20:46,273 - INFO - ✅ Qdrant 寫入 7 筆優化後履歷向量
+2026-03-01 15:20:46,687 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?optimization_id=eq.3 "HTTP/2 200 OK"
+2026-03-01 15:20:47,045 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?optimization_id=eq.4 "HTTP/2 200 OK"
+2026-03-01 15:20:47,385 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?optimization_id=eq.5 "HTTP/2 200 OK"
+2026-03-01 15:20:47,871 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?optimization_id=eq.6 "HTTP/2 200 OK"
+2026-03-01 15:20:48,243 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?optimization_id=eq.7 "HTTP/2 200 OK"
+2026-03-01 15:20:48,582 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?optimization_id=eq.8 "HTTP/2 200 OK"
+2026-03-01 15:20:48,913 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?optimization_id=eq.9 "HTTP/2 200 OK"
+2026-03-01 15:20:48,915 - INFO - 📈 進度: 成功=7, 失敗=0, 跳過=0 (本批 成功=7, 失敗=0, 跳過=0)
+2026-03-01 15:20:48,916 - INFO - ============================================================
+2026-03-01 15:20:48,916 - INFO - 🎉 本輪優化後履歷向量化作業完成
+2026-03-01 15:20:48,916 - INFO - ✅ 成功轉出並回寫: 7 筆（已寫入 Qdrant 並更新 resume_optimization.vector_id / is_embedded）
+2026-03-01 15:20:48,916 - INFO - ❌ 失敗: 0 筆
+2026-03-01 15:20:48,916 - INFO - ⚠️  跳過（無有效文本）: 0 筆
+2026-03-01 15:20:48,916 - INFO - ============================================================
+2026-03-01 15:27:33,385 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-01 15:27:33,980 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-01 15:27:35,244 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?select=optimization_id%2Cresume_id%2Cuser_id%2Cvector_id%2Cprofessional_summary%2Cprofessional_experience%2Ccore_skills%2Cprojects%2Ceducation%2Cautobiography&is_embedded=eq.True&order=optimization_id.asc "HTTP/2 200 OK"
+2026-03-01 15:27:40,941 - INFO - HTTP Request: POST https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:27:41,144 - INFO - HTTP Request: POST https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:27:41,341 - INFO - HTTP Request: POST https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:27:41,715 - INFO - HTTP Request: POST https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:27:41,904 - INFO - HTTP Request: POST https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:27:42,101 - INFO - HTTP Request: POST https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:27:42,292 - INFO - HTTP Request: POST https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:29:58,031 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-01 15:29:58,629 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-01 15:29:59,339 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?select=optimization_id%2Cresume_id%2Cuser_id%2Cvector_id%2Cprofessional_summary%2Cprofessional_experience%2Ccore_skills%2Cprojects%2Ceducation%2Cautobiography&is_embedded=eq.True&order=optimization_id.asc "HTTP/2 200 OK"
+2026-03-01 15:30:04,684 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:30:04,880 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:30:05,074 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:30:05,267 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:30:05,463 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:30:05,655 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:30:05,848 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:36:16,601 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-01 15:36:17,204 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-01 15:36:18,474 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume_optimization?select=optimization_id%2Cresume_id%2Cuser_id%2Cvector_id%2Cprofessional_summary%2Cprofessional_experience%2Ccore_skills%2Cprojects%2Ceducation%2Cautobiography&is_embedded=eq.True&order=optimization_id.asc "HTTP/2 200 OK"
+2026-03-01 15:36:22,839 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:36:23,030 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:36:23,224 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:36:23,414 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:36:23,607 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:36:23,800 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:36:23,992 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
+2026-03-01 15:36:24,186 - INFO - HTTP Request: POST https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points "HTTP/1.1 200 OK"

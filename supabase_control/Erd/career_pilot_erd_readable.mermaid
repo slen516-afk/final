@@ -67,6 +67,7 @@ erDiagram
         datetime created_at
         datetime last_login
         boolean is_active
+        int optimization_quota_per_month "每月履歷優化次數上限；0=不開放；DEFAULT 5"
     }
 
     USER_PROFILE {
@@ -337,6 +338,8 @@ erDiagram
         string llm_model_used "VARCHAR(100)"
         string optimization_version "VARCHAR(10) DEFAULT '1.0'"
         string template_color "VARCHAR(50) 顏色模板名稱"
+        uuid vector_id "Qdrant Point ID，optimized_resume_vectors 回填用"
+        boolean is_embedded "DEFAULT FALSE，是否已寫入 Qdrant"
         timestamptz created_at "NOT NULL, DEFAULT NOW()"
     }
 

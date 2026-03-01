@@ -36,6 +36,7 @@ class Settings:
     # Collection 名稱
     JOB_COLLECTION = "job_vectors"
     RESUME_COLLECTION = "resume_vectors"
+    OPTIMIZED_RESUME_COLLECTION = "optimized_resume_vectors"
 
 
 settings = Settings()

@@ -18,6 +18,7 @@
 | created_at | 建立時間 | Created At | DATETIME | 帳號建立時間 | NOT NULL |
 | last_login | 最後登入時間 | Last Login | DATETIME | 最後登入時間 | - |
 | is_active | 帳號啟用狀態 | Is Active | BOOLEAN | 帳號是否啟用 | DEFAULT TRUE |
+| optimization_quota_per_month | 每月優化次數上限 | Optimization Quota Per Month | INT | 每月可使用的履歷優化次數上限，0 表示不開放；後端以當月 RESUME_OPTIMIZATION 筆數與此值比較判斷是否允許 | DEFAULT 5 |
 
 ---
 
@@ -368,6 +369,8 @@
 | llm_model_used | 使用的 LLM 模型 | LLM Model Used | VARCHAR(100) | 產生此優化使用的 LLM 版本 | - |
 | optimization_version | 優化版本 | Optimization Version | VARCHAR(10) | Schema 版本 | DEFAULT '1.0' |
 | template_color | 顏色模板名稱 | Template Color | VARCHAR(50) | 用戶確認優化結果時選擇的顏色模板名稱（如：'深海藍經典'），前端依此名稱對應 hex 色碼渲染 | - |
+| vector_id | 向量識別碼 | Vector ID | UUID | 對應 Qdrant optimized_resume_vectors 中的 Point ID，向量化腳本回填用 | - |
+| is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 是否已寫入 Qdrant optimized_resume_vectors | DEFAULT FALSE |
 | created_at | 建立時間 | Created At | TIMESTAMPTZ | 優化產生時間 | NOT NULL, DEFAULT NOW() |
 
 ---
