@@ -24,6 +24,9 @@ rec_bp = Blueprint('recommendation', __name__)
 @rec_bp.route('/jobs/recommendations', methods=['POST'])
 def recommend_jobs():
     data = request.get_json() or {}
+
+    page = request.args.get('page', 1, type=int)
+    page_size = 10  # 每一頁只挑 10 個最精華的給 AI 看，省錢又精準！
     
     resume_id = data.get("resumeId")
     target_city = data.get("city", "不限地區")
@@ -63,8 +66,11 @@ def recommend_jobs():
             max_salary = 999999
 
         # ==========================================
-        # 步驟 2：Python 嚴格過濾與「毀屍滅跡」(刪除原始數字)
+        # 步驟 2：撈取多一點庫存 + Python 頁碼切片
         # ==========================================
+
+        # 🌟 就是這裡！把這三行補回來，Python 才知道要搜哪裡！
+        target_city = data.get("city", "不限地區")
         search_city = target_city.replace("市", "").replace("縣", "")
         print(f"DEBUG: 準備撈取 - 地點: {search_city}, 條件: {min_salary} ~ {max_salary}")
 
@@ -72,8 +78,10 @@ def recommend_jobs():
         if target_city != "不限地區":
             query = query.ilike('city', f'%{search_city}%')
             
-        raw_jobs = query.limit(50).execute().data
+        # 🌟 1. 放大撈取量：一次撈 300 筆出來給 Python 慢慢洗，不要只撈 50 筆
+        raw_jobs = query.limit(300).execute().data
         
+        # ... (中間 Python 洗薪水、過濾大數字的 for 迴圈完全不變) ...
         clean_jobs = []
         for job in raw_jobs:
             s_min = job.get('salary_min') or 0
@@ -85,31 +93,41 @@ def recommend_jobs():
 
             actual_s_max = s_max if s_max > 0 else 999999
 
-            # 嚴格過濾：過濾掉低於或遠高於問卷區間的
+            # 🌟 絕對嚴格模式：只要起薪不符合區間，直接踢掉！
             if s_min < min_salary or s_min > max_salary:
                 continue
 
-            # 格式化薪水字串
+            # 預先格式化為 k (例如 40000 變 40k)
             if s_min == s_max or s_max == 0:
                 final_salary_str = f"{int(s_min/1000)}k"
             else:
                 final_salary_str = f"{int(s_min/1000)}k - {int(s_max/1000)}k"
 
-            # 🌟 殺手鐧：重組一個全新的乾淨字典！把原始數字直接丟掉！
+            # 🌟 就是這裡！重新定義乾淨的 clean_job 字典，隱藏真實的大數字！
             clean_job = {
                 "id": job.get("job_id"),
                 "title": job.get("job_title"),
                 "description": job.get("job_description"),
                 "location": job.get("city"),
-                "salary_range": final_salary_str  # 👈 AI 只能看到這個完美的字串
+                "salary_range": final_salary_str
             }
             clean_jobs.append(clean_job)
 
-        if not clean_jobs:
-            return jsonify({"status": "success", "recommendations": [], "message": "目前沒有符合該薪資區間的職缺"}), 200
+        # 🌟 2. 核心魔法：根據前端的頁碼，算出這次要切哪幾筆給 AI！
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        candidate_jobs = clean_jobs[start_idx:end_idx]
 
-        # 取前 15 筆轉成字串餵給 AI
-        jobs_context = json.dumps(clean_jobs[:15], ensure_ascii=False)
+        # 如果切片切不到東西 (例如使用者翻到第 100 頁，或是這區真的沒工作了)
+        if not candidate_jobs:
+            return jsonify({
+                "status": "success", 
+                "recommendations": [], 
+                "message": "這頁沒有符合的職缺了"
+            }), 200
+
+        # 將「這頁專屬」的 10 筆資料轉成字串，餵給 AI
+        jobs_context = json.dumps(candidate_jobs, ensure_ascii=False)
 
         # ==========================================
         # 步驟 3：設定 AI 任務 (大幅簡化，因為資料已經乾淨了)
@@ -135,10 +153,14 @@ def recommend_jobs():
             3. `company` 統一輸出為 "精選企業"。
             4. `match_score` 請根據技能相符程度給予 1~100 的分數。
             5. `required_skills` 請從職缺描述中萃取出技術關鍵字陣列。
+            
+            🚨 嚴格警告：你的輸出將被機器直接讀取！
+            絕對不准輸出任何解釋文字！不准說 "Here is the JSON" 或 "The JSON array above"！
             """,
             expected_output="""
-            輸出一個合法的 JSON 陣列。
-            格式範例：[{"id": 1, "title": "工程師", "company": "精選企業", "location": "桃園", "salary_range": "40k - 80k", "match_score": 85, "required_skills": ["Python"], "description": "..."}]
+            [{"id": 1, "title": "工程師", "company": "精選企業", "location": "新北", "salary_range": "60k - 80k", "match_score": 85, "required_skills": ["Python"], "description": "..."}]
+            
+            請確保你的最後輸出「只有」一個合法的 JSON 陣列，必須以 [ 開頭，以 ] 結尾。即使找不到合適的工作，也請只輸出 []，禁止任何多餘文字！
             """,
             agent=job_advisor
         )
