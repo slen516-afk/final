@@ -6,6 +6,10 @@ Career Pilot 優化後履歷向量化主程式
 3. 使用 OpenAI text-embedding-3-large 產生 1536 維向量，寫入 Qdrant optimized_resume_vectors
 4. 回寫 resume_optimization 表的 vector_id 與 is_embedded
 5. Payload 僅存：optimization_id, user_id, resume_id（篩選用），六個內容欄位不寫入 payload
+
+流程／後端串接：
+- 使用者使用履歷優化功能（每月次數由後端卡上限）、寫入 resume_optimization 後，後端可立即觸發本腳本只處理該筆：設 OPTIMIZATION_IDS=<optimization_id> 再執行（不問 confirm）。
+- 未設 OPTIMIZATION_IDS 時為批次模式（依 OPTIMIZED_RESUME_LIMIT），適合 cron 或手動補跑。
 """
 
 import os
@@ -14,7 +18,7 @@ import time
 import uuid
 import logging
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from openai import OpenAI
@@ -43,6 +47,9 @@ logger = logging.getLogger(__name__)
 
 # 本腳本預設只處理前 N 筆（可透過 OPTIMIZED_RESUME_LIMIT 環境變數覆寫）
 OPTIMIZED_RESUME_LIMIT = int(os.getenv("OPTIMIZED_RESUME_LIMIT", "10"))
+# 後端觸發「指定優化結果」向量化時可傳 OPTIMIZATION_IDS=5,6,7，只處理這些 optimization_id（仍限 is_embedded=False）
+_OPTIMIZATION_IDS_ENV = os.getenv("OPTIMIZATION_IDS", "").strip()
+OPTIMIZATION_IDS = [int(x.strip()) for x in _OPTIMIZATION_IDS_ENV.split(",") if x.strip().isdigit()] if _OPTIMIZATION_IDS_ENV else None
 
 # 向量化來源欄位（與 ERD RESUME_OPTIMIZATION 對應）
 VECTOR_FIELDS = [
@@ -139,14 +146,15 @@ def get_embedding(text: str) -> List[float]:
         raise
 
 
-def vectorize_optimized_resumes_batch(limit: int) -> tuple:
+def vectorize_optimized_resumes_batch(limit: int, optimization_ids: Optional[List[int]] = None) -> tuple:
     """
-    處理單一批次優化後履歷向量化（每次撈「下一批」未嵌入，不依賴 offset，與 vectorize_jobs 一致）。
+    處理單一批次優化後履歷向量化（每次撈「下一批」未嵌入，不依賴 offset）。
+    optimization_ids: 若提供，只處理這些 optimization_id（仍限 is_embedded=False），供後端「優化完成後立即向量化」觸發。
     Returns:
         (成功筆數, 失敗筆數, 跳過筆數)
     """
     try:
-        response = (
+        q = (
             supabase.table("resume_optimization")
             .select(
                 "optimization_id, resume_id, user_id, "
@@ -154,10 +162,12 @@ def vectorize_optimized_resumes_batch(limit: int) -> tuple:
                 "projects, education, autobiography"
             )
             .eq("is_embedded", False)
-            .order("optimization_id")
-            .limit(limit)
-            .execute()
         )
+        if optimization_ids:
+            q = q.in_("optimization_id", optimization_ids)
+        else:
+            q = q.order("optimization_id").limit(limit)
+        response = q.execute()
         rows = response.data or []
     except Exception as e:
         logger.error("❌ Supabase 查詢 resume_optimization 失敗: %s", e)
@@ -235,14 +245,23 @@ def vectorize_optimized_resumes_batch(limit: int) -> tuple:
 
 
 def main():
-    """主流程：只處理前 OPTIMIZED_RESUME_LIMIT 筆未向量化優化後履歷。"""
+    """主流程：可依 OPTIMIZATION_IDS 只處理指定優化結果，或依 OPTIMIZED_RESUME_LIMIT 批次處理。"""
     logger.info("=" * 60)
     logger.info("Career Pilot 優化後履歷向量化作業")
     logger.info("執行時間: %s", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     logger.info("模型: %s，維度: %s", settings.EMBEDDING_MODEL, settings.EMBEDDING_DIMENSIONS)
     logger.info("Collection: %s", settings.OPTIMIZED_RESUME_COLLECTION)
-    logger.info("本輪處理筆數上限: %s", OPTIMIZED_RESUME_LIMIT)
+    if OPTIMIZATION_IDS:
+        logger.info("模式: 指定 ID（OPTIMIZATION_IDS=%s）", OPTIMIZATION_IDS)
+    else:
+        logger.info("本輪處理筆數上限: %s", OPTIMIZED_RESUME_LIMIT)
     logger.info("=" * 60)
+
+    if OPTIMIZATION_IDS:
+        # 後端觸發：只處理指定 optimization_id（優化完成、扣完每月次數後呼叫），不問 confirm
+        ok, fail, skip = vectorize_optimized_resumes_batch(limit=0, optimization_ids=OPTIMIZATION_IDS)
+        logger.info("指定 ID 模式完成：成功=%s, 失敗=%s, 跳過=%s", ok, fail, skip)
+        return
 
     try:
         count_response = (

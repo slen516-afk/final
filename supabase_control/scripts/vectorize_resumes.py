@@ -5,6 +5,11 @@ Career Pilot 履歷向量化主程式
 2. 使用 OpenAI text-embedding-3-large 產生 1536 維向量
 3. 寫入 Qdrant resume_vectors，並回寫 resume 表的 vector_id 與 is_embedded
 4. 日誌寫入 logs/vectorization.log，含明確進度與成功/失敗筆數
+
+流程／後端串接：
+- 使用者上傳原始履歷後，後端可立即觸發本腳本只處理該筆：設 RESUME_IDS=<resume_id> 再執行（不問 confirm）。
+- 未設 RESUME_IDS 時為批次模式（依 RESUME_LIMIT），適合 cron 或手動補跑。
+- 職缺推薦時由 retriever 依使用者選擇用 resume_vectors 或 optimized_resume_vectors 做比對；職缺本身用 vectorize_jobs 批次即可。
 """
 
 import os
@@ -43,6 +48,9 @@ logger = logging.getLogger(__name__)
 
 # 本腳本預設只處理前 N 筆（可透過 RESUME_LIMIT 環境變數覆寫）
 RESUME_LIMIT = int(os.getenv("RESUME_LIMIT", "10"))
+# 後端觸發「指定履歷」向量化時可傳 RESUME_IDS=1,2,3，只處理這些 resume_id（仍限 is_embedded=False）
+_RESUME_IDS_ENV = os.getenv("RESUME_IDS", "").strip()
+RESUME_IDS = [int(x.strip()) for x in _RESUME_IDS_ENV.split(",") if x.strip().isdigit()] if _RESUME_IDS_ENV else None
 
 # ============ 初始化客戶端 ============
 openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
@@ -145,31 +153,35 @@ def get_embedding(text: str) -> List[float]:
         raise
 
 
-def vectorize_resumes_batch(limit: int, offset: int = 0) -> tuple:
+def vectorize_resumes_batch(limit: int, offset: int = 0, resume_ids: Optional[List[int]] = None) -> tuple:
     """
     處理單一批次履歷向量化。
 
     Args:
-        limit: 本批最多筆數
-        offset: 起始位置（用於分頁）
+        limit: 本批最多筆數（resume_ids 為 None 時使用）
+        offset: 起始位置（resume_ids 為 None 時用於分頁）
+        resume_ids: 若提供，只處理這些 resume_id（仍限 is_embedded=False），供後端「上傳後立即向量化」觸發
 
     Returns:
         (成功筆數, 失敗筆數, 跳過筆數)
     """
     # ========== Step 1: 從 Supabase 提取未向量化履歷 ==========
     try:
-        response = (
+        q = (
             supabase.table("resume")
             .select(
                 "resume_id, user_id, template_id, resume_type, structured_data, normalized_data"
             )
             .eq("is_embedded", False)
-            .range(offset, offset + limit - 1)
-            .execute()
         )
+        if resume_ids:
+            q = q.in_("resume_id", resume_ids)
+        else:
+            q = q.range(offset, offset + limit - 1)
+        response = q.execute()
         rows = response.data or []
     except Exception as e:
-        logger.error("❌ Supabase 查詢履歷失敗 (offset=%s): %s", offset, e)
+        logger.error("❌ Supabase 查詢履歷失敗 (offset=%s, resume_ids=%s): %s", offset, resume_ids, e)
         return (0, 0, 0)
 
     if not rows:
@@ -236,15 +248,24 @@ def vectorize_resumes_batch(limit: int, offset: int = 0) -> tuple:
 
 
 def main():
-    """主流程：只處理前 RESUME_LIMIT 筆未向量化履歷。"""
+    """主流程：可依 RESUME_IDS 只處理指定履歷，或依 RESUME_LIMIT 批次處理未向量化履歷。"""
     logger.info("=" * 60)
     logger.info("Career Pilot 履歷向量化作業")
     logger.info("執行時間: %s", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     logger.info("模型: %s，維度: %s", settings.EMBEDDING_MODEL, settings.EMBEDDING_DIMENSIONS)
-    logger.info("本輪處理筆數上限: %s", RESUME_LIMIT)
+    if RESUME_IDS:
+        logger.info("模式: 指定 ID（RESUME_IDS=%s）", RESUME_IDS)
+    else:
+        logger.info("本輪處理筆數上限: %s", RESUME_LIMIT)
     logger.info("=" * 60)
 
-    # ========== 取得待處理總數 ==========
+    if RESUME_IDS:
+        # 後端觸發：只處理指定 resume_id，不問 confirm、不跑進度條
+        ok, fail, skip = vectorize_resumes_batch(limit=0, offset=0, resume_ids=RESUME_IDS)
+        logger.info("指定 ID 模式完成：成功=%s, 失敗=%s, 跳過=%s", ok, fail, skip)
+        return
+
+    # ========== 批次模式：取得待處理總數 ==========
     try:
         count_response = (
             supabase.table("resume")
