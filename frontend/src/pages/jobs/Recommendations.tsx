@@ -26,6 +26,7 @@ import icon104 from "@/assets/104-icon.png";
 import type { JobData } from "@/types/job";
 import { generateMockJobs } from "@/mocks/jobs";
 import { getJobRecommendationsAPI } from "@/services/api";
+import { useResumes } from "@/contexts/ResumeContext";
 
 
 // Job Card Skeleton
@@ -112,6 +113,7 @@ type Stage = "survey" | "loading" | "results";
 const Recommendations = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isJobPreferenceQuizDone, setIsJobPreferenceQuizDone } = useAppState();
+  const { selectedResumeId } = useResumes();
 
   // Determine initial stage
   const [stage, setStage] = useState<Stage>(isJobPreferenceQuizDone ? "results" : "survey");
@@ -189,9 +191,29 @@ const Recommendations = () => {
   };
 
   // Survey complete → loading → results
-  const handleSurveyComplete = (surveyData: any) => { //<-加上surveyData參數
-    // 將真實問卷資料存入瀏覽器Local Storage
-    localStorage.setItem('userJobSurvey', JSON.stringify(surveyData));
+  const handleSurveyComplete = (surveyData: any) => {
+    // 🔍 可以先在 console 看一下 surveyData 到底長怎樣
+    console.log("問卷原始資料:", surveyData);
+
+    const finalPayload = {
+      // 1. 恢復使用真實的履歷 ID (把 '我是 Ryan' 刪掉)
+      resumeId: selectedResumeId, 
+      
+      // 2. 地點與辦公模式
+      city: surveyData.city || surveyData.location || "不限地區",
+      workMode: surveyData.workMode || "不限",
+
+      // 🌟 3. 強制把薪資轉換成後端要的 minSalary 和 maxSalary
+      // (這裡假設你的拉桿回傳的是 salaryRange 陣列，請依據你 console.log 的結果微調)
+      minSalary: surveyData.minSalary || 30000,
+      maxSalary: surveyData.maxSalary || 200000,
+    };
+
+    console.log("📦 準備寄給後端的最終包裹:", finalPayload);
+
+    // 將真實問卷資料存入瀏覽器 Local Storage
+    localStorage.setItem('userJobSurvey', JSON.stringify(finalPayload));
+
     setStage("loading");
     window.scrollTo({ top: 0, behavior: "smooth" });
 
