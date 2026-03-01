@@ -230,7 +230,7 @@ const Recommendations = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen ">
       <div className="container py-8 md:py-12">
         <AnimatePresence mode="wait">
           {/* ─── Stage 1: Survey ─── */}

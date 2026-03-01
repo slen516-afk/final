@@ -63,10 +63,10 @@ const AlertModal = ({
 
           {/* Modal */}
           <motion.div
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2"
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm"
+            initial={{ opacity: 0, scale: 0.9, x: "-50%", y: "-40%" }} 
+            animate={{ opacity: 1, scale: 1, x: "-50%", y: "-50%" }}
+            exit={{ opacity: 0, scale: 0.9, x: "-50%", y: "-40%" }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
             <div className="ui-white rounded-2xl border overflow-hidden">
