@@ -59,9 +59,12 @@ class TargetPosition(BaseModel):
     """)
     match_score: str = Field(description="目標職位與目前能力的匹配百分比 (如 '75%')")
     gap_description: str = Field(description="""
-        針對目標職位的落差分析。
-        - 有經驗者：具體說明技術缺口 (如缺 K8s)。
-        - 無經驗者：**必須在此處整合『技能轉譯』**。解釋使用者的舊經驗 (如 Excel) 如何對應到新職位 (如 SQL)，並說明雖然目前技術分低 (0.5)，但具備哪些遷移潛力。
+        針對目標職位的深度落差分析，請務必使用以下結構輸出：
+        【優勢 (Strengths)】：既有技術/軟實力中能直接對應目標職位的能力。
+        【劣勢 (Weaknesses)】：技術斷層或相關經驗不足之處。
+        【機會 (Opportunities)】：目標職位目前的市場缺口可以如何發揮使用者潛力。
+        【威脅 (Threats)】：該職位的競爭情況或技術快速迭代帶來的外部風險。
+        【核心落差 (Gap)】：具體指出缺漏的技術棧（如缺乏 K8s、高併發經驗）或需轉譯的舊經驗。
         """)
 
 class GapAnalysis(BaseModel):
