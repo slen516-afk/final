@@ -61,7 +61,7 @@ def create_tech_lead_agent(tools: list = None) -> Agent:
         goal=TECH_LEAD_GOAL,
         backstory=TECH_LEAD_BACKSTORY,
         tools=tools or [],
-        verbose=True,
+        verbose=VERBOSE,
         allow_delegation=False
     )
 
@@ -72,7 +72,7 @@ def create_psychologist_agent(tools: list = None) -> Agent:
         goal=PSYCHOLOGIST_GOAL,
         backstory=PSYCHOLOGIST_BACKSTORY,
         tools=tools or [],
-        verbose=True,
+        verbose=VERBOSE,
         allow_delegation=False
     )
 
@@ -83,7 +83,7 @@ def create_career_advisor_agent(tools: list = None) -> Agent:
         goal=ADVISOR_GOAL,
         backstory=ADVISOR_BACKSTORY,
         tools=tools or [],
-        verbose=True,
+        verbose=VERBOSE,
         allow_delegation=False
     )
 
@@ -94,6 +94,6 @@ def create_discovery_mentor_agent(tools: list = None) -> Agent:
         goal=MENTOR_GOAL,
         backstory=MENTOR_BACKSTORY,
         tools=tools or [],
-        verbose=True,
+        verbose=VERBOSE,
         allow_delegation=False
     )
