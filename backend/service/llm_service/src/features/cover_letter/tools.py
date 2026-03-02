@@ -48,7 +48,7 @@ class DatabaseTools:
                 .execute()
 
             if not response.data:
-https://github.com/slen516-afk/final/pull/21/conflict?name=backend%252Fservice%252Fllm_service%252Fsrc%252Ffeatures%252Fcover_letter%252Ftools.py&base_oid=220afb8dfd1b59fb8dbd9ed295fa0c1e71e35e11&head_oid=78a21c5c4531e4db7664927bb85d45c207544c5a                return {"error": "找不到該用戶優化後履歷資料"}
+                return {"error": "找不到該用戶優化後履歷資料"}
 
             return response.data
 
