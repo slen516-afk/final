@@ -79,7 +79,7 @@ class GapAnalysisHandler(BaseResultHandler):
             raise
 
 # ======================================================
-# 範例 1：履歷優化處理器 (Resume Optimization) - 新增式存檔(需要撈 resume_id & 算版本)
+# 1. 履歷優化處理器 (Resume Optimization) - 新增式存檔(需要撈 resume_id & 算版本)
 # ======================================================
 class ResumeOptHandler(BaseResultHandler):
     def process(self, pydantic_result: any, **kwargs):
@@ -122,7 +122,7 @@ class ResumeOptHandler(BaseResultHandler):
         return self.supabase.table("resume_optimization").insert(payload).execute()
 
 # ======================================================
-# 範例 2：履歷分析處理器 (Resume Analysis) - 新增式存檔
+# 2. 履歷分析處理器 (Resume Analysis) - 新增式存檔
 # ======================================================
 class ResumeAnalysisHandler(BaseResultHandler):
     def process(self, pydantic_result: any, **kwargs):
@@ -151,7 +151,7 @@ class ResumeAnalysisHandler(BaseResultHandler):
         # 使用 upsert，衝突時更新
         return self.supabase.table("resume_analysis").insert(payload).execute()
 
-# ... 你可以依此類推，為其他 5 個功能建立專屬 Handler ...
+# 職缺與課程推薦暫不存檔資料庫，若要存需要調整程式碼
 # ======================================================
 # 3. 職缺推薦處理器 (Job Recommendation) - 新增式存檔
 # ======================================================
