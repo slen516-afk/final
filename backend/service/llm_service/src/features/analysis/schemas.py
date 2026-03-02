@@ -77,9 +77,9 @@ class GapAnalysis(BaseModel):
 # ==========================================
 
 class ActionPlan(BaseModel):
-    short_term: str = Field(description="短期計畫 (1-3個月)：針對最急迫的 Gap，提及具體工具或語法")
-    mid_term: str = Field(description="中期計畫 (3-6個月)：針對專案經驗與進階框架的補強") # [新增]
-    long_term: str = Field(description="長期計畫 (6個月以上)：針對架構思維、軟實力或跨領域整合")
+    short_term: str = Field(description="短期計畫 (1-3個月)：針對最急迫的破口。必須包含具體的學習主題、推薦工具(如指定閱讀某技術文件或學習某特定語言)與預期達成的專案里程碑。")
+    mid_term: str = Field(description="中期計畫 (3-6個月)：針對專案經驗與進階框架的補強。指出該如何累積作品集或工作上的實作方向。") 
+    long_term: str = Field(description="長期計畫 (6個月以上)：針對架構思維、產業領域知識 (Domain Knowledge) 或跨領域整合的長遠職涯發展建議。")
 
 class PreliminarySummary(BaseModel):
     core_insight: str = Field(description="一句話精闢總結使用者的職涯畫像，包含強項與隱憂")
