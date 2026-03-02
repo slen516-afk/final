@@ -18,8 +18,8 @@ def create_resume_form():
         if user_id is None:
             return jsonify({'error': 'User not found in DB'}), 403
         data = request.json
-        if 'survey_id' not in data or 'structured_data' not in data:
-            return jsonify({'error': 'Missing survey_id or structured_data'}), 400
+        if 'structured_data' not in data:
+            return jsonify({'error': 'Missing structured_data'}), 400
 
         template_id = data.get('template_id', 1)
         resume_type = data.get('resume_type', 'generic')
@@ -117,21 +117,20 @@ def update_resume(id):
         ver_resp = (
             supabase.table("resume_optimization")
             .select("optimization_version")
-            .eq("resume_id", id)
+            .eq("user_id", user_id)
             .order("optimization_version", desc=True)
             .limit(1)
             .execute()
         )
 
         if ver_resp.data:
-            # optimization_version 是 varchar，如 '1.0', '2.0'
             current_ver = ver_resp.data[0]['optimization_version']
             try:
-                next_ver = str(int(float(current_ver)) + 1) + ".0"
+                next_ver = str(int(float(current_ver)) + 1)
             except (ValueError, TypeError):
-                next_ver = "1.0"
+                next_ver = "1"
         else:
-            next_ver = "1.0"
+            next_ver = "1"
 
         # 3. 從 structured_data 或直接頂層欄位映射
         sd = data.get('structured_data', {})

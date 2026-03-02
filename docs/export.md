@@ -2,7 +2,7 @@
 
 ## Endpoint
 
-```
+```http
 GET /api/resumes/{resume_id}/export?format={pdf|docx|json}
 ```
 
@@ -15,6 +15,7 @@ GET /api/resumes/{resume_id}/export?format={pdf|docx|json}
 | 參數       | 必填 | 預設    | 說明                                  |
 | ---------- | ---- | ------- | ------------------------------------- |
 | `format` | 否   | `pdf` | 匯出格式：`pdf`、`docx`、`json` |
+| `version` | 否   |         | 指定優化版本（如 `1.0`、`2.0`），未帶則取最新版本 |
 
 ## Response
 
@@ -35,8 +36,9 @@ GET /api/resumes/{resume_id}/export?format={pdf|docx|json}
 ```json
 {
   "resume_id": 203,
+  "optimization_version": "1.0",
   "format": "json",
-  "data": { "...整份 resume row..." }
+  "data": { "...整份 resume_optimization row..." }
 }
 ```
 
@@ -151,15 +153,18 @@ curl -H "Authorization: Bearer YOUR_TOKEN" \
 
 兩種格式產出的履歷包含以下區塊（依 `structured_data` 內容自動渲染）：
 
-| 區塊            | `structured_data` 欄位                                   |
-| --------------- | ---------------------------------------------------------- |
-| 個人資料 Header | `personal_info.name`, `email`, `phone`, `location` |
-| Summary         | `summary`                                                |
-| Work Experience | `work_experience[]` 或 `experience[]`                  |
-| Education       | `education[]`                                            |
-| Skills          | `skills[]`                                               |
-| Projects        | `projects[]`                                             |
-| Certifications  | `certifications[]` 或 `certificates[]`                 |
+| 區塊            | `structured_data` 欄位                                   | 格式說明 |
+| --------------- | ---------------------------------------------------------- | -------- |
+| 個人資料 Header | `personal_info.name`, `email`, `phone`, `location` | |
+| Summary         | `summary`                                                | str |
+| Work Experience | `work_experience[]` 或 `experience[]`                  | `List[str]`（模型輸出）或 `List[dict]` |
+| Education       | `education[]`                                            | `List[str]`（模型輸出）或 `List[dict]` |
+| Skills          | `skills[]`                                               | `List[str]` |
+| Projects        | `projects[]`                                             | `List[str]`（模型輸出）或 `List[dict]` |
+| Certifications  | `certifications[]` 或 `certificates[]`                 | `List[str]` 或 `List[dict]` |
+
+> **注意**: `work_experience`、`education`、`projects` 欄位在模型輸出時為 `List[str]`（每筆是完整字串），
+> PDF/DOCX builder 同時支援 `List[dict]` legacy 格式。
 
 ## 相依套件
 

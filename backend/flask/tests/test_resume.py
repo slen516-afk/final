@@ -10,7 +10,6 @@ class TestCreateResumeForm:
 
     def _payload(self):
         return {
-            "survey_id": "s1",
             "structured_data": {
                 "personal_info": {"name": "王小明"},
                 "education": [{"school": "台大"}],
@@ -25,13 +24,6 @@ class TestCreateResumeForm:
         data = resp.get_json()
         assert "resume_id" in data
         assert data["status"] == "completed"
-
-    def test_missing_survey_id(self, client, auth_headers):
-        payload = self._payload()
-        payload.pop("survey_id")
-        resp = client.post("/api/resumes/form", json=payload, headers=auth_headers)
-        assert resp.status_code == 400
-        assert "survey_id" in resp.get_json()["error"]
 
     def test_missing_structured_data(self, client, auth_headers):
         payload = self._payload()
@@ -64,10 +56,10 @@ class TestUpdateResume:
         payload = {
             "structured_data": {
                 "professional_summary": "資深後端工程師",
-                "professional_experience": [{"company": "Google", "title": "SWE"}],
+                "professional_experience": ["Google | SWE | 2020-01 ~ Present | 負責後端開發"],
                 "core_skills": ["Python", "Flask"],
-                "projects": [{"name": "Resume Builder"}],
-                "education": [{"school": "台大"}],
+                "projects": ["Resume Builder — 履歷產生器"],
+                "education": ["台大 | 資工系 | 學士 | 2020-06"],
             },
             "style_settings": {"color": "#FF5733"},
         }
@@ -75,7 +67,7 @@ class TestUpdateResume:
         assert resp.status_code == 201
         data = resp.get_json()
         assert "optimization_id" in data
-        assert data["optimization_version"] == "1.0"
+        assert data["optimization_version"] == "1"
         assert data["template_color"] == "#FF5733"
 
     def test_missing_body(self, client, auth_headers):
@@ -100,7 +92,7 @@ class TestResumeVersions:
         assert data["resume_id"] == 1
 
     def test_get_specific_version(self, client, auth_headers):
-        resp = client.get("/api/resumes/1/versions/1.0", headers=auth_headers)
+        resp = client.get("/api/resumes/1/versions/1", headers=auth_headers)
         # 可能 200 或 404 取決於 mock 設定
         assert resp.status_code in (200, 404)
 

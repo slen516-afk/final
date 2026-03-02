@@ -137,7 +137,8 @@ if __name__ == "__main__":
 
 ```shell
 # Windows
-set MOCK_MODE=true
+CMD: set MOCK_MODE=true
+PowerShell: $env:MOCK_MODE="true"
 
 # Linux / macOS
 export MOCK_MODE=true

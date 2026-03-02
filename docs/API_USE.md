@@ -141,7 +141,6 @@
 
         ```json
         {
-          "survey_id": 101,
           "structured_data": {
             "basics": {
               "name": "測試人員",
@@ -171,7 +170,10 @@
   - **Header**: `Bearer {{token}}`
   - **預期結果 (200 OK)**: 回傳完整履歷資料（含 `structured_data`, `template_id`, ERD 欄位等）。
 
-- **更新履歷**
+- **更新履歷（全局覆蓋 → 寫入 `resume_optimization`）**
+
+  每次 PUT 會在 `resume_optimization` 新增一筆，`optimization_version` 整數自動遞增 (1, 2, 3...)。
+
   - **Method**: `PUT`
   - **URL**: `{{base_url}}/resumes/203`
   - **Header**: `Bearer {{token}}`
@@ -179,17 +181,25 @@
 
         ```json
         {
-          "structured_data": {
-             "basics": { "name": "更新後的名字" }
-          },
-          "template_id": 2,
-          "style_settings": {
-              "color": "#FF5733"
-          }
+          "professional_summary": "全端工程師，3 年 Python/Flask 開發經驗...",
+          "professional_experience": [
+            "Tech Corp | Senior Backend Developer | 2022-07 ~ Present | 主導 RESTful API 重構...",
+            "Startup Inc. | Junior Developer | 2021-01 ~ 2022-06 | 開發內部管理後台..."
+          ],
+          "core_skills": ["Python", "Flask", "Docker", "PostgreSQL"],
+          "projects": [
+            "Career Pilot — AI 職涯規劃平台，整合 LLM 進行履歷分析...",
+            "Smart Inventory System — 智慧庫存管理系統..."
+          ],
+          "education": [
+            "台灣大學 | 資工系 | 學士 | 2022-06"
+          ],
+          "autobiography": "我是一位熱衷於解決複雜工程問題的全端工程師...",
+          "style_settings": { "color": "#1A73E8" }
         }
         ```
 
-  - **預期結果 (200 OK)**: `updated_at` 更新, 回傳 `saved_settings`。
+  - **預期結果 (201 Created)**: `optimization_id` + `optimization_version` (整數遞增)。
 
 ### 4. 履歷分析 (Analysis) — 非同步
 
@@ -201,11 +211,12 @@
 
         ```json
         {
-          "resume_id": 203,
-          "survey_id": 101,
-          "task_type": "resume_analysis" // 可帶入 resume_analysis (取建議) 或 resume_opt (取結果)
+          "task_type": "resume_analysis"
         }
         ```
+
+    > `task_type` 支援 `resume_analysis`（取分析建議）或 `resume_opt`（取優化結果）。
+    > `resume_id` 和 `survey_id` 為選填 metadata。
 
   - **預期結果 (202 Accepted)**:
 
@@ -228,30 +239,50 @@
   - **Header**: `Bearer {{token}}`
   - **預期結果 (200 OK)**: 回傳 `task_id` + `status`。
 
-- **取得優化結果 (Results Only)**
+- **取得優化結果 (D-04, Results Only)**
   - **Method**: `GET`
   - **URL**: `{{base_url}}/analysis/tasks/{{job_id}}/results`
   - **Header**: `Bearer {{token}}`
-  - **預期結果 (200 OK)**:
+  - **限制**: 僅限 `task_type: "resume_opt"` 的任務
+  - **預期結果 (200 OK)** — 回傳 `ResumeOptimization` 結構：
 
         ```json
         {
-          "career_readiness_score": 85.0,
-          "market_insights": { ... },
-          "matched_keywords": [...],
-          "missing_keywords": [...]
+          "professional_summary": "...",
+          "professional_experience": ["公司A | 職稱 | 年資 | 描述..."],
+          "core_skills": ["Python", "Flask"],
+          "projects": ["專案名稱 — 描述..."],
+          "education": ["學校 | 科系 | 學位 | 畢業時間"],
+          "autobiography": "..."
         }
         ```
 
-- **取得優化建議 (Suggestions Only)**
+- **取得分析建議 (D-03, Suggestions Only)**
   - **Method**: `GET`
   - **URL**: `{{base_url}}/analysis/tasks/{{job_id}}/suggestions`
   - **Header**: `Bearer {{token}}`
-  - **預期結果 (200 OK)**:
+  - **限制**: 僅限 `task_type: "resume_analysis"` 的任務
+  - **預期結果 (200 OK)** — 回傳 `ResumeAnalysis` 結構：
 
         ```json
         {
-          "career_path_suggestions": { ... },
-          "skill_gap_analysis": [...]
+          "candidate_positioning": "...",
+          "target_role_gap_summary": "...",
+          "overall_strengths": ["..."],
+          "overall_weaknesses": ["..."],
+          "critical_issues": [
+            {
+              "section": "技能專長",
+              "original_text": "...",
+              "issue_type": ["描述模糊"],
+              "severity": ["可優化"],
+              "diagnosis_dimension": "...",
+              "issue_reason": "...",
+              "improvement_direction": ["..."]
+            }
+          ],
+          "ats_risk_level": "中",
+          "screening_outcome_prediction": "...",
+          "recommended_next_actions": ["..."]
         }
         ```

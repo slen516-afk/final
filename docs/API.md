@@ -166,7 +166,7 @@
 
 ### Job 狀態生命週期
 
-```
+```text
 queued → processing → done
                    ↘ failed (送入 DLQ)
 ```
@@ -189,14 +189,13 @@ queued → processing → done
 | **請求部分** | **參數名稱**   | **類型** | **必填** | **說明**                |
 | ------------------ | -------------------- | -------------- | -------------- | ----------------------------- |
 | **Header**   | Authorization        | String         | **Yes**  | Bearer Token (Supabase)       |
-| **Body**     | survey_id           | Int            | **Yes**  | 關聯的問卷 ID             |
+| **Body**     | survey_id           | Int            | No       | 關聯的問卷 ID（選填）        |
 | **Body**     | **structured_data** | JSON           | **Yes**  | 完整的履歷結構物件 |
 
 ### Request Body 範例
 
 ```json
 {
-  "survey_id": 101,
   "structured_data": {
     "basics": {
       "name": "王小明",
@@ -278,30 +277,34 @@ queued → processing → done
 }
 ```
 
-### C-05 用戶更新/確認履歷內容
+### C-05 用戶更新/確認履歷內容（全局覆蓋 → `resume_optimization`）
 
 * **權限** : Protected
 * **Method** : `PUT`
 * **Path** : `/resumes/{id}`
+* **用途** : 每次 PUT 會在 `resume_optimization` 新增一筆，`optimization_version` 整數自動遞增 (1, 2, 3...)。
 
 | **請求部分** | **參數**   | **類型** | **必填** | **說明**          |
 | ------------------ | ---------------- | -------------- | -------------- | ----------------------- |
 | **Header**   | Authorization    | String         | Yes            |                         |
 | **Path**     | id               | Int            | Yes            | Resume ID               |
-| **Body**     | structured_data | JSON           | **Yes**  | 完整的 Resume JSON 結構 |
-| **Body**     | template_id     | Int            | No             | 選擇的模板 ID |
+| **Body**     | professional_summary | String      | No             | 專業總結 |
+| **Body**     | professional_experience | list[str]  | No             | 工作經歷 (string array) |
+| **Body**     | core_skills     | list[str]      | No             | 核心技能 (string array) |
+| **Body**     | projects        | list[str]      | No             | 專案 (string array) |
+| **Body**     | education       | list[str]      | No             | 學歷 (string array) |
+| **Body**     | autobiography   | String         | No             | 自傳 |
 | **Body**     | style_settings  | JSON           | No             | 視覺設定 (e.g. `{"color": "#1A73E8"}`) |
 
-**Response Body (200 OK)**
+**Response Body (201 Created)**
 
 ```json
 {
+  "optimization_id": 15,
   "resume_id": 202,
-  "updated_at": "2026-01-27T10:00:00Z",
-  "saved_settings": {
-    "template_id": 1,
-    "style_settings": { "color": "#1A73E8" }
-  }
+  "optimization_version": "2",
+  "template_color": "#1A73E8",
+  "created_at": "2026-03-02T04:20:00+00:00"
 }
 ```
 
@@ -318,15 +321,14 @@ queued → processing → done
 * **權限** : Protected
 * **Method** : `POST`
 * **Path** : `/analysis/tasks`
-* **用途** : 觸發 AI 進行 Gap Analysis（任務排入 Redis Stream）。
+* **用途** : 觸發 AI 進行履歷分析或優化（任務排入 Redis Stream）。
 
 | **請求部分** | **參數** | **類型** | **必填** | **說明** |
 | ------------------ | -------------- | -------------- | -------------- | -------------- |
 | **Header**   | Authorization  | String         | Yes            |                |
-| **Body**     | resume_id       | Int            | Yes            |                |
-| **Body**     | survey_id     | Int            | Yes            |                |
-| **Body**     | task_type     | String         | No              | 預設 `resume_analysis`(建議)，可傳 `resume_opt`(生成結果) |
-| **Body**     | task_type     | String         | No              | 預設 `resume_analysis` (建議)，可傳 `resume_opt` (生成結果) |
+| **Body**     | task_type     | String         | **Yes**        | `resume_analysis`（D-03 分析建議）或 `resume_opt`（D-04 優化結果） |
+| **Body**     | resume_id     | Int            | No             | 選填 metadata    |
+| **Body**     | survey_id     | Int            | No             | 選填 metadata    |
 
 **Response Body (202 Accepted)**
 
@@ -407,57 +409,67 @@ queued → processing → done
 }
 ```
 
-### D-03 取得履歷優化結果 (Results Only)
-
-* **權限** : Protected
-* **Method** : `GET`
-* **用途** : 取得 `task_type: "resume_opt"` 時模型生成的完整履歷結果。
-
-> 若尚未完成，回傳 **202** 並帶 `"message": "尚未完成"`。
-
-**Response Body (200 OK)**
-
-```json
-{
-  "career_readiness_score": 85.0,
-  "market_insights": {
-    "summary": "...",
-    "matched_keywords": ["Python", "Flask", "API Design"],
-    "missing_keywords": ["Docker", "Kubernetes", "CI/CD"]
-  }
-}
-```
-
-### D-04 取得履歷優化建議 (Suggestions Only)
+### D-03 取得履歷分析建議 (Suggestions Only)
 
 * **權限** : Protected
 * **Method** : `GET`
 * **Path** : `/analysis/tasks/{task_id}/suggestions`
 * **用途** : 取得 `task_type: "resume_analysis"` 時的產出建議。
 
+> 僅限 `task_type: "resume_analysis"` 的任務，否則回傳 **400**。
 > 若尚未完成，回傳 **202** 並帶 `"message": "尚未完成"`。
 
-**Response Body (200 OK)**
+**Response Body (200 OK)** — `ResumeAnalysis` 結構
 
 ```json
 {
-  "career_path_suggestions": {
-    "section_improvements": [
-      {
-        "section": "Experience",
-        "suggestion": "建議在工作經歷中加入具體的量化數據（例如：提升了 20% 的效能）。"
-      },
-      {
-        "section": "Skills",
-        "suggestion": "建議將技能依照熟練度進行分類，讓閱讀者更容易掌握重點。"
-      }
-    ],
-    "overall_feedback": "整體履歷結構清晰，但在個人專案部分的描述可以更具體一些。"
-  },
-  "skill_gap_analysis": [
-    { "skill": "Kubernetes", "priority": "High" },
-    { "skill": "React", "priority": "Medium" }
-  ]
+  "candidate_positioning": "企業視角下這份履歷目前看起來像...",
+  "target_role_gap_summary": "與目標職位之間的整體落差...",
+  "overall_strengths": ["履歷中最具說服力的優勢點"],
+  "overall_weaknesses": ["整體最影響錄取率的核心弱點"],
+  "critical_issues": [
+    {
+      "section": "技能專長",
+      "original_text": "使用者履歷中的原始文字",
+      "issue_type": ["描述模糊", "ATS 關鍵字缺失"],
+      "severity": ["可優化"],
+      "diagnosis_dimension": "...",
+      "issue_reason": "...",
+      "improvement_direction": ["可執行的改善方向"]
+    }
+  ],
+  "ats_risk_level": "中",
+  "screening_outcome_prediction": "模擬企業 6–10 秒快速掃描後的篩選結果...",
+  "recommended_next_actions": ["下一步行動建議"]
+}
+```
+
+### D-04 取得履歷優化結果 (Results Only)
+
+* **權限** : Protected
+* **Method** : `GET`
+* **Path** : `/analysis/tasks/{task_id}/results`
+* **用途** : 取得 `task_type: "resume_opt"` 時模型生成的完整履歷結果。
+
+> 僅限 `task_type: "resume_opt"` 的任務，否則回傳 **400**。
+> 若尚未完成，回傳 **202** 並帶 `"message": "尚未完成"`。
+
+**Response Body (200 OK)** — `ResumeOptimization` 結構
+
+```json
+{
+  "professional_summary": "精簡的專業總結，包含核心價值與推薦職缺的關鍵字",
+  "professional_experience": [
+    "公司名稱 | 職稱 | 年資 | 以 STAR 原則重新撰寫的工作描述"
+  ],
+  "core_skills": ["Python", "Flask", "Docker", "PostgreSQL", "CI/CD", "REST API"],
+  "projects": [
+    "專案名稱 — 優化後的專案描述，強調技術棧與量化成果"
+  ],
+  "education": [
+    "學校名稱 | 科系 | 學位 | 畢業時間"
+  ],
+  "autobiography": "保留使用者原本風格的優化後完整自傳"
 }
 ```
 
@@ -470,14 +482,14 @@ queued → processing → done
 * **權限** : Protected
 * **Method** : `GET`
 * **Path** : `/resumes/{id}/export`
-* **用途** : 下載 PDF/Word。
+* **用途** : 從 `resume_optimization` 取最新（或指定版本）優化履歷，下載 PDF/DOCX/JSON。
 
 | **請求部分** | **參數** | **類型** | **必填** | **說明**     |
 | ------------------ | -------------- | -------------- | -------------- | ------------------ |
 | **Header**   | Authorization  | String         | Yes            |                    |
-| **Query**    | format         | String         | Yes            | `pdf`或 `docx` |
-| **Query**    | template_id     | Int            | No             |                    |
+| **Query**    | format         | String         | No             | `pdf`（預設）、`docx`、`json` |
+| **Query**    | version        | String         | No             | 指定優化版本，未帶則取最新 |
 
 **Response (200 OK)**
 
-* **Content-Type** : `application/pdf` (binary stream)
+* **Content-Type** : `application/pdf`（PDF）、`application/vnd.openxmlformats-.../document`（DOCX）、`application/json`（JSON）

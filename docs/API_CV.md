@@ -18,13 +18,13 @@
 
 ## 1. 環境需求
 
-| 項目 | 版本/說明 |
-|------|-----------|
-| Docker Desktop | 已安裝並運行 |
-| Python | 3.10+ |
-| VSCode | 已安裝 Docker Extension（選配） |
-| Postman / curl | 用來打 API |
-| `.env` 檔 | 放在 `backend/` 下，包含 Supabase 金鑰 |
+| 項目           | 版本/說明                        |
+| -------------- | -------------------------------- |
+| Docker Desktop | 已安裝並運行                      |
+| Python         | 3.10+                            |
+| VSCode         | 已安裝 Docker Extension（選配）      |
+| Postman / curl | 用來打 API                         |
+| `.env` 檔      | 放在 `backend/` 下，包含 Supabase 金鎥 |
 
 ### `.env` 範例（放 `backend/.env`）
 
@@ -63,7 +63,7 @@ docker compose ps
 
 預期輸出：
 
-```
+```text
 NAME           SERVICE   STATUS    PORTS
 final-redis-1  redis     running   0.0.0.0:6379->6379/tcp
 ```
@@ -108,7 +108,7 @@ python app.py
 
 預期輸出：
 
-```
+```text
 ------------------------------------------------
 [System] 正在初始化 Flask 伺服器...
 [System] 正在預載入 Qwen 模型...
@@ -127,7 +127,7 @@ analysis.start_analysis_task: /api/analysis/tasks
 > [!WARNING]
 > 如果 Qwen 模型載入失敗（記憶體不足或找不到），Flask 仍會繼續啟動，
 > 但 OCR 功能會不可用。**不影響本次 API 測試**。
-
+>
 > [!TIP]
 > 如果出現 `SUPABASE_URL 或 SUPABASE_SERVICE_ROLE_KEY` 錯誤，
 > 代表 `backend/.env` 檔案不存在或內容缺失。
@@ -145,7 +145,7 @@ python -m worker.cv_worker
 
 預期輸出：
 
-```
+```text
 [Worker] 建立 consumer group 'cv_workers' on 'cv_jobs'
 [Worker worker-abc123] 啟動，等待任務... (stream=cv_jobs, group=cv_workers)
 ```
@@ -167,7 +167,7 @@ python get_token.py
 
 按提示輸入 Email 和 Password（已在 Supabase 註冊的帳號）。
 
-```
+```text
 === Supabase Access Token Generator ===
 Enter Email: test@example.com
 Enter Password: ****
@@ -193,14 +193,14 @@ User ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
 在 Postman 設定 Environment Variables：
 
-| Variable | Value |
-|----------|-------|
+| Variable   | Value                       |
+| ---------- | --------------------------- |
 | `base_url` | `http://127.0.0.1:5000/api` |
-| `token` | `<貼上 Access Token>` |
+| `token`    | `<貼上 Access Token>`       |
 
 所有 Protected API 的 Header 都要加：
 
-```
+```http
 Authorization: Bearer {{token}}
 ```
 
@@ -210,7 +210,7 @@ Authorization: Bearer {{token}}
 
 #### 註冊
 
-```
+```http
 POST {{base_url}}/auth/register
 ```
 
@@ -226,7 +226,7 @@ POST {{base_url}}/auth/register
 
 #### 登入
 
-```
+```http
 POST {{base_url}}/auth/login
 ```
 
@@ -245,7 +245,7 @@ POST {{base_url}}/auth/login
 
 #### Step 1: 提交問卷
 
-```
+```http
 POST {{base_url}}/dream-jobs
 Authorization: Bearer {{token}}
 ```
@@ -281,7 +281,7 @@ Authorization: Bearer {{token}}
 
 #### Step 2: 輪詢結果
 
-```
+```http
 GET {{base_url}}/dream-jobs/{{job_id}}
 Authorization: Bearer {{token}}
 ```
@@ -319,14 +319,13 @@ Authorization: Bearer {{token}}
 
 #### 建立履歷
 
-```
+```http
 POST {{base_url}}/resumes/form
 Authorization: Bearer {{token}}
 ```
 
 ```json
 {
-  "survey_id": 101,
   "structured_data": {
     "basics": {
       "name": "測試人員",
@@ -376,39 +375,56 @@ Authorization: Bearer {{token}}
 
 ✅ 預期 `200` — 回傳完整履歷 JSON（含 `structured_data`、`template_id`、ERD 欄位等）。
 
-#### 更新履歷
+#### 更新履歷（全局覆蓋 → 寫入 `resume_optimization`）
 
-```
+每次 PUT 會在 `resume_optimization` 新增一筆，`optimization_version` 整數自動遞增 (1, 2, 3...)。
+
+```http
 PUT {{base_url}}/resumes/203
 Authorization: Bearer {{token}}
 ```
 
 ```json
 {
-  "structured_data": {
-    "basics": { "name": "更新後的名字" }
-  },
-  "template_id": 2,
-  "style_settings": { "color": "#FF5733" }
+  "professional_summary": "全端工程師，擁有 3 年 Python/Flask 與 React 開發經驗，專注於高效能 API 設計與微服務架構。曾主導日處理 50 萬請求的後端系統重構，熟悉 CI/CD、容器化部署與雲端服務。",
+  "professional_experience": [
+    "Tech Corp | Senior Backend Developer | 2022-07 ~ Present | 主導 RESTful API 重構，將回應時間從 800ms 降至 120ms；設計 Redis 快取層，降低資料庫負載 60%",
+    "Startup Inc. | Junior Developer | 2021-01 ~ 2022-06 | 開發內部管理後台（React + Flask），支援 50+ 使用者同時操作"
+  ],
+  "core_skills": [
+    "Python", "Flask", "FastAPI", "React", "TypeScript",
+    "PostgreSQL", "Redis", "Docker", "Kubernetes",
+    "CI/CD", "REST API", "GraphQL", "AWS"
+  ],
+  "projects": [
+    "Career Pilot — AI 職涯規劃平台，整合 LLM 進行履歷分析與優化建議，使用 Redis Stream 實作非同步任務佇列",
+    "Smart Inventory System — 智慧庫存管理系統，以 FastAPI 建構 REST API，搭配 Celery 處理批次匯入任務"
+  ],
+  "education": [
+    "國立台灣大學 | 資訊工程學系 | 學士 | 2022-06"
+  ],
+  "autobiography": "我是一位熱衷於解決複雜工程問題的全端工程師。大學期間主修資訊工程，奠定了扎實的演算法與系統設計基礎。畢業後投入軟體開發產業，從後端 API 設計到前端使用者體驗都有深入涉獵。在 Tech Corp 任職期間，主導了核心系統的微服務化重構，成功將系統承載能力提升 4 倍。",
+  "style_settings": {
+    "color": "#1A73E8"
+  }
 }
 ```
 
-✅ 預期 `200`：
+✅ 預期 `201 Created`：
 
 ```json
 {
+  "optimization_id": 15,
   "resume_id": 203,
-  "updated_at": "...",
-  "saved_settings": {
-    "template_id": 2,
-    "style_settings": { "color": "#FF5733" }
-  }
+  "optimization_version": "2",
+  "template_color": "#1A73E8",
+  "created_at": "2026-03-02T04:20:00+00:00"
 }
 ```
 
 #### 匯出履歷
 
-```
+```http
 GET {{base_url}}/resumes/203/export?format=pdf
 Authorization: Bearer {{token}}
 ```
@@ -421,18 +437,19 @@ Authorization: Bearer {{token}}
 
 #### Step 1: 啟動分析任務
 
-```
+```http
 POST {{base_url}}/analysis/tasks
 Authorization: Bearer {{token}}
 ```
 
 ```json
 {
-  "resume_id": 203,
-  "survey_id": 101,
-  "task_type": "resume_analysis" // 可傳入 resume_analysis (D-04建議) 或 resume_opt (D-03結果)
+  "task_type": "resume_analysis"
 }
 ```
+
+> `task_type` 支援 `resume_analysis`（D-03 取得分析建議）或 `resume_opt`（D-04 取得優化結果）。
+> `resume_id` 和 `survey_id` 為選填 metadata，不影響模型呼叫。
 
 ✅ 預期 `202 Accepted`：
 
@@ -447,7 +464,7 @@ Authorization: Bearer {{token}}
 
 #### Step 2: 輪詢進度（推薦：一次取全部）
 
-```
+```http
 GET {{base_url}}/analysis/jobs/{{job_id}}
 Authorization: Bearer {{token}}
 ```
@@ -486,22 +503,26 @@ Authorization: Bearer {{token}}
 
 查詢狀態：
 
-```
+```http
 GET {{base_url}}/analysis/tasks/{{job_id}}/status
 ```
 
-查詢生成結果 (對應 `task_type: "resume_opt"`)：
+查詢生成結果 (D-04，對應 `task_type: "resume_opt"`)：
 
-```
+```http
 GET {{base_url}}/analysis/tasks/{{job_id}}/results
 ```
 
-查詢分析建議 (對應 `task_type: "resume_analysis"`)：
+> 僅限 `task_type: "resume_opt"` 的任務，否則回傳 400。
 
-```
+查詢分析建議 (D-03，對應 `task_type: "resume_analysis"`)：
+
+```http
 GET {{base_url}}/analysis/tasks/{{job_id}}/suggestions
 ```
 
+> 僅限 `task_type: "resume_analysis"` 的任務，否則回傳 400。
+>
 > [!NOTE]
 > `results` 和 `suggestions` 在任務尚未完成時會回傳 `202`，
 > body 含 `"message": "尚未完成"`。
@@ -512,20 +533,20 @@ GET {{base_url}}/analysis/tasks/{{job_id}}/suggestions
 
 ### 常見問題
 
-| 問題 | 原因 | 解法 |
-|------|------|------|
-| `Connection refused` on Redis | Redis 容器沒起來 | `docker compose up -d redis` |
-| Flask 啟動報 `SUPABASE_URL` 錯誤 | `.env` 缺少或路徑錯 | 確認 `backend/.env` 存在且有正確的金鑰 |
-| API 回 `401 請先登入` | Token 過期或格式錯 | 重跑 `get_token.py`，注意 Header 是 `Bearer <token>` |
-| 任務一直卡 `queued` | Worker 沒啟動 | 另開 Terminal 跑 `python -m worker.cv_worker` |
-| 任務 `failed` | Worker 處理出錯（可能是 LLM 未注入） | 檢查 Worker Terminal 的錯誤訊息 |
-| `BUSYGROUP` 警告 | Consumer Group 已存在 | 正常現象，不影響功能 |
-| Port 5000 已佔用 | 另一個 Flask 還在跑 | 關掉舊的 Flask 進程 |
-| Docker 起不來 | Docker Desktop 沒開 | 啟動 Docker Desktop，等到 running |
+| 問題                             | 原因                               | 解法                                            |
+| -------------------------------- | ---------------------------------- | ----------------------------------------------- |
+| `Connection refused` on Redis    | Redis 容器沒起來                   | `docker compose up -d redis`                    |
+| Flask 啟動報 `SUPABASE_URL` 錯誤 | `.env` 缺少或路徑錯                 | 確認 `backend/.env` 存在且有正確的金鎥            |
+| API 回 `401 請先登入`            | Token 過期或格式錯                   | 重跑 `get_token.py`，注意 Header 是 `Bearer <token>` |
+| 任務一直卡 `queued`              | Worker 沒啟動                      | 另開 Terminal 跑 `python -m worker.cv_worker`    |
+| 任務 `failed`                    | Worker 處理出錯（可能是 LLM 未注入）   | 檢查 Worker Terminal 的錯誤訊息                  |
+| `BUSYGROUP` 警告                 | Consumer Group 已存在              | 正常現象，不影響功能                            |
+| Port 5000 已佔用                 | 另一個 Flask 還在跑                 | 關掉舊的 Flask 進程                              |
+| Docker 起不來                    | Docker Desktop 沒開                | 啟動 Docker Desktop，等到 running               |
 
 ### 架構總覽
 
-```
+```text
 ┌──────────────┐     POST /dream-jobs       ┌──────────────┐
 │              │     POST /analysis/tasks    │              │
 │   Postman    │ ──────────────────────────► │  Flask App   │
@@ -550,15 +571,15 @@ GET {{base_url}}/analysis/tasks/{{job_id}}/suggestions
 
 ### Redis 資料結構
 
-| Key Pattern | Type | 說明 |
-|-------------|------|------|
-| `job:{job_id}` | Hash | 任務狀態、輸入資料、結果 |
-| `cv_jobs` | Stream | 任務佇列 |
-| `cv_jobs_dlq` | Stream | 死信佇列（超過 3 次重試） |
+| Key Pattern    | Type   | 說明                       |
+| -------------- | ------ | -------------------------- |
+| `job:{job_id}` | Hash   | 任務狀態、輸入資料、結果   |
+| `cv_jobs`      | Stream | 任務佇列                     |
+| `cv_jobs_dlq`  | Stream | 死信佇列（超過 3 次重試）  |
 
 ### Job 狀態生命週期
 
-```
+```text
 queued ──► processing ──► done
                      └──► failed → cv_jobs_dlq (DLQ)
 ```

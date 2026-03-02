@@ -2,7 +2,7 @@
 
 將 `analysis.py` 從同步 mock 改為 **Redis Stream 排隊 + Worker 消化** 架構。
 
-```
+```text
 [Frontend] → POST /api/analysis/tasks → [API Server] → XADD cv_jobs → [Worker x N] → DB
 [Frontend] ← GET /api/analysis/jobs/{job_id}  ← [Redis/DB 查狀態]
 ```
@@ -34,7 +34,7 @@ redis:
 
 新增：
 
-```
+```text
 redis>=5.0.0
 ```
 
@@ -67,7 +67,7 @@ Redis 連線 singleton，跟 `supabase_client.py` 同層：
 
 **Job 狀態 (Redis Hash `job:{job_id}`)**:
 
-```
+```text
 status:    queued | processing | done | failed
 user_id:   <uuid>
 resume_id: <str>
@@ -149,7 +149,7 @@ updated_at: <timestamp>
 
 ## 架構流程
 
-```
+```text
 POST /api/analysis/tasks  →  Redis Hash (status=queued) + XADD cv_jobs
                                     ↓
                            Worker XREADGROUP
@@ -213,7 +213,7 @@ curl http://localhost:5000/api/analysis/jobs/job_xxxx `
 
 ## 測試結果
 
-```
+```text
 42 passed, 1 failed in 5.39s
 ```
 

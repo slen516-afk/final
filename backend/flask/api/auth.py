@@ -34,7 +34,7 @@ def register():
                 supabase.table("USER").insert({
                     "email": email,
                     "password_hash": "supabase_managed",
-                    "auth_uuid": result.user.id,
+                    "auth_uid": result.user.id,
                     "auth_provider": "Email",
                     "is_active": True
                 }).execute()
@@ -82,7 +82,7 @@ def login():
         try:
             supabase.table("USER").update({
                 "last_login": datetime.utcnow().isoformat()
-            }).eq("auth_uuid", user.id).execute()
+            }).eq("auth_uid", user.id).execute()
         except Exception:
             pass  # 非關鍵操作，不阻擋登入
 
@@ -129,14 +129,15 @@ def login_required(f):
             db_user = (
                 supabase.table("USER")
                 .select("user_id")
-                .eq("auth_uuid", auth_user.id)
+                .eq("auth_uid", auth_user.id)
                 .single()
                 .execute()
             )
             g.db_user_id = db_user.data["user_id"] if db_user.data else None
 
         except Exception as e:
-            return jsonify({"message": "Token 無效 / 逾期"}), 401
+            print(f"[Auth] login_required error: {e}")
+            return jsonify({"message": f"Token 無效 / 逾期: {e}"}), 401
             
         return f(*args, **kwargs)
     return decorated
