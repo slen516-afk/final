@@ -6,6 +6,8 @@ import json
 import re
 from supabase import create_client
 import os
+from qdrant_client import QdrantClient
+from service.llm_service.src.features.matching.service import CareerMatchingService
 
 SUPABASE_URL = os.getenv("SUPABASE_URL") or os.getenv("project_url")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY") or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("service_role_key")
@@ -291,3 +293,64 @@ def recommend_learning():
     except json.JSONDecodeError as e:
         print(f"❌ AI 格式錯亂: {e}")
         return jsonify({"status": "error", "message": "AI 未回傳正確格式"}), 500
+
+@rec_bp.route('/jobs/v2/recommendations', methods=['POST'])
+def smart_recommend_jobs_v2():
+    data = request.get_json() or {}
+    
+    # 1. 抓取前端傳來的包裹
+    document_id = data.get("resumeId")
+    if not document_id:
+        return jsonify({"status": "error", "message": "缺少履歷 ID"}), 400
+        
+    # TODO: 由於你目前的 service.py 需要 user_id，如果前端沒傳，我們先假設是 1 號使用者
+    user_id = data.get("userId", 1) 
+    source_type = data.get("sourceType", "RESUME").upper() # 預設是履歷
+
+    # 2. 整理篩選條件 (Filters) 給 Qdrant 
+    target_city = data.get("city", "不限地區")
+    search_city = target_city.replace("市", "").replace("縣", "") if target_city != "不限地區" else None
+    
+    filters = {}
+    if search_city:
+        filters["city"] = search_city
+        
+    print(f"🚀 [V2 引擎啟動] User: {user_id}, Doc: {document_id}, Filters: {filters}")
+
+    try:
+        # 3. 準備環境變數與連線
+        # (確保你的 .env 裡面有 QDRANT_URL 跟 OPENAI_API_KEY)
+        qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
+        qdrant_client = QdrantClient(url=qdrant_url)
+        openai_key = os.getenv("OPENAI_API_KEY")
+
+        if not openai_key:
+            raise ValueError("伺服器缺少 OPENAI_API_KEY 環境變數")
+
+        # 4. 實例化你超強的 Matching Service
+        matching_service = CareerMatchingService(
+            qdrant_client=qdrant_client,
+            supabase_client=supabase,  # 這裡使用你檔案最上方已經連好的 supabase
+            openai_api_key=openai_key
+        )
+
+        # 5. 執行 RAG 與混合檢索！
+        final_jobs = matching_service.find_best_jobs(
+            user_id=user_id,
+            document_id=int(document_id),
+            source_type=source_type,
+            filters=filters
+        )
+
+        # 6. 回傳跟 V1 一模一樣格式的 JSON，這樣前端就不用改寫接收邏輯！
+        return jsonify({
+            "status": "success",
+            "count": len(final_jobs),
+            "recommendations": final_jobs
+        }), 200
+
+    except Exception as e:
+        print(f"❌ V2 推薦過程發生錯誤: {str(e)}")
+        import traceback
+        traceback.print_exc() # 印出詳細錯誤軌跡方便 Debug
+        return jsonify({"status": "error", "message": f"內部引擎錯誤: {str(e)}"}), 500
