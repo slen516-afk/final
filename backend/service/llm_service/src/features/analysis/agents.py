@@ -5,6 +5,9 @@ from crewai import Agent
 # Agent 定義常數
 # ==========================================
 
+# verbose 統一開關
+VERBOSE = True
+
 # Tech Lead
 TECH_LEAD_ROLE = "資深技術評估專家 (Tech Lead)"
 TECH_LEAD_GOAL = "精準計算技術分數、計算與目標職位的匹配度並驗證履歷真實性"
