@@ -208,8 +208,15 @@ class CoverLetterHandler(BaseResultHandler):
             "user_id": user_id,
             "job_id": job_id,
             **pydantic_result,
-            # "created_at": "now()"
         }
+
+        optimization_id = kwargs.get("optimization_id")
+        resume_id = kwargs.get("resume_id")
+
+        if optimization_id:
+            payload["optimization_id"] = optimization_id
+        elif resume_id:
+            payload["resume_id"] = resume_id
         # 這裡建議用 user_id + job_id 作為 Unique Key，如果不希望同職缺存兩封
         return self.supabase.table("cover_letter").insert(payload).execute()
 
