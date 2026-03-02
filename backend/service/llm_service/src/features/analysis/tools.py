@@ -48,19 +48,25 @@ class FetchResumeFromDBTool(BaseTool):
 
 # 2. Calculate Technical Vectors Tool
 class CalculateTechVectorsInput(BaseModel):
-    user_json_str: str = Field(description="使用者職涯問卷的完整 JSON 字串")
+    user_json_str: str = Field(description="使用者的 ID")
 
 class CalculateTechVectorsTool(BaseTool):
     name: str = "Calculate Technical Vectors"
-    description: str = "接收使用者職涯問卷查核結果的 JSON 字串，計算 D1-D6 六維能力分數。"
+    description: str = "計算 D1-D6 六維能力分數。"
     args_schema: type[BaseModel] = CalculateTechVectorsInput
     
+    # [額外屬性] 預先注入的資料字串，LLM 不需提供
+    survey_json_str: str = Field(default="")
+
     def _run(self, user_json_str: str) -> str:
         default_scores = {"D1": 0.5, "D2": 0.5, "D3": 0.5, "D4": 0.5, "D5": 1.0, "D6": 1.0}
         try:
-            user_data = safe_parse_json(user_json_str)
-            if not user_data:
+            user_data_raw = safe_parse_json(self.survey_json_str)
+            if not user_data_raw:
                 return str(default_scores)
+
+            # 若資料包在 questionnaire_response 裡 (例如直接從 DB 得到的格式)
+            user_data = user_data_raw.get("questionnaire_response", user_data_raw)
 
             ma = user_data.get("module_a", {})
             if not ma or not ma.get("q1_languages"):
