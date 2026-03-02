@@ -310,11 +310,10 @@ def smart_recommend_jobs_v2():
     # 2. 整理篩選條件 (Filters) 給 Qdrant 
     target_city = data.get("city", "不限地區")
     search_city = target_city.replace("市", "").replace("縣", "") if target_city != "不限地區" else None
+
+    
     
     filters = {}
-    if search_city:
-        filters["city"] = search_city
-        
     print(f"🚀 [V2 引擎啟動] User: {user_id}, Doc: {document_id}, Filters: {filters}")
 
     try:
@@ -322,16 +321,23 @@ def smart_recommend_jobs_v2():
         # (確保你的 .env 裡面有 QDRANT_URL 跟 OPENAI_API_KEY)
         qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
         qdrant_client = QdrantClient(url=qdrant_url)
-        openai_key = os.getenv("OPENAI_API_KEY")
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        qdrant_api_key = os.getenv("QDRANT_API_KEY")
 
-        if not openai_key:
+        if not openai_api_key:
             raise ValueError("伺服器缺少 OPENAI_API_KEY 環境變數")
+        
+        # 🌟 關鍵在這裡！把 api_key=qdrant_api_key 塞進去給警衛檢查
+        qdrant_client = QdrantClient(
+            url=qdrant_url, 
+            api_key=qdrant_api_key 
+        )
 
         # 4. 實例化你超強的 Matching Service
         matching_service = CareerMatchingService(
             qdrant_client=qdrant_client,
             supabase_client=supabase,  # 這裡使用你檔案最上方已經連好的 supabase
-            openai_api_key=openai_key
+            openai_api_key=openai_api_key
         )
 
         # 5. 執行 RAG 與混合檢索！
