@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   MapPin,
   Building2,
@@ -105,7 +106,6 @@ const JobCard = ({ job }: { job: JobData }) => (
   </Card>
 );
 
-// ─── Stage type ───
 type Stage = "survey" | "loading" | "results";
 
 const Recommendations = () => {
@@ -113,77 +113,63 @@ const Recommendations = () => {
   const { isJobPreferenceQuizDone, setIsJobPreferenceQuizDone } = useAppState();
   const { selectedResumeId } = useResumes();
 
-  // Determine initial stage
   const [stage, setStage] = useState<Stage>(isJobPreferenceQuizDone ? "results" : "survey");
   const [showRefillAlert, setShowRefillAlert] = useState(false);
 
-  // Results state
+  // 1. 基礎分頁狀態
   const urlPage = parseInt(searchParams.get("page") || "1", 10);
   const initialPage = isNaN(urlPage) || urlPage < 1 ? 1 : urlPage;
-  const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(initialPage);
-  
-  // 🌟 核心：只留下一個大箱子裝全部資料
-  const [allJobs, setAllJobs] = useState<any[]>([]); 
-  const itemsPerPage = 5; 
+  const itemsPerPage = 5;
 
-  // 🌟 自動計算總頁數 (至少 1 頁)
-  const calculatedTotalPages = Math.max(1, Math.ceil(allJobs.length / itemsPerPage));
+  // 2. 從 LocalStorage 拿出使用者的搜尋條件
+  const savedData = localStorage.getItem('userJobSurvey');
+  const surveyPayload = savedData ? JSON.parse(savedData) : null;
 
-
-  // Sync stage
-  useEffect(() => {
-    if (isJobPreferenceQuizDone && stage === "survey") {
-      setStage("results");
-    }
-  }, [isJobPreferenceQuizDone]);
-
-  // Load jobs (前端分頁版：只抓一次！)
-  const loadJobs = async () => {
-    setIsLoading(true);
-    try {
-      const savedData = localStorage.getItem('userJobSurvey');
-      const realQuestionnaireData = savedData ? JSON.parse(savedData) : {};
-
-      // 🌟 不再傳遞 page 給後端，叫後端一次給滿
-      const response = await getJobRecommendationsAPI(realQuestionnaireData);
-
+  // 🌟 3. React Query 魔法陣！
+  const { data: allJobs = [], isLoading: isJobsLoading } = useQuery({
+    queryKey: ['jobRecommendations', surveyPayload],
+    queryFn: async () => {
+      console.log("🚀 真的打 API 囉！(如果有快取，你就不會看到這行)");
+      const response = await getJobRecommendationsAPI(surveyPayload);
       const backendJobs = response.recommendations || [];
-      const mappedJobs = backendJobs.map((bJob: any) => ({
+
+      return backendJobs.map((bJob: any) => ({
         id: bJob.id,
         title: bJob.title,
-        company: bJob.company,
+        company: bJob.company || "精選企業",
         description: bJob.description,
         city: bJob.location,
         salary: bJob.salary_range,
         industry: "資訊軟體業",
         externalUrl: `https://www.104.com.tw/jobs/search/?keyword=${encodeURIComponent(bJob.title)}`
       }));
+    },
+    enabled: stage === "results" && !!surveyPayload,
+    staleTime: 1000 * 60 * 30, // 30 分鐘保鮮期
+  });
 
-      setAllJobs(mappedJobs);
-    } catch (error) {
-      console.error("無法載入推薦職缺:", error);
-      setAllJobs([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // 4. 數學魔法 (必須放在 allJobs 宣告之後！)
+  const calculatedTotalPages = Math.max(1, Math.ceil(allJobs.length / itemsPerPage));
+  const displayJobs = allJobs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
-  // 🌟 只有在剛進入 results 階段，且箱子是空的時候，才去敲後端
+  // 5. UI 連動 useEffect
   useEffect(() => {
-    if (stage === "results" && allJobs.length === 0) {
-      loadJobs();
+    if (isJobPreferenceQuizDone && stage === "survey") {
+      setStage("results");
     }
-  }, [stage]);
+  }, [isJobPreferenceQuizDone, stage]);
 
-  // Sync URL params
   useEffect(() => {
     const urlPageParam = parseInt(searchParams.get("page") || "1", 10);
     const validPage = isNaN(urlPageParam) || urlPageParam < 1 ? 1 : Math.min(urlPageParam, calculatedTotalPages);
     if (validPage !== currentPage && allJobs.length > 0) {
       setCurrentPage(validPage);
     }
-  }, [searchParams, calculatedTotalPages, allJobs.length]);
+  }, [searchParams, calculatedTotalPages, allJobs.length, currentPage]);
 
   const handlePageChange = (page: number) => {
     if (page < 1 || page > calculatedTotalPages) return;
@@ -194,7 +180,7 @@ const Recommendations = () => {
 
   const handleSurveyComplete = (surveyData: any) => {
     const finalPayload = {
-      resumeId: selectedResumeId, 
+      resumeId: selectedResumeId,
       city: surveyData.city || surveyData.location || "不限地區",
       workMode: surveyData.workMode || "不限",
       minSalary: surveyData.minSalary || 30000,
@@ -218,7 +204,7 @@ const Recommendations = () => {
     setShowRefillAlert(false);
     setIsJobPreferenceQuizDone(false);
     setStage("survey");
-    setAllJobs([]); // 🌟 重新填寫時清空大箱子
+    // 移除了舊的 setAllJobs([]) 避免報錯
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -237,11 +223,6 @@ const Recommendations = () => {
     }
     return pages;
   };
-  // 🌟 自動計算當前頁面該顯示的職缺
-  const displayJobs = allJobs.slice(
-    (currentPage - 1) * itemsPerPage, 
-    currentPage * itemsPerPage
-  );
 
   return (
     <div className="min-h-screen ">
@@ -318,7 +299,7 @@ const Recommendations = () => {
 
               <div className="max-w-4xl mx-auto">
                 <AnimatePresence mode="wait">
-                  {isLoading ? (
+                  {isJobsLoading ? (
                     <motion.div
                       key="skeleton"
                       initial={{ opacity: 0 }}
@@ -331,7 +312,6 @@ const Recommendations = () => {
                       ))}
                     </motion.div>
                   ) : allJobs.length === 0 ? (
-                    /* 🌟 完美的找不到職缺提示畫面 */
                     <motion.div
                       key="empty"
                       initial={{ opacity: 0 }}
@@ -367,8 +347,7 @@ const Recommendations = () => {
                   )}
                 </AnimatePresence>
 
-                {/* 🌟 只有總頁數 > 1 時才顯示翻頁按鈕 */}
-                {!isLoading && allJobs.length > 0 && (
+                {!isJobsLoading && allJobs.length > 0 && (
                   <motion.div
                     className="flex justify-center items-center gap-2 mt-10 pb-8"
                     initial={{ opacity: 0 }}

@@ -179,6 +179,26 @@ def recommend_jobs():
     except Exception as e:
         print(f"❌ 推薦過程發生錯誤: {str(e)}")
         return jsonify({"status": "error", "message": "伺服器內部錯誤"}), 500
+    
+
+@rec_bp.route('/jobs/<job_id>', methods=['GET'])
+def get_job_detail(job_id):
+    print(f"DEBUG: 準備查詢單筆職缺，ID: {job_id}")
+    try:
+        # 去 Supabase 撈這筆職缺的完整資料
+        res = supabase.table('job_posting').select('*').eq('job_id', job_id).execute()
+        
+        if not res.data:
+            return jsonify({"status": "error", "message": "找不到該職缺"}), 404
+            
+        return jsonify({
+            "status": "success",
+            "data": res.data[0]  # 回傳這筆職缺的所有欄位 (包含工作要求、福利等)
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ 查詢單筆職缺發生錯誤: {str(e)}")
+        return jsonify({"status": "error", "message": "伺服器內部錯誤"}), 500
 
 @rec_bp.route('/projects/suggestions', methods=['POST'])
 def suggest_projects():
