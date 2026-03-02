@@ -111,3 +111,58 @@ export const getJobDetailAPI = async (jobId: string) => {
     return response.json();
 };
 
+
+// 非同步任務處理
+import axios from 'axios';
+import { apiClient } from './apiClient';
+
+// 建立 axios 實例
+const api = axios.create({
+    baseURL: '/api',
+});
+
+// 攔截器 : 統一處理JWT token
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => {
+    return Promise.reject(error);
+});
+
+// 定義 Response 介面
+export interface TaskStatusResponse<T = any> {
+    task_id: string;
+    state: 'PENDING' | 'PROGRESS' | 'SUCCESS' | 'FAILURE' | 'REVOKED';
+    result: T | null;
+    message?: string; // 對應 tasks.py 中的 meta msg
+}
+// 針對不同模組導出 Service
+export const taskService = {
+    /**
+     * 提交非同步任務
+     * @param {string} taskType - 任務類型 (e.g., 'career_analysis', 'resume_ocr')
+     * @param {object} payload - 任務所需的參數內容
+     */
+    submit: (taskType: string, payload: any) => {
+        return apiClient.post<{ task_id: string }>('/tasks/submit', {
+            task_type: taskType,
+            payload: payload
+        });
+    },
+    /**
+         * 取得任務狀態
+         * @param taskId 任務 ID
+         */
+    getStatus: (taskId) => {
+        return apiClient.get<TaskStatusResponse<T>>(`/tasks/status/${taskId}`);
+    }
+};
+export const resumeService = {
+    getAll: () => apiClient.get('/resumes'), // /api/resumes
+    process: (id: string) => apiClient.post(`/resume_process/${id}`), // /api/resume_process/{id}
+};
+
+export default apiClient;

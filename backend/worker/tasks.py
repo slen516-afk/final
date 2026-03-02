@@ -1,19 +1,27 @@
 import os
+import sys
 import json
 from .celery_app import celery_app
 from core.supabase_client import supabase
 import time
 from qdrant_client import QdrantClient
-# To import llm service
-# from service.llm_service.src.core import CareerAgentManager  > manager.py # crewai_engine related process
-# from service.llm_service.src.features.matching import CareerMatchingService >service.py # matching related process
-# from service.llm_service.src.features.course import CourseRecommendationService >course_matching.py # course recommendation related process
+# 引入llm service 路徑
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
+from service.llm_service.src.core.agent_engine.manager import CareerAgentManager  # crewai_engine related process
+from service.llm_service.src.features.matching.service import CareerMatchingService # matching related process
+from service.llm_service.src.features.course.course_matching import CourseRecommendationService  # course recommendation related process
+
+from service.ocr_service.ocr_service import ResumeOCRService
+service = ResumeOCRService(device="cpu")
 
 # 初始化常駐客戶端
 QDRANT_HOST = os.getenv("QDRANT_HOST", "localhost")
 QDRANT_PORT = int(os.getenv("QDRANT_PORT", 6333))
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY","")
 
 qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
@@ -25,12 +33,11 @@ def process_career_analysis(user_id: str, survey_json: str):
     """
     try:
         manager = CareerAgentManager(model_name="o3-mini")
-        user_input = {"survey_json": survey_json}
+        user_input = {"user_id": user_id,"survey_json": survey_json}
         
         # 執行 CrewAI 流程
         result = manager.run_task(
             task_type_str="career_analysis", 
-            user_id=user_id, 
             user_input=user_input
         )
         
@@ -41,7 +48,7 @@ def process_career_analysis(user_id: str, survey_json: str):
 
 
 @celery_app.task(name='process_job_matching')
-def process_job_matching(user_id: int, filters: dict, user_6d_profile: dict):
+def process_job_matching(user_id: int, filters: dict, document_id: int, source_type: str):
     """
     執行職缺匹配任務 (Service.py 邏輯)
     """
@@ -55,8 +62,9 @@ def process_job_matching(user_id: int, filters: dict, user_6d_profile: dict):
         # 執行三階段匹配流程
         best_jobs = matching_service.find_best_jobs(
             user_id=user_id,
-            filters=filters,
-            user_6d_profile=user_6d_profile
+            document_id=document_id,
+            source_type=source_type,
+            filters=filters
         )
         
         return {"status": "success", "jobs": best_jobs}
@@ -82,34 +90,29 @@ def process_course_recommendation(user_id: str, top_k: int = 5):
         print(f"Course Recommendation Task Failed: {e}")
         return {"status": "error", "message": str(e)}
 
+@celery_app.task(name='analyze_resume_async', bind=True)
+def analyze_resume_async(self, file_path):
+    """
+    執行履歷 OCR 分析任務
+    """
+    try:
+        self.update_state(state='PROGRESS', meta={'msg': 'AI 正在分析履歷中...'})
+        
+        # 1. 實例化 Service 並傳入 supabase 實例
+        ocr_service = ResumeOCRService(supabase_client=supabase)
+        
+        # 2. 執行處理邏輯
+        result = ocr_service.extract_text_from_image(file_path=file_path)
+        
+        return {"status": "success", "data": result}
+        
+    except Exception as e:
+        print(f"Resume OCR Task Failed: {e}")
+        self.update_state(state='FAILURE', meta={'error': str(e)})
+        return {"status": "error", "message": str(e)}
 
 # for test purpose, not real processing
 @celery_app.task(name='test_connection')
 def test_connection(user_id=None, content=None):
     return f"Worker is up and running! Received user_id: {user_id}, content: {content}"
 
-@celery_app.task(name='analyze_resume_async', bind=True)
-def analyze_resume_async(self, user_id, resume_content):
-    """
-    非同步處理：AI 分析履歷並寫入 Supabase
-    """
-    try:
-        self.update_state(state='PROGRESS', meta={'msg': 'AI 正在分析中...'})
-        
-        # 1. 模擬調用 AI 模型 (例如 GPT-4)
-        time.sleep(5) 
-        analysis_result = f"分析報告：針對用戶 {user_id} 的履歷建議..."
-        
-        # 2. 寫入 Supabase
-        data = {
-            "user_id": user_id,
-            "report": analysis_result,
-            "status": "completed"
-        }
-        response = supabase.table("analysis_reports").insert(data).execute()
-        
-        return {"status": "success", "db_id": response.data[0]['id']}
-        
-    except Exception as e:
-        self.update_state(state='FAILURE', meta={'error': str(e)})
-        raise e
