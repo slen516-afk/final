@@ -30,19 +30,21 @@ def create_app():
 
     # --- OCR模型預載入 ---
     try:
-        from service.ocr_service.ocr_service import load_model, extract_text_from_image
+        from service.ocr_service.ocr_service import ResumeOCRService
 
         print("[System] 正在初始化 OCR 模型...")
-        load_model()
-        app.config["OCR_HANDLER"] = extract_text_from_image
-        print(f"[System] 成功引入 OCR Service")
+        try:
+        # ✅ 先建立管家，再請管家做事
+            ocr_service = ResumeOCRService() 
+            ocr_service.load_model()
+        except Exception as e:
+            print(f"[Error] OCR 模型初始化失敗: {e}")
+        
     except ImportError as e:
         print(f"[Critical] 無法引入 ocr_service！請檢查路徑。錯誤: {e}")
         # 這裡不 exit，避免為了 OCR 讓整個 App 掛掉
         app.config["OCR_HANDLER"] = None
-    except Exception as e:
-        print(f"[Error] OCR 模型初始化失敗: {e}")
-        app.config["OCR_HANDLER"] = None
+    
 
     # --- 註冊路由 ---
     from api.auth import auth_bp
