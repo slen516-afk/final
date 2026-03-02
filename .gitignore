@@ -1,5 +1,6 @@
 # --- Python (Backend & ML) ---
 __pycache__/
+*.pdf
 *.pyc
 *.pyo
 *.pyd
