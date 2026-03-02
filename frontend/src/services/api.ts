@@ -82,22 +82,32 @@ export const getProjectSuggestionsAPI = async (userData: any = {}) => {
 
 // 取得學習資源推薦 (POST 請求)
 export const getLearningRecommendationsAPI = async (userData: any = {}) => {
-  try {
-    const response = await fetch(`/api/learning/recommendations`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData), 
-    });
+    try {
+        const response = await fetch(`/api/learning/recommendations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData),
+        });
 
-if (!response.ok) {
-      throw new Error(`伺服器回應錯誤: ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`伺服器回應錯誤: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("取得學習資源推薦失敗:", error);
+        throw error;
     }
+};
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("取得學習資源推薦失敗:", error);
-    throw error;
-  }
+// 取得單筆職缺詳細資料
+export const getJobDetailAPI = async (jobId: string) => {
+    // 記得把 URL 換成你實際的後端位址 (例如 http://localhost:8000 或是 /api )
+    const response = await fetch(`/api/jobs/${jobId}`);
+    if (!response.ok) {
+        throw new Error('取得職缺詳細資料失敗');
+    }
+    return response.json();
 };
 

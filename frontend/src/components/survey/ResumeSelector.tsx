@@ -21,11 +21,10 @@ const ResumeSelector = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <Card className={`transition-all duration-300 ${
-        selectedResumeId
-          ? 'border-primary/40 shadow-[0_0_12px_rgba(34,197,94,0.15)]'
+      <Card className={`transition-all duration-300 ${selectedResumeId
+          ? 'border-primary/40 shadow-[0_0_12px_rgba(141,73,3,0.15)]'
           : 'border-border'
-      }`}>
+        }`}>
         <CardHeader className="pb-2 md:pb-4">
           <CardTitle className="text-base md:text-lg flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
@@ -40,7 +39,7 @@ const ResumeSelector = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          
+
           {/* 🌟 2. 這裡才是真正的下拉選單！利用 onValueChange 觸發魔法棒 */}
           <Select
             value={selectedResumeId?.toString() ?? ''}
@@ -48,7 +47,7 @@ const ResumeSelector = () => {
               console.log("✅ 使用者切換了履歷，新的 ID 是:", val);
               // 注意：如果你的 selectedResumeId 是數字，這裡要用 parseInt(val, 10)
               // 如果是字串，直接傳 val 即可。我們統一先當字串傳
-              setSelectedResumeId(val); 
+              setSelectedResumeId(val);
             }}
           >
             <SelectTrigger className="w-full">

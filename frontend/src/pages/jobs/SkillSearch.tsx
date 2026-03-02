@@ -175,7 +175,7 @@ const SkillSearch = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.06 }}
                   >
-                    <Card className="group relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-medium hover:ring-1 hover:ring-primary/40 hover:shadow-[0_0_16px_hsl(152_69%_45%/0.15)]">
+                    <Card className="group relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-medium hover:ring-1 hover:ring-primary/40 hover:shadow-[0_0_16px_hsl(30_96%_28%/0.15)]">
                       <CardHeader className="pb-2">
                         <div className="flex items-center gap-3">
                           <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-primary/10 shrink-0">

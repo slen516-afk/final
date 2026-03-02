@@ -29,11 +29,11 @@ VITE_API_BASE_URL=https://api.example.com vite build
 | 🟠 P1  | `/jobs/recommendations`           | AI 推薦職缺                           | `jobService.ts`       | `GET /jobs?page=`                                                                                                        |
 | 🟠 P1  | `/jobs/:id`                       | 職缺詳情 + 求職信生成                 | `jobService.ts`       | `GET /jobs/:id`、`POST /jobs/:id/cover-letter`                                                                           |
 | 🟡 P2  | `/analysis/skills`                | 技能雷達圖 + 落差分析 + 學習資源      | `analysisService.ts`  | `GET /analysis/radar`、`GET /analysis/gap`、`GET /analysis/resources`、`GET /analysis/projects`、`GET /analysis/history` |
-| 🟡 P2  | `/interview/prep`                 | 面試準備題目 + 感謝信                 | `interviewService.ts` | `GET /interview/topics`、`POST /interview/thank-you-letter`                                                              |
-| 🟡 P2  | `/member/survey/personality-test` | 職涯性向測驗提交                      | —                     | `POST /survey/personality`                                                                                               |
+| 🟡 P2  | `/member/survey/personality`      | 職涯偏好問卷提交                      | —                     | `POST /survey/personality`                                                                                               |
 | 🟢 P3  | `/` (首頁)                        | 統計數據 + 最新消息                   | `homepageService.ts`  | `GET /homepage/stats`、`GET /homepage/news`                                                                              |
 | 🟢 P3  | `/member/career-path`             | 職涯路徑圖                            | —                     | `GET /career/path`                                                                                                       |
-| 🟢 P3  | `/jobs/categories`                | 職缺分類                              | `jobService.ts`       | `GET /jobs/categories`                                                                                                   |
+
+> ℹ️ `/member/survey/personality-test`（人格特質問卷）的計分與結果判定完全在前端完成（見 `src/data/personalityScoring.ts`），不需後端 API。
 
 ---
 
@@ -47,7 +47,6 @@ src/
 │   ├── jobService.ts
 │   ├── memberService.ts
 │   ├── analysisService.ts
-│   ├── interviewService.ts
 │   └── homepageService.ts
 ├── mocks/             # 模擬資料（對接後可移除）
 ├── types/             # TypeScript 介面定義
@@ -55,8 +54,14 @@ src/
 │   ├── job.ts
 │   ├── member.ts
 │   ├── analysis.ts
-│   ├── interview.ts
 │   └── homepage.ts
+├── data/              # 前端靜態資料與計算邏輯
+│   ├── personalityScoring.ts    # 人格特質問卷計分引擎（純前端）
+│   ├── archetypeDetails.ts      # 人格原型詳細資訊
+│   ├── personalityTestQuestions.ts
+│   ├── surveyQuestions.ts
+│   ├── careerLadderTemplates.ts
+│   └── taiwanAddresses.ts
 └── contexts/          # React Context（全局狀態）
 ```
 
@@ -114,18 +119,28 @@ export async function getResumes(): Promise<ResumeItem[]> {
 - `ResumeItem`, `ResumeData`, `Suggestion` → `src/types/resume.ts`
 - `JobData`, `JobDetailData`, `JobCategory` → `src/types/job.ts`
 - `RadarTemplate`, `GapAnalysisData`, `LearningResource` → `src/types/analysis.ts`
-- `InterviewTopic` → `src/types/interview.ts`
 - `HeroStat`, `NewsItem` → `src/types/homepage.ts`
 
 ---
 
-## 測試門禁系統
+## 🔐 門禁系統（Route Protection）
 
-- `isLoggedIn ` 登入狀態
-- `isResumeUploaded` 履歷上傳狀態
-- `isPersonalityQuizDone` 職涯問卷狀態
-- `isJobPreferenceQuizDone` 工作偏好問卷狀態
-- `isPersonalityTestDone` 人格問卷狀態
+前端使用 `ProtectedRoute` 組件控制頁面存取，依據以下狀態旗標：
+
+- `isLoggedIn` — 登入狀態
+- `isResumeUploaded` — 履歷上傳狀態
+- `isPersonalityQuizDone` — 職涯偏好問卷狀態
+- `isPersonalityTestDone` — 人格特質問卷狀態
+
+各頁面所需旗標：
+
+| 頁面                    | 需要旗標                                                                      |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| `/member/center`        | `isLoggedIn`                                                                  |
+| `/jobs/skill-search`    | `isLoggedIn`                                                                  |
+| `/jobs/recommendations` | `isLoggedIn`, `isResumeUploaded`, `isPersonalityQuizDone`, `isPersonalityTestDone` |
+| `/resume/optimize`      | `isLoggedIn`, `isResumeUploaded`, `isPersonalityQuizDone`, `isPersonalityTestDone` |
+| `/analysis/skills`      | `isLoggedIn`, `isResumeUploaded`, `isPersonalityQuizDone`, `isPersonalityTestDone` |
 
 ---
 

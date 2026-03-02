@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Palette, Server, Brain, Database, ChevronDown, Users } from "lucide-react";
 
 const Team = () => {
-  const [openKey, setOpenKey] = useState<string | null>(null);
+  // const [openKey, setOpenKey] = useState<string | null>(null);
 
   // 團隊資料
   const teams = [
@@ -113,7 +113,7 @@ const Team = () => {
         ))} */}
         {teams.map((team) => {
           const Icon = team.icon;
-          const isOpen = openKey === team.key;
+          // const isOpen = openKey === team.key;
 
           return (
             <Card key={team.key} className="cursor-pointer transition hover:shadow-md">
@@ -127,7 +127,7 @@ const Team = () => {
                 <CardDescription>{team.role}</CardDescription>
 
                 {/* 展開按鈕, 唯一可點防誤觸 */}
-                <button
+                {/* <button
                   type="button"
                   onClick={() => setOpenKey(isOpen ? null : team.key)}
                   className="absolute right-4 top-4 rounded-md p-1 hover:bg-muted"
@@ -135,14 +135,14 @@ const Team = () => {
                   <ChevronDown
                     className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
                   />
-                </button>
+                </button> */}
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">{team.description}</p>
 
                 {/* 成員區 */}
-                <div className={`overflow-hidden ${isOpen ? "animate-accordion-down" : "animate-accordion-up"}`}>
-                  {isOpen && (
+                {/* <div className={`overflow-hidden ${isOpen ? "animate-accordion-down" : "animate-accordion-up"}`}>
+                  {isOpen && team.members && (
                     <div className="grid grid-cols-1 gap-3">
                       {team.members.map((member) => (
                         <div key={member.name} className="flex items-center gap-3 rounded-lg border bg-card p-3">
@@ -159,7 +159,7 @@ const Team = () => {
                       ))}
                     </div>
                   )}
-                </div>
+                </div> */}
               </CardContent>
             </Card>
           );

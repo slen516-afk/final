@@ -3,14 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { getJobDetailAPI } from '@/services/api';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  ChevronLeft, 
-  MapPin, 
-  Banknote, 
-  Building2, 
-  Briefcase, 
-  FileText, 
+import {
+  ChevronLeft,
+  MapPin,
+  Banknote,
+  Building2,
+  Briefcase,
+  FileText,
   ExternalLink,
   Copy,
   Download,
@@ -80,14 +81,14 @@ const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isLoggedIn } = useAppState();
-  
+
   // Page states
   const [isLoading, setIsLoading] = useState(true);
   const [job, setJob] = useState<JobDetailData | null>(null);
-  
+
   // Auth modal
   const [showAuthModal, setShowAuthModal] = useState(false);
-  
+
   // Cover letter drawer states
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -95,19 +96,53 @@ const JobDetail = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Load job details
+  // Load job details (🌟 真實 API 版)
   useEffect(() => {
-    setIsLoading(true);
-    // TODO: Replace with API call
-    const timer = setTimeout(() => {
-      if (id) {
-        setJob(getMockJobDetail(id));
+    const fetchJob = async () => {
+      if (!id) return;
+      setIsLoading(true);
+      try {
+        // 呼叫我們剛剛在 api.ts 新增的函式
+        const res = await getJobDetailAPI(id);
+        const rawData = res.data;
+
+        // 因為資料庫的欄位名稱 (job_title) 跟前端定義的 (title) 不一樣，需要做個翻譯蒟蒻
+        const formattedJob: JobDetailData = {
+          id: rawData.job_id,
+          title: rawData.job_title,
+          company: "精選企業", // 如果資料庫有真實公司名，改成 rawData.company
+          description: rawData.job_description,
+          city: rawData.city,
+
+          // 薪資格式化 (如果有 min 跟 max，就組裝起來)
+          salary: (rawData.salary_min && rawData.salary_max)
+            ? `${Math.floor(rawData.salary_min / 1000)}k - ${Math.floor(rawData.salary_max / 1000)}k`
+            : "依公司規定",
+
+          industry: "資訊軟體業", // 可依資料庫調整
+          skills: ["專業技能"],   // 可依資料庫調整 (若資料庫有存技能陣列就替換)
+
+          // 把長長的 description 切一點出來當工作要求跟福利 (暫時的防呆設計)
+          requirements: ["請參考上方職缺描述"],
+          benefits: ["勞健保", "年終獎金"],
+
+          externalUrl: `https://www.104.com.tw/jobs/search/?keyword=${encodeURIComponent(rawData.job_title)}`
+        };
+
+        setJob(formattedJob);
+      } catch (error) {
+        console.error("無法取得職缺詳細資料:", error);
+        toast.error('無法載入職缺資訊');
+        setJob(null);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
+    };
+
+    fetchJob();
+
   }, [id]);
+
 
   const handleGenerateLetter = async () => {
     // Check login status first
@@ -115,37 +150,37 @@ const JobDetail = () => {
       setShowAuthModal(true);
       return;
     }
-    
+
     setDrawerOpen(true);
     setIsGenerating(true);
     setLetterContent(null);
     setIsCopied(false);
-    
+
     // TODO: Replace with API call
     await new Promise(resolve => setTimeout(resolve, 3000));
-    
+
     setLetterContent(mockCoverLetter(job?.title, job?.company));
-    
+
     setIsGenerating(false);
   };
 
   const handleCopyContent = async () => {
     if (!letterContent) return;
-    
+
     const fullContent = `主旨：${letterContent.subject}\n\n${letterContent.body}`;
     await navigator.clipboard.writeText(fullContent);
     setIsCopied(true);
     toast.success('已複製到剪貼簿');
-    
+
     setTimeout(() => setIsCopied(false), 2000);
   };
 
   const handleDownload = async () => {
     if (!letterContent) return;
-    
+
     setIsDownloading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     const fullContent = `主旨：${letterContent.subject}\n\n${letterContent.body}`;
     const blob = new Blob([fullContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -154,7 +189,7 @@ const JobDetail = () => {
     a.download = `推薦信_${job?.company}_${job?.title}.txt`;
     a.click();
     URL.revokeObjectURL(url);
-    
+
     setIsDownloading(false);
     toast.success('推薦信已下載');
   };
@@ -213,13 +248,13 @@ const JobDetail = () => {
                             <span>{job.company}</span>
                           </div>
                         </div>
-                        <img 
-                          src={icon104} 
-                          alt="104人力銀行" 
+                        <img
+                          src={icon104}
+                          alt="104人力銀行"
                           className="h-12 w-12 rounded-full shadow-sm flex-shrink-0"
                         />
                       </div>
-                      
+
                       {/* Job meta info */}
                       <div className="flex flex-wrap gap-3 mt-4">
                         <Badge variant="secondary" className="flex items-center gap-1 px-3 py-1">
@@ -242,9 +277,9 @@ const JobDetail = () => {
                           <FileText className="h-4 w-4" />
                           生成推薦信
                         </Button>
-                        <a 
-                          href={job.externalUrl} 
-                          target="_blank" 
+                        <a
+                          href={job.externalUrl}
+                          target="_blank"
                           rel="noopener noreferrer"
                         >
                           <Button className="gap-2">
@@ -276,8 +311,8 @@ const JobDetail = () => {
                     <CardContent>
                       <div className="flex flex-wrap gap-2">
                         {job.skills.map((skill, index) => (
-                          <Badge 
-                            key={index} 
+                          <Badge
+                            key={index}
                             variant="secondary"
                             className="px-3 py-1"
                           >
@@ -296,8 +331,8 @@ const JobDetail = () => {
                     <CardContent>
                       <ul className="space-y-2">
                         {job.requirements.map((req, index) => (
-                          <li 
-                            key={index} 
+                          <li
+                            key={index}
                             className="flex items-start gap-3 text-muted-foreground"
                           >
                             <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
@@ -316,8 +351,8 @@ const JobDetail = () => {
                     <CardContent>
                       <ul className="space-y-2">
                         {job.benefits.map((benefit, index) => (
-                          <li 
-                            key={index} 
+                          <li
+                            key={index}
                             className="flex items-start gap-3 text-muted-foreground"
                           >
                             <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -336,9 +371,9 @@ const JobDetail = () => {
                           <h3 className="font-semibold text-lg">對這個職位感興趣嗎？</h3>
                           <p className="text-muted-foreground text-sm">立即投遞履歷，開啟您的新職涯旅程</p>
                         </div>
-                        <a 
-                          href={job.externalUrl} 
-                          target="_blank" 
+                        <a
+                          href={job.externalUrl}
+                          target="_blank"
                           rel="noopener noreferrer"
                         >
                           <Button size="lg" className="gap-2">
