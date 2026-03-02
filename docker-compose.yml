@@ -4,6 +4,7 @@ services:
   # 0. Redis (Job Queue)
   redis:
     image: redis:7-alpine
+    container_name: final-redis
     ports:
       - "6379:6379"
     networks:
@@ -27,6 +28,8 @@ services:
     networks:
       - default
     command: sleep infinity
+    env_file:
+      - .env
   supabase_control:
     image: python:3.10-slim
     command: sleep infinity
@@ -46,28 +49,28 @@ services:
       - ./frontend:/app # 把本機的程式碼同步到容器內，這樣你存檔畫面就會自動更新
       - /app/node_modules # 關鍵！保護容器內的 Node 模組不被本機覆蓋
     ports:
-      - "3000:3000" # 本機 3000 對應容器 3000
+      - "8080:8080"
     networks:
       - default
   # 專門負責 "眼睛" 的服務 (OCR)
-  ocr_service:
-    build:
-      context: ./backend/service/ocr_service # 告訴 Docker 去哪裡找 Dockerfile
-      dockerfile: Dockerfile
-    command: sleep infinity # 依然讓它發呆，方便你進去操作
-    volumes:
-      # 1. 程式碼掛載：讓你在本機改 code，容器內同步生效
-      - ./backend/service/ocr_service:/app
-      # 2. 模型快取掛載：這是之前卡死的地方，我們用 Volume 的方式給它，不放進 Build 過程
-      - ./backend/cache/hf_cache:/root/.cache/huggingface
-      - ./supabase_control:/app/supabase_control
-    ports:
-      - "5001:5000"
-    networks:
-      - default
-    environment:
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
+  # ocr_service:
+  #   build:
+  #     context: ./backend/service/ocr_service # 告訴 Docker 去哪裡找 Dockerfile
+  #     dockerfile: Dockerfile
+  #   command: sleep infinity # 依然讓它發呆，方便你進去操作
+  #   volumes:
+  #     # 1. 程式碼掛載：讓你在本機改 code，容器內同步生效
+  #     - ./backend/service/ocr_service:/app
+  #     # 2. 模型快取掛載：這是之前卡死的地方，我們用 Volume 的方式給它，不放進 Build 過程
+  #     - ./backend/cache/hf_cache:/root/.cache/huggingface
+  #     - ./supabase_control:/app/supabase_control
+  #   ports:
+  #     - "5001:5000"
+  #   networks:
+  #     - default
+  #   environment:
+  #     - SUPABASE_URL=${SUPABASE_URL}
+  #     - SUPABASE_KEY=${SUPABASE_KEY}
 
   llm_service:
     image: python:3.10-slim
@@ -78,8 +81,25 @@ services:
     ports:
       - "5002:5000" # 外部 5002 -> 內部 5000 (避開 OCR 的 5001)
     # 如果你有用 .env 存 API Key，記得把下面這兩行註解打開
-    # env_file:
-    #   - .env
+    env_file:
+      - .env
+    networks:
+      - default
+
+  # --- 新增的 Celery Worker ---
+  worker:
+    build: ./backend
+    command: celery -A worker.celery_app worker --loglevel=info
+    volumes:
+      - ./backend:/app
+      - ./supabase_control:/app/supabase_control
+    working_dir: /app
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
     networks:
       - default
 

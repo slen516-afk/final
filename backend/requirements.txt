@@ -10,10 +10,14 @@ fastapi
 uvicorn
 python-multipart
 marshmallow
+celery
+redis
+requests
 
 # 2.環境變數與設定管理 (Config)
 python-dotenv>=1.0.0
 pydantic>=2.0.0
+pytest
 
 # 3.資料庫與向量搜尋 (Database & Vector Store)
 supabase

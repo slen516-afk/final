@@ -24,7 +24,8 @@ import ResumeSelector from "@/components/survey/ResumeSelector";
 import AlertModal from "@/components/modals/AlertModal";
 import icon104 from "@/assets/104-icon.png";
 import type { JobData } from "@/types/job";
-import { generateMockJobs } from "@/mocks/jobs";
+import { getJobRecommendationsAPI } from "@/services/api";
+import { useResumes } from "@/contexts/ResumeContext";
 
 // Job Card Skeleton
 const JobCardSkeleton = () => (
@@ -110,6 +111,7 @@ type Stage = "survey" | "loading" | "results";
 const Recommendations = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isJobPreferenceQuizDone, setIsJobPreferenceQuizDone } = useAppState();
+  const { selectedResumeId } = useResumes();
 
   // Determine initial stage
   const [stage, setStage] = useState<Stage>(isJobPreferenceQuizDone ? "results" : "survey");
@@ -119,50 +121,87 @@ const Recommendations = () => {
   const urlPage = parseInt(searchParams.get("page") || "1", 10);
   const initialPage = isNaN(urlPage) || urlPage < 1 ? 1 : urlPage;
   const [isLoading, setIsLoading] = useState(false);
-  const [jobs, setJobs] = useState<JobData[]>([]);
   const [currentPage, setCurrentPage] = useState(initialPage);
-  const [totalPages] = useState(5);
+  
+  // 🌟 核心：只留下一個大箱子裝全部資料
+  const [allJobs, setAllJobs] = useState<any[]>([]); 
+  const itemsPerPage = 5; 
 
-  // Sync stage when global state changes externally
+  // 🌟 自動計算總頁數 (至少 1 頁)
+  const calculatedTotalPages = Math.max(1, Math.ceil(allJobs.length / itemsPerPage));
+
+
+  // Sync stage
   useEffect(() => {
     if (isJobPreferenceQuizDone && stage === "survey") {
       setStage("results");
     }
   }, [isJobPreferenceQuizDone]);
 
-  // Load jobs
-  const loadJobs = (page: number) => {
+  // Load jobs (前端分頁版：只抓一次！)
+  const loadJobs = async () => {
     setIsLoading(true);
-    setTimeout(() => {
-      setJobs(generateMockJobs(page));
+    try {
+      const savedData = localStorage.getItem('userJobSurvey');
+      const realQuestionnaireData = savedData ? JSON.parse(savedData) : {};
+
+      // 🌟 不再傳遞 page 給後端，叫後端一次給滿
+      const response = await getJobRecommendationsAPI(realQuestionnaireData);
+
+      const backendJobs = response.recommendations || [];
+      const mappedJobs = backendJobs.map((bJob: any) => ({
+        id: bJob.id,
+        title: bJob.title,
+        company: bJob.company,
+        description: bJob.description,
+        city: bJob.location,
+        salary: bJob.salary_range,
+        industry: "資訊軟體業",
+        externalUrl: `https://www.104.com.tw/jobs/search/?keyword=${encodeURIComponent(bJob.title)}`
+      }));
+
+      setAllJobs(mappedJobs);
+    } catch (error) {
+      console.error("無法載入推薦職缺:", error);
+      setAllJobs([]);
+    } finally {
       setIsLoading(false);
-    }, 1200);
+    }
   };
 
+  // 🌟 只有在剛進入 results 階段，且箱子是空的時候，才去敲後端
   useEffect(() => {
-    if (stage === "results") {
-      loadJobs(currentPage);
+    if (stage === "results" && allJobs.length === 0) {
+      loadJobs();
     }
-  }, [currentPage, stage]);
+  }, [stage]);
 
   // Sync URL params
   useEffect(() => {
     const urlPageParam = parseInt(searchParams.get("page") || "1", 10);
-    const validPage = isNaN(urlPageParam) || urlPageParam < 1 ? 1 : Math.min(urlPageParam, totalPages);
-    if (validPage !== currentPage) {
+    const validPage = isNaN(urlPageParam) || urlPageParam < 1 ? 1 : Math.min(urlPageParam, calculatedTotalPages);
+    if (validPage !== currentPage && allJobs.length > 0) {
       setCurrentPage(validPage);
     }
-  }, [searchParams, totalPages]);
+  }, [searchParams, calculatedTotalPages, allJobs.length]);
 
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
+    if (page < 1 || page > calculatedTotalPages) return;
     setCurrentPage(page);
     setSearchParams({ page: page.toString() });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Survey complete → loading → results
-  const handleSurveyComplete = () => {
+  const handleSurveyComplete = (surveyData: any) => {
+    const finalPayload = {
+      resumeId: selectedResumeId, 
+      city: surveyData.city || surveyData.location || "不限地區",
+      workMode: surveyData.workMode || "不限",
+      minSalary: surveyData.minSalary || 30000,
+      maxSalary: surveyData.maxSalary || 200000,
+    };
+
+    localStorage.setItem('userJobSurvey', JSON.stringify(finalPayload));
     setStage("loading");
     window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -175,33 +214,37 @@ const Recommendations = () => {
     }, 1800);
   };
 
-  // Refill flow
   const handleRefillConfirm = () => {
     setShowRefillAlert(false);
     setIsJobPreferenceQuizDone(false);
     setStage("survey");
-    setJobs([]);
+    setAllJobs([]); // 🌟 重新填寫時清空大箱子
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    if (calculatedTotalPages <= 7) {
+      for (let i = 1; i <= calculatedTotalPages; i++) pages.push(i);
     } else {
       if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, "...", totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, "...", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+        pages.push(1, 2, 3, 4, "...", calculatedTotalPages);
+      } else if (currentPage >= calculatedTotalPages - 2) {
+        pages.push(1, "...", calculatedTotalPages - 3, calculatedTotalPages - 2, calculatedTotalPages - 1, calculatedTotalPages);
       } else {
-        pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
+        pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", calculatedTotalPages);
       }
     }
     return pages;
   };
+  // 🌟 自動計算當前頁面該顯示的職缺
+  const displayJobs = allJobs.slice(
+    (currentPage - 1) * itemsPerPage, 
+    currentPage * itemsPerPage
+  );
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen ">
       <div className="container py-8 md:py-12">
         <AnimatePresence mode="wait">
           {/* ─── Stage 1: Survey ─── */}
@@ -252,7 +295,6 @@ const Recommendations = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Header */}
               <motion.div
                 className="text-center mb-8 md:mb-10"
                 initial={{ opacity: 0, y: -20 }}
@@ -267,7 +309,6 @@ const Recommendations = () => {
                 </p>
               </motion.div>
 
-              {/* Refill Button */}
               <div className="max-w-4xl mx-auto mb-6">
                 <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowRefillAlert(true)}>
                   <RefreshCw className="h-4 w-4" />
@@ -275,7 +316,6 @@ const Recommendations = () => {
                 </Button>
               </div>
 
-              {/* Job List */}
               <div className="max-w-4xl mx-auto">
                 <AnimatePresence mode="wait">
                   {isLoading ? (
@@ -290,6 +330,21 @@ const Recommendations = () => {
                         <JobCardSkeleton key={i} />
                       ))}
                     </motion.div>
+                  ) : allJobs.length === 0 ? (
+                    /* 🌟 完美的找不到職缺提示畫面 */
+                    <motion.div
+                      key="empty"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="text-center py-16 mt-4 bg-muted/20 rounded-xl border border-dashed border-muted-foreground/30"
+                    >
+                      <div className="text-4xl mb-4">🤷‍♂️</div>
+                      <h3 className="text-xl font-semibold mb-2">哎呀，目前沒有符合條件的職缺</h3>
+                      <p className="text-muted-foreground">
+                        這個薪資區間在該地區可能比較稀有，試著稍微放寬條件，或是更改地區看看吧！
+                      </p>
+                    </motion.div>
                   ) : (
                     <motion.div
                       key="content"
@@ -298,7 +353,7 @@ const Recommendations = () => {
                       exit={{ opacity: 0 }}
                       className="grid gap-4"
                     >
-                      {jobs.map((job, index) => (
+                      {displayJobs.map((job, index) => (
                         <motion.div
                           key={job.id}
                           initial={{ opacity: 0, y: 20 }}
@@ -312,8 +367,8 @@ const Recommendations = () => {
                   )}
                 </AnimatePresence>
 
-                {/* Pagination */}
-                {!isLoading && jobs.length > 0 && (
+                {/* 🌟 只有總頁數 > 1 時才顯示翻頁按鈕 */}
+                {!isLoading && allJobs.length > 0 && (
                   <motion.div
                     className="flex justify-center items-center gap-2 mt-10 pb-8"
                     initial={{ opacity: 0 }}
@@ -353,7 +408,7 @@ const Recommendations = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      disabled={currentPage === calculatedTotalPages}
                       className="gap-1"
                     >
                       下一頁
@@ -367,7 +422,6 @@ const Recommendations = () => {
         </AnimatePresence>
       </div>
 
-      {/* Refill Confirmation Alert */}
       <AlertModal
         open={showRefillAlert}
         onClose={() => setShowRefillAlert(false)}

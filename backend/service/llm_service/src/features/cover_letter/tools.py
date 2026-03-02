@@ -1,3 +1,5 @@
+import json
+
 from crewai.tools import BaseTool
 import os
 from src.core.database.supabase_client import get_supabase_client
@@ -45,7 +47,7 @@ class DatabaseTools:
                 .single() \
                 .execute()
 
-            if not response.data:
+            if not response.data:            
                 return {"error": "找不到該用戶優化後履歷資料"}
 
             return response.data

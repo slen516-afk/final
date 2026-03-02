@@ -15,6 +15,13 @@ class JobMatchRetriever:
         """
         must_conditions = []
 
+        # [新增] 0. 強制篩選已貼標職缺 (is_labeled == true)
+        must_conditions.append(
+            models.FieldCondition(
+                key="is_labeled", 
+                match=models.MatchValue(value=True)
+            )
+        )
         # 1. 處理地區 (City) -> 支援多選
         if "city" in filters and filters["city"]:
             must_conditions.append(
@@ -90,34 +97,58 @@ class JobMatchRetriever:
 
 class UserProfileRetriever:
     """
-    負責從 Qdrant 提取使用者的優化履歷向量。
+    負責從 Qdrant 提取使用者的履歷向量。
+    支援根據 source_type 自動切換到「原始履歷」或「優化後履歷」的資料庫。
     """
-    def __init__(self, client: QdrantClient, resume_collection_name: str):
+    def __init__(self, client: QdrantClient):
         self.client = client
-        self.resume_collection_name = resume_collection_name
+        # self.resume_collection_name = resume_collection_name
 
-    def get_resume_vector(self, user_id: int) -> List[float]:
+    def get_user_resume_vector(self, user_id: int, document_id: int, source_type: str) -> list[float]:
         """
+        根據來源類型，前往不同的 Qdrant Collection 提取履歷向量
+        """
+        # 1. 路由分流：決定目標 Collection 與過濾欄位
+        if source_type == "RESUME":
+            collection_name = "resume_vectors"
+            # 對應 ERD 中的 resume_id
+            doc_id_field = "resume_id" 
+        elif source_type == "OPTIMIZATION":
+            collection_name = "optimized_resume_vectors" # 資料庫名稱待確認
+            # 對應 ERD 中的 optimization_id
+            doc_id_field = "optimization_id"
+        else:
+            raise ValueError(f"未知的 source_type: {source_type}")
+
+        print(f"🔍 準備前往 Qdrant 集合 [{collection_name}] 尋找 {doc_id_field}={document_id} 的向量...")
+
+        """
+        2. 建立 Qdrant Payload Filter (嚴格包含 user_id 防護)
+        這裡利用 Qdrant 的精確比對功能，確保撈出來的向量是正確的
         透過 user_id 撈取 1536 維的向量。
         """
-        user_filter = models.Filter(
+        search_filter = models.Filter(
             must=[
                 models.FieldCondition(
-                    key="user_id", 
-                    match=models.MatchValue(value=user_id)
+                    key="user_id",
+                    match=models.MatchValue(value=user_id) # 絕對必要的資安防線
+                ),
+                models.FieldCondition(
+                    key=doc_id_field,
+                    match=models.MatchValue(value=document_id) # 精確定位哪一份履歷
                 )
             ]
         )
 
+        # 3. 執行檢索 (使用 scroll API 根據 Payload 條件找出那筆資料)
         records, _ = self.client.scroll(
-            collection_name=self.resume_collection_name,
-            scroll_filter=user_filter,
+            collection_name=collection_name,
+            scroll_filter=search_filter,
             limit=1,
-            with_vectors=True,    
-            with_payload=False    
+            with_vectors=True # 要求 Qdrant 回傳 1536 維的向量
         )
 
         if not records:
-            raise ValueError(f"❌ 找不到 user_id 為 [{user_id}] 的履歷向量！")
+            raise ValueError(f"❌ 找不到 user_id=[{user_id}] 且 {doc_id_field}=[{document_id}] 的履歷向量！")
         
         return records[0].vector

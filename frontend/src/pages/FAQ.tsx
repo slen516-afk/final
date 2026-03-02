@@ -9,7 +9,7 @@ import { HelpCircle } from 'lucide-react';
 const FAQ = () => {
   const faqs = [
     {
-      question: '如何開始使用職涯智慧平台？',
+      question: '如何開始使用職星領航員平台？',
       answer: '請先註冊帳號，完成個人資料填寫後，即可開始使用各項功能。',
     },
     {
@@ -37,7 +37,7 @@ const FAQ = () => {
           找到您需要的答案
         </p>
       </div>
-      
+
       <div className="max-w-2xl mx-auto">
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, index) => (

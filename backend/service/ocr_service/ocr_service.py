@@ -10,6 +10,7 @@ from transformers import Qwen2VLForConditionalGeneration, AutoProcessor, TextStr
 from qwen_vl_utils import process_vision_info
 from dotenv import load_dotenv
 
+
 # 嘗試引入 Supabase
 try:
     from supabase import create_client, Client
@@ -91,7 +92,7 @@ def _convert_pdf_to_image(file_path):
         # 4. 轉換為 PIL Image 格式，這是 Qwen2-VL 認得的格式
         image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
         
-        print("[OCR Service] ✅ PDF 成功轉換為圖片！")
+        print("[OCR Service] PDF 成功轉換為圖片！")
         return image
 
     except Exception as e:

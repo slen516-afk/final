@@ -3,7 +3,8 @@ from functools import wraps
 from datetime import datetime
 from core.supabase_client import supabase
 
-auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+auth_bp = Blueprint("auth", __name__)
+
 
 # 用戶註冊
 @auth_bp.route("/register", methods=["POST"])
@@ -18,15 +19,17 @@ def register():
 
     try:
         # 呼叫 Supabase Auth 註冊
-        result = supabase.auth.sign_up({
-            "email": email,
-            "password": password,
-            "options": {
-                "data": {"username": username}
-                # 驗證後跳轉頁面<url>
-                # "email_redirect_to": "<url>"
+        result = supabase.auth.sign_up(
+            {
+                "email": email,
+                "password": password,
+                "options": {
+                    "data": {"username": username}
+                    # 驗證後跳轉頁面<url>
+                    # "email_redirect_to": "<url>"
+                },
             }
-        })
+        )
 
         # 同步寫入 USER 表（auth_uuid 橋接）
         if result.user:
@@ -43,16 +46,20 @@ def register():
 
         # 驗證用戶信箱
         if result.user and not result.session:
-            return jsonify({
-                "message": "註冊成功！請檢查您的信箱以驗證帳號。",
-                "needsConfirmation": True
-            }), 201
-            
+            return (
+                jsonify(
+                    {
+                        "message": "註冊成功！請檢查您的信箱以驗證帳號。",
+                        "needsConfirmation": True,
+                    }
+                ),
+                201,
+            )
+
         return jsonify({"message": "註冊成功"}), 201
 
     except Exception as e:
         return jsonify({"message": str(e)}), 400
-
 
 
 # 用戶登入
@@ -67,10 +74,9 @@ def login():
 
     try:
         # 呼叫 Supabase Auth 登入
-        result = supabase.auth.sign_in_with_password({
-            "email": email,
-            "password": password
-        })
+        result = supabase.auth.sign_in_with_password(
+            {"email": email, "password": password}
+        )
 
         user = result.user
         session = result.session
@@ -78,45 +84,42 @@ def login():
         if not user:
             return jsonify({"message": "Invalid credentials"}), 401
 
-        # 更新 USER 表最後登入時間
-        try:
-            supabase.table("USER").update({
-                "last_login": datetime.utcnow().isoformat()
-            }).eq("auth_uid", user.id).execute()
-        except Exception:
-            pass  # 非關鍵操作，不阻擋登入
+        # 更新最後登入時間
+        supabase.table("users").update(
+            {"last_login": datetime.utcnow().isoformat()}
+        ).eq("id", user.id).execute()
 
         # 回傳指定格式
-        return jsonify({
-            "user": {
-                "id": user.id,
-                "role": user.role or "user"
-            },
-            "auth": {
-                "accessToken": session.access_token,
-                "refreshToken": session.refresh_token,
-                "expiresIn": session.expires_in
-            },
-            "security": {
-                "mfaRequired": False,
-                "passwordExpired": False
-            }
-        }), 200
+        return (
+            jsonify(
+                {
+                    "user": {"id": user.id, "role": user.role or "user"},
+                    "auth": {
+                        "accessToken": session.access_token,
+                        "refreshToken": session.refresh_token,
+                        "expiresIn": session.expires_in,
+                    },
+                    "security": {"mfaRequired": False, "passwordExpired": False},
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         return jsonify({"message": str(e)}), 500
+
 
 # 權限驗證
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
-        
+
         if not auth_header or not auth_header.startswith("Bearer "):
             return jsonify({"message": "請先登入"}), 401
-        
-        token = auth_header.replace("Bearer ", "")       
-        
+
+        token = auth_header.replace("Bearer ", "")
+
         try:
             # 使用 Supabase SDK 驗證用戶資訊
             user_info = supabase.auth.get_user(token)
@@ -136,18 +139,21 @@ def login_required(f):
             g.db_user_id = db_user.data["user_id"] if db_user.data else None
 
         except Exception as e:
-            print(f"[Auth] login_required error: {e}")
-            return jsonify({"message": f"Token 無效 / 逾期: {e}"}), 401
-            
+            return jsonify({"message": "Token 無效 / 逾期"}), 401
+
         return f(*args, **kwargs)
+
     return decorated
+
 
 # 用戶首頁 - 登入後可使用
 @auth_bp.route("/profile", methods=["GET"])
 @login_required
 def get_profile():
     try:
-        user_data = supabase.table("users").select("*").eq("id", g.user_id).single().execute()
+        user_data = (
+            supabase.table("users").select("*").eq("id", g.user_id).single().execute()
+        )
         return jsonify(user_data.data), 200
     except Exception as e:
         return jsonify({"message": str(e)}), 500
