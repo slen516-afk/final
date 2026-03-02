@@ -39,9 +39,9 @@ TECH_VERIFICATION_DESCRIPTION = """計算技術分數與目標職位匹配度，
 [問卷資料]: {survey_json}
 
 請依序執行：
-1. **獲取履歷**：使用 'Fetch Resume From Database' 工具獲取使用者 {user_id} 的最新履歷資料。
-2. **算分**：使用「問卷資料」呼叫工具計算 D1-D6 技術分數。
-3. **匹配**：根據算出的 D1-D6 分數與問卷中的目標職位 (target_role)，呼叫工具計算『匹配分數 (Match Score)』。
+1. **獲取履歷**：使用 'Fetch Resume From Database' 工具並傳入 `user_id` 作為參數，獲取使用者最新的履歷資料。
+2. **算分**：呼叫 'Calculate Technical Vectors' 工具並傳入 `user_id` 作為參數，計算 D1-D6 技術分數 (系統已自動將問卷資料綁定至工具內)。
+3. **匹配**：根據算出的 D1-D6 分數與問卷中的目標職位 (target_role)，呼叫 'Calculate Job Match Score' 工具計算『匹配分數 (Match Score)』。
 4. **驗證**：對比「獲取到的履歷資料」內容進行真實性驗證，若履歷證據與問卷分數不符，請註明落差。"""
 
 TRAIT_ANALYSIS_DESCRIPTION = """分析人格特質。
