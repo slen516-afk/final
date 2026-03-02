@@ -48,7 +48,7 @@ class DatabaseTools:
                 .execute()
 
             if not response.data:
-                return {"error": "找不到該用戶優化後履歷資料"}
+https://github.com/slen516-afk/final/pull/21/conflict?name=backend%252Fservice%252Fllm_service%252Fsrc%252Ffeatures%252Fcover_letter%252Ftools.py&base_oid=220afb8dfd1b59fb8dbd9ed295fa0c1e71e35e11&head_oid=78a21c5c4531e4db7664927bb85d45c207544c5a                return {"error": "找不到該用戶優化後履歷資料"}
 
             return response.data
 
@@ -60,10 +60,10 @@ class RecommendJobSearchTool(BaseTool):
     name: str = "SearchRecommendJob"
     description: str = "搜尋推薦職缺。Input: job_id"
     def _run(self, job_id: str) -> str:
-        return json.dumps(DatabaseTools.get_job_recommendation_profile(job_id), ensure_ascii=False)
+        return DatabaseTools.get_job_recommendation_profile(job_id)
 
 class FetchOptimizeResumeTool(BaseTool):
     name: str = "FetchUserOptimizeResume"
     description: str = "獲取使用者個人優化後的履歷。Input: optimization_id"
     def _run(self, optimization_id: str) -> str:
-        return json.dumps(DatabaseTools.get_optimize_resume(optimization_id), ensure_ascii=False)
+        return DatabaseTools.get_optimize_resume(optimization_id)
