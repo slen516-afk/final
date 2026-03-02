@@ -82,7 +82,7 @@ class ActionPlan(BaseModel):
     long_term: str = Field(description="長期計畫 (6個月以上)：針對架構思維、產業領域知識 (Domain Knowledge) 或跨領域整合的長遠職涯發展建議。")
 
 class PreliminarySummary(BaseModel):
-    core_insight: str = Field(description="一句話精闢總結使用者的職涯畫像，包含強項與隱憂")
+    core_insight: str = Field(description="高階職涯顧問的深度洞察（約150-200字）。請採用結構化敘述：1. 【產業洞察】：簡單描繪目標職位的市場趨勢與技術演進。2. 【個人總結】：精闢點出使用者的核心潛力與潛在隱憂。")
 
 # 最終輸出的完整報告結構
 class CareerReport(BaseModel):
