@@ -1,7 +1,7 @@
 """
 履歷資料寫入 Supabase。
 從 resume.csv 讀取測試履歷，使用 supabase_connection 連線，寫入 resume 表。
-執行條件：工作目錄或專案根為 supabase_control；resume.csv 在專案根；USER 表需有 user_id 1～10；resume_template 表需有 template_id 1。
+執行條件：工作目錄或專案根為 supabase_control；resume.csv 在 data/ 或專案根；USER 表需有 user_id 1～10；resume_template 表需有 template_id 1。
 """
 
 import sys
@@ -64,11 +64,13 @@ def row_to_payload(row):
 def main():
     supabase = connect_to_supabase()
 
-    csv_path = PROJECT_ROOT / "resume.csv"
+    csv_path = PROJECT_ROOT / "data" / "resume.csv"
+    if not csv_path.exists():
+        csv_path = PROJECT_ROOT / "resume.csv"
     if not csv_path.exists():
         csv_path = Path.cwd() / "resume.csv"
     if not csv_path.exists():
-        raise FileNotFoundError(f"找不到 resume.csv，請放在 {PROJECT_ROOT} 或當前目錄")
+        raise FileNotFoundError(f"找不到 resume.csv，請放在 {PROJECT_ROOT / 'data'} 或專案根或當前目錄")
 
     df = pd.read_csv(csv_path)
     df = df.dropna(how="all")

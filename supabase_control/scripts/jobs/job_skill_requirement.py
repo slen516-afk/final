@@ -2,7 +2,7 @@
 階段九：提取技能需求 (job_skill_requirement)。
 依 cleaner步驟_v2.md 階段九，從職缺提取技能並寫入 job_skill_requirement。
 技能來源：結構化欄位 skills/tools、JD/requirements 關鍵字整詞匹配。
-前置條件：skill_master、job_posting、company_info 已寫入；工作目錄為 supabase_control，具備 jobs_rows.csv 或 jobs_cleaned.csv。
+前置條件：skill_master、job_posting、company_info 已寫入；工作目錄為 supabase_control，具備 data/jobs_rows.csv 或 data/jobs_cleaned.csv。
 """
 
 import os
@@ -34,7 +34,7 @@ if not SUPABASE_URL or not SUPABASE_KEY:
     raise ValueError("請設定 SUPABASE_URL 與 SUPABASE_KEY（.env）")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-DATA_DIR = str(PROJECT_ROOT)
+DATA_DIR = str(PROJECT_ROOT / "data")
 RAW_CSV = os.path.join(DATA_DIR, "jobs_rows.csv")
 if not os.path.isfile(RAW_CSV):
     RAW_CSV = os.path.join(DATA_DIR, "jobs_cleaned.csv")

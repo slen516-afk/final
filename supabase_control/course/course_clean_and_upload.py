@@ -1,6 +1,6 @@
 """
 Coursera 課程資料清洗與寫入 Supabase。
-依 coursera_cleaning_steps.md 清洗 Coursera_row_rows.csv，寫入 course 表。
+依 coursera_cleaning_steps.md 清洗 data/course/Coursera_row_rows.csv，寫入 course 表。
 執行：工作目錄為 supabase_control 或 course；.env 設有 SUPABASE_URL、SUPABASE_SERVICE_ROLE_KEY；Supabase 已建立 course 表。
 """
 
@@ -41,11 +41,13 @@ def main():
 
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
     COURSE_DIR = Path(__file__).resolve().parent
-    RAW_CSV = COURSE_DIR / "Coursera_row_rows.csv"
+    RAW_CSV = PROJECT_ROOT / "data" / "course" / "Coursera_row_rows.csv"
+    if not RAW_CSV.exists():
+        RAW_CSV = COURSE_DIR / "Coursera_row_rows.csv"
     if not RAW_CSV.exists():
         RAW_CSV = PROJECT_ROOT / "course" / "Coursera_row_rows.csv"
     if not RAW_CSV.exists():
-        raise FileNotFoundError(f"找不到 Coursera_row_rows.csv（請放在 {COURSE_DIR} 或 course/）")
+        raise FileNotFoundError(f"找不到 Coursera_row_rows.csv（請放在 data/course/ 或 course/）")
 
     print(f"資料目錄: {COURSE_DIR}")
     print(f"來源 CSV: {RAW_CSV}")

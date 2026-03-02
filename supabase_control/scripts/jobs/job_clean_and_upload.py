@@ -1,7 +1,7 @@
 """
 職缺資料清理與寫入 Supabase。
 依 cleaner步驟_v2.md 清理 jobs_rows.csv，寫入 company_info、job_posting。
-執行：工作目錄或腳本所在專案根為 supabase_control，具備 jobs_rows.csv、.env（或 Erd/.env）。
+執行：工作目錄或腳本所在專案根為 supabase_control，具備 data/jobs_rows.csv、.env（或 Erd/.env）。
 """
 
 import math
@@ -18,7 +18,7 @@ import numpy as np
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-DATA_DIR = PROJECT_ROOT
+DATA_DIR = PROJECT_ROOT / "data"
 RAW_CSV = DATA_DIR / "jobs_rows.csv"
 
 # --- 清理函數（依 clear.ipynb）---
