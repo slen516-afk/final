@@ -7,8 +7,10 @@ from crewai import Task
 STANDARD_ROLES_STR = "前端工程師, 後端工程師, 全端工程師, 資料科學家, AI 工程師, DevOps/SRE 工程師"
 
 MAPPING_INSTRUCTION = """
-**Radar Chart Mapping Rules (Strictly Follow)**:
-請將工具計算出的 D1-D6 分數映射為以下中文名稱：
+**[CRITICAL] Radar Chart Mapping & Data Integrity Rules (Strictly Follow)**:
+你正在處理最後的 JSON 生成。雷達圖 `radar_chart.dimensions` 的分數，【必須 100% 精準抄寫】第一階段「技術評估備忘錄」中算出的 D1~D6 分數。
+絕對不可以自己發明、猜測、或使用心理分析的百分比分數來替代！
+請嚴格將 D1-D6 映射為以下中文名稱：
 - D1 -> "前端開發"
 - D2 -> "後端開發"
 - D3 -> "運維部署"
@@ -19,6 +21,7 @@ MAPPING_INSTRUCTION = """
 注意：
 - 如果輸入資料是 Entry Level (無經驗)，Technical dimensions (前四項) 請直接使用 0.5。
 - 請確保 `radar_chart.dimensions` 陣列中剛好包含這 6 個項目，順序不拘。
+- 請務必去歷史訊息中尋找 `--- RAW_SCORES_START ---` 區塊，並把那六個數字精準地抄寫到 JSON 中。
 """
 
 CAREER_STAGE_MAPPING = """
