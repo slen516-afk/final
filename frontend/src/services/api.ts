@@ -32,29 +32,29 @@ export const uploadResumeAPI = async (file: File) => {
     }
 };
 
-// 根據問卷結果獲取推薦職缺 (POST 請求)
-export const getJobRecommendationsAPI = async (questionnaireData: any, page: number = 1) => {
+
+
+// 取得職缺推薦 (POST 請求) -> 🌟 已經換成 V2 引擎
+export const getJobRecommendationsAPI = async (surveyData: any) => {
     try {
-        const response = await fetch(`/api/jobs/recommendations?page=${page}`, {
+        const response = await fetch('/api/jobs/v2/recommendations', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(questionnaireData),
+            body: JSON.stringify(surveyData),
         });
 
         if (!response.ok) {
-            throw new Error(`伺服器回應錯誤: ${response.status}`);
+            throw new Error(`API 請求失敗，狀態碼: ${response.status}`);
         }
 
-        const data = await response.json();
-        return data;
+        return await response.json();
     } catch (error) {
         console.error("取得職缺推薦失敗:", error);
         throw error;
     }
 };
-
 // 取得專屬 Side Project 推薦 (POST 請求)
 export const getProjectSuggestionsAPI = async (userData: any = {}) => {
     try {
