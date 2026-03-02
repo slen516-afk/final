@@ -12,20 +12,21 @@ from core.redis_client import (
 
 analysis_bp = Blueprint("analysis", __name__)
 
-def _create_job(user_id: str, resume_id: str, survey_id: str, task_type: str = "cv_analysis") -> str:
+VALID_TASK_TYPES = {"resume_analysis", "resume_opt"}
+
+
+def _create_job(user_id: str, task_type: str = "resume_analysis", **extra) -> str:
     """
     建立 job hash 在 Redis 並 XADD 到 stream。
     回傳 job_id。
+    extra: 可傳入 resume_id, survey_id 等，視 task_type 而定。
     """
     job_id = f"job_{uuid.uuid4().hex[:12]}"
     now = datetime.now(timezone.utc).isoformat()
 
-    # 存狀態到 Redis Hash
-    redis_client.hset(f"job:{job_id}", mapping={
+    mapping = {
         "status": "queued",
         "user_id": user_id,
-        "resume_id": resume_id,
-        "survey_id": survey_id,
         "task_type": task_type,
         "result": "",
         "suggestions": "",
@@ -33,7 +34,13 @@ def _create_job(user_id: str, resume_id: str, survey_id: str, task_type: str = "
         "retry_count": "0",
         "created_at": now,
         "updated_at": now,
-    })
+    }
+    # 動態加入額外欄位（resume_id, survey_id 等）
+    for k, v in extra.items():
+        if v is not None:
+            mapping[k] = str(v)
+
+    redis_client.hset(f"job:{job_id}", mapping=mapping)
 
     # XADD 到 cv_jobs stream
     redis_client.xadd(STREAM_NAME, {
@@ -59,11 +66,18 @@ def start_analysis_task():
         user_id = g.user_id
         data = request.json
 
-        if "resume_id" not in data or "survey_id" not in data:
-            return jsonify({"error": "Missing resume_id or survey_id"}), 400
-
         task_type = data.get("task_type", "resume_analysis")
-        job_id = _create_job(user_id, data["resume_id"], data["survey_id"], task_type)
+        if task_type not in VALID_TASK_TYPES:
+            return jsonify({"error": f"Unsupported task_type: {task_type}. 支援: {', '.join(VALID_TASK_TYPES)}"}), 400
+
+        # resume_id / survey_id 為 optional metadata
+        extra = {}
+        if data.get("resume_id"):
+            extra["resume_id"] = data["resume_id"]
+        if data.get("survey_id"):
+            extra["survey_id"] = data["survey_id"]
+
+        job_id = _create_job(user_id, task_type, **extra)
 
         return jsonify({
             "job_id": job_id,
@@ -120,11 +134,17 @@ def get_optimization_suggestions(task_id):
     if not job:
         return jsonify({"error": "Job not found"}), 404
 
+    if job.get("task_type") != "resume_analysis":
+        return jsonify({"error": "此任務非 resume_analysis，請改用 /results 端點"}), 400
+
     if job["status"] != "done":
         return jsonify({"task_id": task_id, "status": job["status"], "message": "尚未完成"}), 202
 
-    suggestions = json.loads(job["suggestions"]) if job.get("suggestions") else {}
-    return jsonify(suggestions), 200
+    raw = job.get("suggestions", "")
+    if not raw:
+        return jsonify({"error": "此任務尚未產生建議資料"}), 404
+
+    return jsonify(json.loads(raw)), 200
 
 # D-04 取得履歷優化結果
 @analysis_bp.route("/tasks/<task_id>/results", methods=["GET"])
@@ -134,8 +154,14 @@ def get_optimization_results(task_id):
     if not job:
         return jsonify({"error": "Job not found"}), 404
 
+    if job.get("task_type") != "resume_opt":
+        return jsonify({"error": "此任務非 resume_opt，請改用 /suggestions 端點"}), 400
+
     if job["status"] != "done":
         return jsonify({"task_id": task_id, "status": job["status"], "message": "尚未完成"}), 202
 
-    result = json.loads(job["result"]) if job.get("result") else {}
-    return jsonify(result), 200
+    raw = job.get("result", "")
+    if not raw:
+        return jsonify({"error": "此任務尚未產生優化結果"}), 404
+
+    return jsonify(json.loads(raw)), 200

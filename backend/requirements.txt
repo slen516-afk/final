@@ -28,6 +28,8 @@ scipy
 # 5. 文件解析與影像處理 (Document & Image)
 PyMuPDF
 Pillow
+fpdf2
+python-docx
 
 # 6. 深度學習核心與視覺模型 (Deep Learning & Vision)
 torch

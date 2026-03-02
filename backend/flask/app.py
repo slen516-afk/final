@@ -37,6 +37,7 @@ from datetime import datetime
 from api.auth import auth_bp
 from api.user_preference import user_preference_bp
 from api.resume import resume_bp
+from api.export import export_bp
 from api.analysis import analysis_bp
 from api.resume_processing import resume_proc_bp 
 from api.recommendation import rec_bp
@@ -77,6 +78,7 @@ app.register_blueprint(auth_bp, url_prefix='/api/auth')
 # 履歷分析
 app.register_blueprint(user_preference_bp, url_prefix='/api')
 app.register_blueprint(resume_bp, url_prefix='/api/resumes')
+app.register_blueprint(export_bp, url_prefix='/api/resumes')
 app.register_blueprint(analysis_bp, url_prefix='/api/analysis')
 # 履歷處理
 app.register_blueprint(resume_proc_bp, url_prefix='/api/resumes')

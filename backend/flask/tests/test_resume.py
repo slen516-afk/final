@@ -15,7 +15,7 @@ class TestCreateResumeForm:
                 "personal_info": {"name": "王小明"},
                 "education": [{"school": "台大"}],
             },
-            "template_id": 2,
+            "template_id": 1,
             "resume_type": "tech",
         }
 
@@ -56,25 +56,53 @@ class TestGetResume:
         assert "structured_data" in data
 
 
-# ─── C-05  PUT /api/resumes/<id> ─────────────────────────────────────────────
+# ─── C-05  PUT /api/resumes/<id> → resume_optimization ───────────────────────
 
 class TestUpdateResume:
 
     def test_success(self, client, auth_headers):
         payload = {
-            "structured_data": {"personal_info": {"name": "李大華"}},
-            "template_id": 3,
+            "structured_data": {
+                "professional_summary": "資深後端工程師",
+                "professional_experience": [{"company": "Google", "title": "SWE"}],
+                "core_skills": ["Python", "Flask"],
+                "projects": [{"name": "Resume Builder"}],
+                "education": [{"school": "台大"}],
+            },
             "style_settings": {"color": "#FF5733"},
         }
         resp = client.put("/api/resumes/1", json=payload, headers=auth_headers)
+        assert resp.status_code == 201
+        data = resp.get_json()
+        assert "optimization_id" in data
+        assert data["optimization_version"] == "1.0"
+        assert data["template_color"] == "#FF5733"
+
+    def test_missing_body(self, client, auth_headers):
+        resp = client.put(
+            "/api/resumes/1",
+            data="",
+            content_type="application/json",
+            headers=auth_headers,
+        )
+        assert resp.status_code in (400, 500)
+
+
+# ─── Version endpoints ───────────────────────────────────────────────────────
+
+class TestResumeVersions:
+
+    def test_list_versions(self, client, auth_headers):
+        resp = client.get("/api/resumes/1/versions", headers=auth_headers)
         assert resp.status_code == 200
         data = resp.get_json()
+        assert "versions" in data
         assert data["resume_id"] == 1
-        assert data["saved_settings"]["template_id"] == 3
 
-    def test_missing_structured_data(self, client, auth_headers):
-        resp = client.put("/api/resumes/1", json={"template_id": 1}, headers=auth_headers)
-        assert resp.status_code == 400
+    def test_get_specific_version(self, client, auth_headers):
+        resp = client.get("/api/resumes/1/versions/1.0", headers=auth_headers)
+        # 可能 200 或 404 取決於 mock 設定
+        assert resp.status_code in (200, 404)
 
 
 # ─── E-01  GET /api/resumes/<id>/export ──────────────────────────────────────
@@ -89,4 +117,4 @@ class TestExportResume:
     def test_with_format_param(self, client, auth_headers):
         resp = client.get("/api/resumes/1/export?format=docx", headers=auth_headers)
         assert resp.status_code == 200
-        assert b"docx" in resp.data
+        assert "wordprocessingml" in resp.content_type

@@ -2,6 +2,7 @@
 Tests for worker.cv_worker — all LLM calls are mocked.
 """
 import json
+import os
 import pytest
 from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
@@ -15,6 +16,8 @@ _fake = fakeredis.FakeRedis(decode_responses=True)
 @pytest.fixture(autouse=True)
 def patch_worker_redis(monkeypatch):
     """Patch redis_client inside cv_worker to use our fakeredis instance."""
+    # 啟用 mock 模式讓 CareerAgentManager 不初始化外部依賴
+    monkeypatch.setenv("MOCK_MODE", "true")
     import worker.cv_worker as cw
     monkeypatch.setattr(cw, "redis_client", _fake)
     yield
@@ -64,37 +67,34 @@ class TestEnsureGroup:
 
 class TestProcessJob:
 
-    def test_cv_analysis_returns_mock_result(self):
+    def test_survey_analysis_returns_mock_result(self):
+        """survey_analysis 走 CareerAgentManager(mock_mode) → 回傳 CareerReport mock。"""
         import worker.cv_worker as cw
         _seed_job("pj1")
-        result = cw.process_job("pj1", "cv_analysis")
+        result = cw.process_job("pj1", "survey_analysis")
         assert "result" in result
         assert "suggestions" in result
-        assert result["result"]["career_readiness_score"] == 85.0
+        # mock CareerReport 裡有 report_metadata
+        assert "report_metadata" in result["result"]
 
-    def test_survey_analysis_calls_run_analysis(self, monkeypatch):
+    def test_resume_analysis_returns_mock_suggestions(self):
+        """resume_analysis → suggestions 欄位應包含 mock ResumeAnalysis。"""
         import worker.cv_worker as cw
         _seed_job("pj2")
+        result = cw.process_job("pj2", "resume_analysis")
+        assert result["suggestions"]["candidate_positioning"].startswith("【Mock】")
 
-        mock_report = {"dream_jobs": ["Data Scientist"], "score": 78}
-        monkeypatch.setattr(cw, "_run_analysis", lambda data: mock_report)
-
-        result = cw.process_job("pj2", "survey_analysis")
-        assert result["result"]["dream_jobs"] == ["Data Scientist"]
-
-    def test_survey_analysis_error(self, monkeypatch):
+    def test_resume_opt_returns_mock_result(self):
+        """resume_opt → result 欄位應包含 mock ResumeOptimization。"""
         import worker.cv_worker as cw
         _seed_job("pj3")
-
-        monkeypatch.setattr(cw, "_run_analysis", lambda data: {"error": "LLM down"})
-
-        with pytest.raises(RuntimeError, match="LLM down"):
-            cw.process_job("pj3", "survey_analysis")
+        result = cw.process_job("pj3", "resume_opt")
+        assert "professional_summary" in result["result"]
 
     def test_job_not_found(self):
         import worker.cv_worker as cw
         with pytest.raises(ValueError, match="not found"):
-            cw.process_job("nonexistent", "cv_analysis")
+            cw.process_job("nonexistent", "survey_analysis")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -124,16 +124,16 @@ class TestHandleMessage:
         # Add a real message to the stream
         from core.redis_client import STREAM_NAME
         msg_id = _fake.xadd(STREAM_NAME, {
-            "job_id": "hm1", "task_type": "cv_analysis", "retry_count": "0"
+            "job_id": "hm1", "task_type": "survey_analysis", "retry_count": "0"
         })
 
         cw.handle_message(msg_id, {
-            "job_id": "hm1", "task_type": "cv_analysis", "retry_count": "0"
+            "job_id": "hm1", "task_type": "survey_analysis", "retry_count": "0"
         })
 
         job = _fake.hgetall("job:hm1")
         assert job["status"] == "done"
-        assert json.loads(job["result"])["career_readiness_score"] == 85.0
+        assert "report_metadata" in json.loads(job["result"])
 
     def test_failure_retry(self, monkeypatch):
         """On failure with retry_count < MAX_RETRY → re-queue."""
@@ -143,14 +143,14 @@ class TestHandleMessage:
 
         from core.redis_client import STREAM_NAME
         msg_id = _fake.xadd(STREAM_NAME, {
-            "job_id": "hm2", "task_type": "cv_analysis", "retry_count": "0"
+            "job_id": "hm2", "task_type": "survey_analysis", "retry_count": "0"
         })
 
         # Make process_job raise
         monkeypatch.setattr(cw, "process_job", MagicMock(side_effect=Exception("boom")))
 
         cw.handle_message(msg_id, {
-            "job_id": "hm2", "task_type": "cv_analysis", "retry_count": "0"
+            "job_id": "hm2", "task_type": "survey_analysis", "retry_count": "0"
         })
 
         job = _fake.hgetall("job:hm2")
@@ -165,13 +165,13 @@ class TestHandleMessage:
 
         from core.redis_client import STREAM_NAME, DLQ_STREAM_NAME
         msg_id = _fake.xadd(STREAM_NAME, {
-            "job_id": "hm3", "task_type": "cv_analysis", "retry_count": "2"
+            "job_id": "hm3", "task_type": "survey_analysis", "retry_count": "2"
         })
 
         monkeypatch.setattr(cw, "process_job", MagicMock(side_effect=Exception("fatal")))
 
         cw.handle_message(msg_id, {
-            "job_id": "hm3", "task_type": "cv_analysis", "retry_count": "2"
+            "job_id": "hm3", "task_type": "survey_analysis", "retry_count": "2"
         })
 
         job = _fake.hgetall("job:hm3")

@@ -19,7 +19,7 @@ for p in [flask_dir, backend_dir]:
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
-llm_service_dir = backend_dir / "service" / "llm_service" / "restructure"
+llm_service_dir = backend_dir / "service" / "llm_service"
 if str(llm_service_dir) not in sys.path:
     sys.path.insert(0, str(llm_service_dir))
 
@@ -102,7 +102,7 @@ def process_job(job_id: str, task_type: str) -> dict:
         }
 
         manager = CareerAgentManager()
-        report = manager.run_task(task_type_str="career_analysis", user_id=user_id, user_input=user_input)
+        report = manager.run_task(task_type_str="career_analysis", user_input=user_input)
 
         if report.get("status") == "error":
             raise RuntimeError(report.get("message", "Unknown error in LLM"))
@@ -115,7 +115,7 @@ def process_job(job_id: str, task_type: str) -> dict:
         manager = CareerAgentManager()
 
         # 1. 取得履歷分析 (D-03 Suggestions)
-        report_analysis = manager.run_task(task_type_str="resume_analysis", user_id=user_id, user_input=user_input)
+        report_analysis = manager.run_task(task_type_str="resume_analysis", user_input=user_input)
         if isinstance(report_analysis, dict) and report_analysis.get("status") == "error":
             raise RuntimeError(report_analysis.get("message", "Unknown error in LLM (resume_analysis)"))
 
@@ -127,7 +127,7 @@ def process_job(job_id: str, task_type: str) -> dict:
         manager = CareerAgentManager()
 
         # 2. 取得履歷優化 (D-04 Results)
-        report_opt = manager.run_task(task_type_str="resume_opt", user_id=user_id, user_input=user_input)
+        report_opt = manager.run_task(task_type_str="resume_opt", user_input=user_input)
         if isinstance(report_opt, dict) and report_opt.get("status") == "error":
             raise RuntimeError(report_opt.get("message", "Unknown error in LLM (resume_opt)"))
 

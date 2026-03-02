@@ -13,67 +13,57 @@ Class name：CareerReport
   * 輸出之 json 格式範例：
     {
     "report_metadata": {
-    "version": "1.0","動態生成的報告版本號，反映該使用者的報告計數 (例如: 1.0, 2.0)")
-    "timestamp": "2026-01-31T09:06:40.500648",
-    "user_id": "dev_001"
+    "user_id": "1",
+    "timestamp": "2026-02-18T12:40:05.192Z",
+    "version": "1.0"
     },
     "preliminary_summary": {
-    "core_insight": "具備後端高併發架構優化與工程品質的強項，並熟悉AI與前端框架，但運維部署能力較弱，需補強以達成技術主管/架構師目標。"
+    "core_insight": "候選人在後端開發與分散式系統設計方面展現出堅實的技術優勢，尤其在使用Python和微服務架構的實戰經驗上具備明顯競爭力；然而，在運維工具和安全防護方面存在明顯不足 ，建議進一步提升K8s及CI/CD相關實操能力。"
     },
     "radar_chart": {
     "dimensions": [
     {
     "axis": "前端開發",
-    "score": 3.0
+    "score": 1.0
     },
     {
     "axis": "後端開發",
-    "score": 4.0
+    "score": 3.7
     },
     {
     "axis": "運維部署",
-    "score": 2.0
+    "score": 4.5
     },
     {
     "axis": "AI與數據",
-    "score": 3.0
+    "score": 0.5
     },
     {
     "axis": "工程品質",
-    "score": 4.0
+    "score": 3.7
     },
     {
     "axis": "軟實力",
-    "score": 3.5
+    "score": 4.8
     }
     ]
     },
     "gap_analysis": {
     "current_status": {
-    "self_assessment": "D. 資深工程師 (Senior, 5年以上)",
-    "actual_level": "Mid-to-Senior",
-    "cognitive_bias": "使用者自評為資深工程師，與系統評估的 Mid-to-Senior 水平相符，顯示自我認知較為準確，無明顯高估或低估。"
+    "self_assessment": "後端轉型中，候選人自認具備後端開發與系統設計能力，但對於運維及 安全相關議題認知較少。",
+    "actual_level": "中階",
+    "cognitive_bias": "雖然履歷顯示出5年後端工程經驗，但實際上在CI/CD、容器編排（如K8s ）及安全防護方面存在落差，顯露出候選人在面對不確定情境時的抗壓能力不足。"
     },
     "target_position": {
-    "role": "E. 技術主管/架構師(Lead/Architect)",
-    "match_score": "65%",
-    "gap_description": "目前後端與工程品質表現較佳，但運維部署與軟實力尚有提升空間，尤其在領導力與跨團隊協作能力需加強，才能符合技術主管/架構師的職務要求。"
+    "role": "後端工程師",
+    "match_score": "82%",
+    "gap_description": "儘管您在後端技術（3.7分）與分散式系統設計上具有紮實經驗，履歷中對於自動化運維和容器技術（如K8s）僅有基本描述，並且安全防護能力（0.5分）明顯不足，建議整 合先前在Python及微服務實戰上的經驗，進一步補強相關運維工具和安全實踐，從而彌補技術落差。"
     }
     },
     "action_plan": {
-    "priority_items": [
-    {
-    "category": "技術提升",
-    "action": "加強運維與部署技能，深入學習 Kubernetes 與 CI/CD 流程，提升系統穩定性與自動化能力。",
-    "recommendation_type": "實作專案"
-    },
-    {
-    "category": "軟實力",
-    "action": "持續深化底層原理研究，並透過技術分享與 Code Audit 強化影響力與技術領導力。",
-    "recommendation_type": "課程"
-    }
-    ],
-    "learning_resource_preference": "實作專案做中學，透過實際參與大型架構設計與團隊協作專案，提升技術與領導力。"
+    "short_term": "在未來1-3個月內，建議專注於K8s和自動化CI/CD流程的基本學習，利用Coursera、Udemy等網上課程，以及官方文檔加深理解，並嘗試在小型專案中應用相關技術。",
+    "mid_term": "在3-6個月內，集中精力學習微服務架構與容器編排技術，參與實際項目或內部工 作坊，並閱讀《Kubernetes in Action》等進階書籍，提升Hands-on實戰能力。",
+    "long_term": "在6個月以上，建議從全流程架構設計到運維安全進行綜合提升，透過參與開源社群與技術論壇，並針對跨域整合和安全策略（如零信任架構）進行深入研究，以達到全面升級。"
     }
     }
   * 說明：
@@ -93,9 +83,7 @@ Class name：CareerReport
           * role, match_score, gap_description 皆為 string (請注意 match_score 是帶有 '%'
             的字串，例如 "78%"）。
       * action_plan (object): 基於分析的行動計畫。
-        * priority_items 是一個 array，其中每個元素都是一個包含三個鍵的 object：
-          * category, action, recommendation_type 皆為 string。
-        * learning_resource_preference 為 string。
+        * 分為短、中、長三個行動計畫
 
 | 中文       | 英文(key)    | 輸出內容型別(value) | 給AI的prompt描述                             | 結果範例                                                                                                     |
 | ---------- | ------------ | ------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -135,8 +123,12 @@ Class name：CareerReport
 | 目標職位類型 | role | str | 目標職位名稱 | 技術主管/架構師(Lead/Architect) |
 | 匹配度 | match_scor | str | 匹配度百分比 | 65% |
 | 落差分析 | gap_description | str | 具體落差描述 | 目前技術能力在後端與工程品質較強，但運維部署與軟實力尚有 不足，且缺乏明確的領導經驗與跨團隊協作實績，需加強系統架構設計、團隊管理與商業價值評估能 力，才能順利轉型為技術主管或架構師。 |
-| 行動計畫 | action_plane | (包含名稱為 priority_items 的 list，包裹 dict；
-dict 中的內容均為 | 據 Q23 產生的學習資源偏好建議 | 參與或主導跨部門大型系統架構設計專案，強化高併發系統與運維自動化能力 |
+| 行動計畫 | action_plane | dict
+(包含短中長三個計畫，內容為 str) | 據 Q23 產生的學習資源偏好建議 | "action_plan": {
+"short_term": "在未來1-3個月內，建議專注於K8s和自動化CI/CD流程的基本學習，利用Coursera、Udemy等網上課程，以及官方文檔加深理解，並嘗試在小型專案中應用相關技術。",
+"mid_term": "在3-6個月內，集中精力學習微服務架構與容器編排技術，參與實際項目或內部工 作坊，並閱讀《Kubernetes in Action》等進階書籍，提升Hands-on實戰能力。",
+"long_term": "在6個月以上，建議從全流程架構設計到運維安全進行綜合提升，透過參與開源社群與技術論壇，並針對跨域整合和安全策略（如零信任架構）進行深入研究，以達到全面升級。"
+} |
 
 ## 履歷分析
 
