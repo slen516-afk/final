@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getProjectSuggestionsAPI } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,7 +31,7 @@ import {
   Radar as RechartsRadar,
 } from "recharts";
 import { radarTemplates, gapAnalysis, learningResources, sideProjects } from "@/mocks/analysis";
-
+import { getLearningRecommendationsAPI } from "@/services/api";
 // All mock data imported from src/mocks/analysis.ts
 
 // Skeleton components
@@ -76,6 +77,24 @@ const Skills = () => {
   const [selectedCareer, setSelectedCareer] = useState<string>("frontend");
   const [subView, setSubView] = useState<SubView>("main");
   const [subViewLoading, setSubViewLoading] = useState(false);
+  // 🌟 裝真實 Side Project 資料的箱子
+
+
+  // 🌟 難度轉換器：把後端的 Advanced 轉成 4 顆星 (加入防呆，避免白畫面)
+  const mapDifficultyToStars = (diffString: string) => {
+    if (!diffString) return 3;
+    const lower = String(diffString).toLowerCase();
+    if (lower.includes("beginner") || lower.includes("easy")) return 2;
+    if (lower.includes("intermediate") || lower.includes("medium")) return 3;
+    if (lower.includes("advanced") || lower.includes("hard")) return 4;
+    if (lower.includes("expert")) return 5;
+    return 3;
+  };
+  const [dynamicSideProjects, setDynamicSideProjects] = useState<any[]>(sideProjects);
+  const [dynamicLearningResources, setDynamicLearningResources] = useState<any[]>(learningResources);
+
+
+ 
 
   // Load data
   useEffect(() => {
@@ -90,11 +109,62 @@ const Skills = () => {
 
   const currentTemplate = radarTemplates[selectedCareer];
 
-  // Navigate to sub-view with loading
+  // Navigate to sub-view with API fetching
+  // Navigate to sub-view with API fetching
   const openSubView = async (view: SubView) => {
     setSubViewLoading(true);
     setSubView(view);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+
+    if (view === "sideproject") {
+      try {
+        console.log("🚀 準備呼叫 API: /api/projects/suggestions");
+        const res = await getProjectSuggestionsAPI({}); 
+        console.log("📦 後端回傳的 Side Project 資料:", res);
+        
+        if (res.status === "success" && res.projects) {
+          // 這裡就是傳說中的翻譯蒟蒻，絕對不能省略！
+          const mappedProjects = res.projects.map((p: any) => ({
+            name: p.title || "未命名專案",
+            technologies: p.tech_stack || [],
+            highlights: `${p.reason} (預估: ${p.estimated_hours}小時)`,
+            difficulty: mapDifficultyToStars(p.difficulty)
+          }));
+          
+          setDynamicSideProjects(mappedProjects);
+        }
+      } catch (error) {
+        console.error("❌ 無法載入推薦專案，使用預設資料", error);
+      }
+    } 
+    // 🌟 處理「學習資源」的 API 呼叫與翻譯
+    else if (view === "learning") {
+      try {
+        console.log("🚀 準備呼叫 API: /api/learning/recommendations");
+        const res = await getLearningRecommendationsAPI({}); 
+        console.log("📦 後端回傳的學習資源資料:", res);
+        
+        if (res.status === "success" && res.resources) {
+          const mappedResources = res.resources.map((r: any) => ({
+            title: r.title,
+            description: `這是一份來自 ${r.platform} 的 ${r.type} 資源，建議您可以前往參考，以補足當前職能落差。`,
+            tags: [
+              r.priority === "High" ? "高優先" : r.priority === "Medium" ? "中優先" : "低優先", 
+              r.platform, 
+              r.type
+            ],
+            url: r.url
+          }));
+          
+          setDynamicLearningResources(mappedResources);
+        }
+      } catch (error) {
+        console.error("❌ 無法載入學習資源，使用預設資料", error);
+      }
+    } 
+    else {
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    }
+    
     setSubViewLoading(false);
   };
 
@@ -129,7 +199,7 @@ ${gapAnalysis.gaps.map((g) => `- ${g.skill}: 當前 ${g.current}% → 目標 ${g
 ${learningResources.map((r) => `- ${r.title}: ${r.description}`).join("\n")}
 
 五、推薦 Side Project
-${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).join("\n")}
+${dynamicSideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).join("\n")}
     `.trim();
 
     const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8" });
@@ -182,7 +252,7 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {learningResources.map((resource, index) => (
+                  {dynamicLearningResources.map((resource, index) => (
                     <motion.div
                       key={resource.title}
                       initial={{ opacity: 0, y: 20 }}
@@ -222,7 +292,7 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
   if (subView === "sideproject") {
     return (
       <>
-        
+
         <div className="min-h-screen bg-card">
           <div className="container py-8">
             {/* Top bar */}
@@ -251,7 +321,7 @@ ${sideProjects.map((p) => `- ${p.name} (技術: ${p.technologies.join(", ")})`).
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {sideProjects.map((project, index) => (
+                  {dynamicSideProjects.map((project, index) => (
                     <motion.div
                       key={project.name}
                       initial={{ opacity: 0, y: 20 }}
