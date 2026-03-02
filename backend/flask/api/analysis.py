@@ -15,12 +15,8 @@ analysis_bp = Blueprint("analysis", __name__)
 VALID_TASK_TYPES = {"resume_analysis", "resume_opt"}
 
 
-def _create_job(user_id: str, task_type: str = "resume_analysis", **extra) -> str:
-    """
-    建立 job hash 在 Redis 並 XADD 到 stream。
-    回傳 job_id。
-    extra: 可傳入 resume_id, survey_id 等，視 task_type 而定。
-    """
+def _create_job(user_id: str, task_type: str = "resume_analysis") -> str:
+    # 建立job hash 在 Redis 並 XADD 到 stream
     job_id = f"job_{uuid.uuid4().hex[:12]}"
     now = datetime.now(timezone.utc).isoformat()
 
@@ -35,10 +31,6 @@ def _create_job(user_id: str, task_type: str = "resume_analysis", **extra) -> st
         "created_at": now,
         "updated_at": now,
     }
-    # 動態加入額外欄位（resume_id, survey_id 等）
-    for k, v in extra.items():
-        if v is not None:
-            mapping[k] = str(v)
 
     redis_client.hset(f"job:{job_id}", mapping=mapping)
 
@@ -70,14 +62,7 @@ def start_analysis_task():
         if task_type not in VALID_TASK_TYPES:
             return jsonify({"error": f"Unsupported task_type: {task_type}. 支援: {', '.join(VALID_TASK_TYPES)}"}), 400
 
-        # resume_id / survey_id 為 optional metadata
-        extra = {}
-        if data.get("resume_id"):
-            extra["resume_id"] = data["resume_id"]
-        if data.get("survey_id"):
-            extra["survey_id"] = data["survey_id"]
-
-        job_id = _create_job(user_id, task_type, **extra)
+        job_id = _create_job(user_id, task_type)
 
         return jsonify({
             "job_id": job_id,
@@ -112,56 +97,4 @@ def poll_job(job_id):
     return jsonify(resp), 200
 
 
-# D-02 查詢任務狀態
-@analysis_bp.route("/tasks/<task_id>/status", methods=["GET"])
-@login_required
-def get_analysis_status(task_id):
-    job = _get_job(task_id)
-    if not job:
-        return jsonify({"error": "Job not found"}), 404
 
-    return jsonify({
-        "task_id": task_id,
-        "status": job["status"],
-    }), 200
-
-
-# D-03 取得履歷優化建議
-@analysis_bp.route("/tasks/<task_id>/suggestions", methods=["GET"])
-@login_required
-def get_optimization_suggestions(task_id):
-    job = _get_job(task_id)
-    if not job:
-        return jsonify({"error": "Job not found"}), 404
-
-    if job.get("task_type") != "resume_analysis":
-        return jsonify({"error": "此任務非 resume_analysis，請改用 /results 端點"}), 400
-
-    if job["status"] != "done":
-        return jsonify({"task_id": task_id, "status": job["status"], "message": "尚未完成"}), 202
-
-    raw = job.get("suggestions", "")
-    if not raw:
-        return jsonify({"error": "此任務尚未產生建議資料"}), 404
-
-    return jsonify(json.loads(raw)), 200
-
-# D-04 取得履歷優化結果
-@analysis_bp.route("/tasks/<task_id>/results", methods=["GET"])
-@login_required
-def get_optimization_results(task_id):
-    job = _get_job(task_id)
-    if not job:
-        return jsonify({"error": "Job not found"}), 404
-
-    if job.get("task_type") != "resume_opt":
-        return jsonify({"error": "此任務非 resume_opt，請改用 /suggestions 端點"}), 400
-
-    if job["status"] != "done":
-        return jsonify({"task_id": task_id, "status": job["status"], "message": "尚未完成"}), 202
-
-    raw = job.get("result", "")
-    if not raw:
-        return jsonify({"error": "此任務尚未產生優化結果"}), 404
-
-    return jsonify(json.loads(raw)), 200

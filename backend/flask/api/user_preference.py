@@ -56,18 +56,8 @@ def create_career_survey():
             if module not in data:
                 return jsonify({'error': f'Missing module: {module}'}), 400
 
-        # 依照 💡 缺口分析 定義準備 json
-        job_payload = {
-            "survey_data": {
-                "module_a": data["module_a"],
-                "module_b": data["module_b"],
-                "module_c": data["module_c"],
-                "module_d": data["module_d"]
-            },
-            "trait_data": data.get("trait_data", {})
-        }
-
-        job_id = _create_survey_job(user_id, job_payload)
+        # 前端照 manager.py 要求的格式傳入，直接存整個 request body，不做額外包裝
+        job_id = _create_survey_job(user_id, data)
 
         return jsonify({
             'job_id': job_id,

@@ -1,8 +1,3 @@
-"""
-啟動方式（從 backend/flask/ 目錄）：
-    python -m worker.cv_worker
-"""
-
 import json
 import sys
 import time
@@ -87,18 +82,24 @@ def process_job(job_id: str, task_type: str) -> dict:
 
     print(f"[Worker {CONSUMER_NAME}] 開始處理 job={job_id} task_type={task_type} ...")
 
-    # ===== survey_analysis: 呼叫 run_analysis =====
+    # ===== survey_analysis: 呼叫 CareerAgentManager =====
     if task_type == "survey_analysis":
         payload = json.loads(job_data.get("survey_data", "{}"))
         user_id = job_data.get("user_id", "")
-        
-        survey_json_str = json.dumps(payload.get("survey_data", payload), ensure_ascii=False)
+
+        # 前端直傳 module_a~d，直接組成 survey_json（不做額外拆解）
+        survey_dict = {
+            k: payload[k]
+            for k in ("module_a", "module_b", "module_c", "module_d")
+            if k in payload
+        }
+        survey_json_str = json.dumps(survey_dict, ensure_ascii=False)
         trait_json_str = json.dumps(payload.get("trait_data", {}), ensure_ascii=False)
-        
+
         user_input = {
             "user_id": user_id,
             "survey_json": survey_json_str,
-            "trait_json": trait_json_str
+            "trait_json": trait_json_str,
         }
 
         manager = CareerAgentManager()
@@ -108,6 +109,7 @@ def process_job(job_id: str, task_type: str) -> dict:
             raise RuntimeError(report.get("message", "Unknown error in LLM"))
 
         return {"result": report, "suggestions": {}}
+
 
     elif task_type == "resume_analysis":
         user_id = job_data.get("user_id", "")
@@ -132,6 +134,11 @@ def process_job(job_id: str, task_type: str) -> dict:
             raise RuntimeError(report_opt.get("message", "Unknown error in LLM (resume_opt)"))
 
         return {"result": report_opt, "suggestions": {}}
+
+
+class NonRecoverableError(Exception):
+    """自訂不可恢復之錯誤 Exception (如: Parser Error, 400 Bad Request 等)"""
+    pass
 
 
 def handle_message(msg_id: str, fields: dict):
@@ -162,6 +169,33 @@ def handle_message(msg_id: str, fields: dict):
         print(f"[Worker {CONSUMER_NAME}] job={job_id} 完成")
 
     except Exception as e:
+        error_msg = str(e)
+        
+        # 判斷是否為不可恢復錯誤
+        is_non_recoverable = False
+        if isinstance(e, NonRecoverableError):
+            is_non_recoverable = True
+        elif "JSON" in error_msg.upper() or "400" in error_msg:
+            # 簡單範例判斷，若遇到 payload 解析錯誤則視為不可恢復
+            is_non_recoverable = True
+
+        if is_non_recoverable:
+             print(f"[Worker {CONSUMER_NAME}] job={job_id} 發生不可恢復錯誤: {e}")
+             redis_client.xadd(DLQ_STREAM_NAME, {
+                 "job_id": job_id,
+                 "task_type": fields.get("task_type", ""),
+                 "retry_count": str(retry_count),
+                 "error": str(e),
+                 "failed_at": datetime.now(timezone.utc).isoformat(),
+             })
+             redis_client.hset(hash_key, mapping={
+                 "status": "dlq",
+                 "error": f"不可恢復的錯誤: {e}",
+                 "updated_at": datetime.now(timezone.utc).isoformat(),
+             })
+             redis_client.xack(STREAM_NAME, GROUP_NAME, msg_id)
+             return
+
         retry_count += 1
         print(f"[Worker {CONSUMER_NAME}] job={job_id} 失敗 (retry={retry_count}/{MAX_RETRY}): {e}")
 
@@ -175,7 +209,7 @@ def handle_message(msg_id: str, fields: dict):
                 "failed_at": datetime.now(timezone.utc).isoformat(),
             })
             redis_client.hset(hash_key, mapping={
-                "status": "failed",
+                "status": "dlq",
                 "error": f"超過重試上限 ({MAX_RETRY} 次): {e}",
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             })
@@ -183,6 +217,11 @@ def handle_message(msg_id: str, fields: dict):
             redis_client.xack(STREAM_NAME, GROUP_NAME, msg_id)
             print(f"[Worker {CONSUMER_NAME}] 🪦 job={job_id} 已移至 DLQ")
         else:
+            # Exponential Backoff 機制
+            backoff_seconds = (2 ** retry_count) # 2, 4, 8 秒延遲
+            print(f"[Worker {CONSUMER_NAME}] 等待 {backoff_seconds} 秒後重新排隊...")
+            time.sleep(backoff_seconds)
+            
             # 重新排隊（新 message）
             redis_client.xadd(STREAM_NAME, {
                 "job_id": job_id,
@@ -190,7 +229,7 @@ def handle_message(msg_id: str, fields: dict):
                 "retry_count": str(retry_count),
             })
             redis_client.hset(hash_key, mapping={
-                "status": "queued",
+                "status": "retrying",
                 "retry_count": str(retry_count),
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             })

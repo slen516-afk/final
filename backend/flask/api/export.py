@@ -1,3 +1,5 @@
+# 如果要含前端版型的話，PDF由前端直接轉；DOCX需請前端提供Template(docx)
+# 此處僅提供純文字匯出
 import io
 from pathlib import Path
 from flask import Blueprint, request, jsonify, g, send_file
@@ -16,8 +18,8 @@ export_bp = Blueprint('export', __name__)
 def export_resume(id):
     """
     E-01 匯出履歷文件 — 從 resume_optimization 取最新版本
-    支援 format=pdf (預設) | docx | json
-    可帶 ?version=2.0 指定版本
+    支援 format=pdf (預設) | docx
+    可帶 ?version=2 指定版本
     """
     try:
         user_id = g.db_user_id
@@ -26,10 +28,9 @@ def export_resume(id):
         fmt = request.args.get('format', 'pdf').lower()
         target_version = request.args.get('version')  # optional
 
-        if fmt not in ('pdf', 'docx', 'json'):
-            return jsonify({'error': f'Unsupported format: {fmt}. Use pdf, docx, or json'}), 400
+        if fmt not in ('pdf', 'docx'):
+            return jsonify({'error': f'Unsupported format: {fmt}. Use pdf or docx'}), 400
 
-        # 從 resume_optimization 取資料
         query = (
             supabase.table("resume_optimization")
             .select("*")
@@ -40,7 +41,6 @@ def export_resume(id):
         if target_version:
             query = query.eq("optimization_version", target_version).single()
         else:
-            # 取最新版本
             query = query.order("optimization_version", desc=True).limit(1)
 
         response = query.execute()
@@ -51,18 +51,7 @@ def export_resume(id):
         if not opt_data:
             return jsonify({'error': 'No optimized resume found for this resume_id'}), 404
 
-        # 將 resume_optimization 的個別欄位組裝成 structured_data 格式
-        # 讓下游 PDF / DOCX builder 可以沿用
         resume_data = _build_structured_from_optimization(opt_data)
-
-        # --- JSON ---
-        if fmt == 'json':
-            return jsonify({
-                'resume_id': id,
-                'optimization_version': opt_data.get('optimization_version'),
-                'format': 'json',
-                'data': opt_data
-            }), 200
 
         # --- PDF ---
         if fmt == 'pdf':
@@ -86,7 +75,6 @@ def export_resume(id):
 
 
 def _build_structured_from_optimization(opt: dict) -> dict:
-    """將 resume_optimization 各欄位組裝成 builder 預期的格式"""
     sd = {}
     if opt.get('professional_summary'):
         sd['summary'] = opt['professional_summary']
@@ -176,7 +164,6 @@ def _build_resume_pdf(resume_data: dict) -> io.BytesIO:
         _section_title("Work Experience")
         for exp in experiences:
             if isinstance(exp, str):
-                # model_output.md 格式：每筆是完整字串
                 _set("", 11)
                 pdf.multi_cell(0, 6, exp)
                 pdf.ln(3)

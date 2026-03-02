@@ -98,7 +98,6 @@ def update_resume(id):
         if user_id is None:
             return jsonify({'error': 'User not found in DB'}), 403
 
-        # 1. 驗證原始履歷存在且屬於該使用者
         owner_check = (
             supabase.table("resume")
             .select("resume_id")
@@ -113,7 +112,6 @@ def update_resume(id):
         if not data:
             return jsonify({'error': 'Missing request body'}), 400
 
-        # 2. 查詢目前最大版本號
         ver_resp = (
             supabase.table("resume_optimization")
             .select("optimization_version")
@@ -132,7 +130,6 @@ def update_resume(id):
         else:
             next_ver = "1"
 
-        # 3. 從 structured_data 或直接頂層欄位映射
         sd = data.get('structured_data', {})
 
         insert_payload = {
@@ -155,18 +152,16 @@ def update_resume(id):
                 or data.get('autobiography'),
         }
 
-        # 4. template_color (style_settings.color → varchar)
+        # template_color (style_settings.color → varchar)
         style = data.get('style_settings', {})
         if isinstance(style, dict) and style.get('color'):
             insert_payload["template_color"] = style['color']
         elif isinstance(style, str):
             insert_payload["template_color"] = style
 
-        # 5. version_id (optional FK to resume_version)
         if data.get('version_id'):
             insert_payload["version_id"] = int(data['version_id'])
 
-        # 清除 None 值，讓 DB 用 DEFAULT
         insert_payload = {k: v for k, v in insert_payload.items() if v is not None}
 
         response = (
@@ -189,12 +184,12 @@ def update_resume(id):
         return jsonify({'error': str(e)}), 500
 
 
-# ─── 版本管理 ────────────────────────────────────────────────────────
+# 履歷版本管理
 
+# 所有優化版本列表
 @resume_bp.route('/<int:id>/versions', methods=['GET'])
 @login_required
 def list_resume_versions(id):
-    """取得某份履歷的所有優化版本列表"""
     try:
         user_id = g.db_user_id
         if user_id is None:
@@ -218,10 +213,10 @@ def list_resume_versions(id):
         return jsonify({'error': str(e)}), 500
 
 
+# 特定版本的優化履歷內容
 @resume_bp.route('/<int:id>/versions/<version>', methods=['GET'])
 @login_required
 def get_resume_version(id, version):
-    """取得特定版本的優化履歷內容"""
     try:
         user_id = g.db_user_id
         if user_id is None:
