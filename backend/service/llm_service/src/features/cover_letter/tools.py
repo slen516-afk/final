@@ -60,10 +60,10 @@ class RecommendJobSearchTool(BaseTool):
     name: str = "SearchRecommendJob"
     description: str = "搜尋推薦職缺。Input: job_id"
     def _run(self, job_id: str) -> str:
-        return json.dumps(DatabaseTools.get_job_recommendation_profile(job_id), ensure_ascii=False)
+        return DatabaseTools.get_job_recommendation_profile(job_id)
 
 class FetchOptimizeResumeTool(BaseTool):
     name: str = "FetchUserOptimizeResume"
     description: str = "獲取使用者個人優化後的履歷。Input: optimization_id"
     def _run(self, optimization_id: str) -> str:
-        return json.dumps(DatabaseTools.get_optimize_resume(optimization_id), ensure_ascii=False)
+        return DatabaseTools.get_optimize_resume(optimization_id)

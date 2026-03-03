@@ -163,6 +163,7 @@ const Recommendations = () => {
       setStage("results");
     }
   }, [isJobPreferenceQuizDone, stage]);
+
   useEffect(() => {
     const urlPageParam = parseInt(searchParams.get("page") || "1", 10);
     const validPage = isNaN(urlPageParam) || urlPageParam < 1 ? 1 : Math.min(urlPageParam, calculatedTotalPages);

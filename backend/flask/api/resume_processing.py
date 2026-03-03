@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 import uuid
 import time
 import random
-from service.ocr_service.ocr_service import extract_text_from_image
+from service.ocr_service.ocr_service import ResumeOCRService
 
 
 
@@ -27,20 +27,24 @@ def upload_resume():
         return jsonify({"error": "沒有選擇檔案", "code": 400}), 400
     
     try:
-        # --- 👇 補上這段：存檔並定義 filepath 👇 ---
+        # --- 存檔並定義 filepath ---
         filename = secure_filename(file.filename)
-        # 為了避免檔名重複，可以加上 timestamp
         unique_filename = f"{int(time.time())}_{filename}"
         filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
         file.save(filepath)
         print(f"✅ 檔案已暫存至: {filepath}")
-        # --- 👆 補檔結束 👆 ---
-
-        # 2. 呼叫真正的 OCR
-        raw_ocr_result = extract_text_from_image(filepath)
         
-        # 3. 數據映射 (Mapping)
-        # 改名為 res_struct 避免跟系統庫 struct 衝突
+        # 1. 先建立一台 OCR 服務機 (實例化)
+        ocr_service = ResumeOCRService()
+        
+        # 2. 呼叫真正的 OCR (🌟 修正：使用 filepath，並把結果存到 raw_ocr_result)
+        raw_ocr_result = ocr_service.extract_text_from_image(filepath)
+        
+        # --- 防呆機制：如果 OCR 失敗回傳 Error ---
+        if "error" in raw_ocr_result:
+            return jsonify({"error": raw_ocr_result["error"], "code": 500}), 500
+
+        # 3. 數據映射 (Mapping) (🌟 修正：現在 raw_ocr_result 有東西了！)
         res_struct = raw_ocr_result.get("structured_data", {})
         norm = raw_ocr_result.get("normalized_data", {})
         contact = norm.get("contact", {})
@@ -59,7 +63,7 @@ def upload_resume():
             
             # 工作經歷轉化為字串
             "experience": "\n\n".join([
-                f"{exp.get('title')} - {exp.get('company')}\n{exp.get('responsibilities')}" 
+                f"{exp.get('title', '')} - {exp.get('company', '')}\n{exp.get('responsibilities', '')}" 
                 for exp in res_struct.get("experience", [])
             ]),
             

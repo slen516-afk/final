@@ -29,22 +29,22 @@ class CourseRecommendationTool(BaseTool):
         """
         service = CourseRecommendationService()
         try:
-            # 調用核心 Service (這裡拿到的 result 是一個 List[Dict])
-            result_list = service.get_recommendations(user_id, top_k)
+            # 調用核心 Service
+            result = service.get_recommendations(user_id, top_k)
             
-            # 如果陣列是空的
-            if not result_list:
+            # 格式化輸出，方便 Agent 閱讀與整合進最終回覆
+            if not result.recommendations:
                 return f"目前在資料庫中找不到適合使用者 {user_id} 的推薦課程。"
             
-            output = f"### 為使用者 {user_id} 推薦的學習資源\n\n"
+            output = f"### 為使用者 {user_id} 推薦的學習資源\n"
+            output += f"**當前技術匹配度**: {result.match_score}/100 (等級: {result.user_level})\n\n"
             
-            # 正確使用迴圈讀取 Dictionary 裡面的資料
-            for i, course in enumerate(result_list, 1):
+            for i, course in enumerate(result.recommendations, 1):
                 output += (
-                    f"{i}. **{course.get('course_name')}**\n"
-                    f"   - 難度分級: {course.get('level')}\n"
-                    f"   - 課程連結: {course.get('url')}\n"
-                    f"   - 推薦分數: {course.get('priority_score')}\n\n"
+                    f"{i}. **{course.course_name}**\n"
+                    f"   - 難度分級: {course.level}\n"
+                    f"   - 課程連結: {course.url}\n"
+                    f"   - 推薦理由: 該課程難度與您的當前水平精確匹配，是提升技能的最佳切入點。\n\n"
                 )
             
             return output
