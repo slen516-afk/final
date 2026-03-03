@@ -139,7 +139,13 @@ const clearOptimizeState = () => {
 const Optimize = () => {
   const navigate = useNavigate();
   const { isLoggedIn, isResumeUploaded, isPersonalityQuizDone } = useAppState();
-  const { resumes, selectedResumeId, setSelectedResumeId } = useResumes();
+  const { resumes } = useResumes();
+
+  // Auto-select the latest resume
+  const latestResume = useMemo(() => {
+    if (resumes.length === 0) return null;
+    return [...resumes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+  }, [resumes]);
 
   // Restore persisted state if available
   const persisted = useMemo(() => loadOptimizeState(), []);
@@ -161,6 +167,9 @@ const Optimize = () => {
   const resumeRef = useRef<HTMLDivElement>(null);
   const [showSuggestionsDrawer, setShowSuggestionsDrawer] = useState(false);
   const [editPhase, setEditPhase] = useState<'view' | 'edit'>('view');
+  const [isEditSaved, setIsEditSaved] = useState(false);
+  const [isTemplateSaved, setIsTemplateSaved] = useState(false);
+  const [showTemplateSaveConfirm, setShowTemplateSaveConfirm] = useState(false);
 
   // Check access conditions
   useEffect(() => {
@@ -270,6 +279,7 @@ const Optimize = () => {
   const confirmSave = () => {
     setOriginalData(editedOriginalData);
     setEditPhase('view');
+    setIsEditSaved(true);
     setShowSaveConfirm(false);
   };
 
@@ -305,8 +315,15 @@ const Optimize = () => {
     setEditedOriginalData(mockOriginalResumeData);
     setEditedData(mockResumeData);
     setEditPhase('view');
+    setIsEditSaved(false);
+    setIsTemplateSaved(false);
     setShowSuggestionsDrawer(false);
     clearOptimizeState();
+  };
+
+  const confirmTemplateSave = () => {
+    setIsTemplateSaved(true);
+    setShowTemplateSaveConfirm(false);
   };
 
   const handleBackToTemplates = () => {
@@ -337,13 +354,26 @@ const Optimize = () => {
         <AlertModal
           open={showSaveConfirm}
           onClose={() => setShowSaveConfirm(false)}
-          type="info"
+          type="warning"
           title="確認儲存變更"
-          message="確定要儲存您編輯的履歷內容嗎？"
+          message="儲存後將無法再次編輯履歷內容，確定要儲存嗎？"
           confirmLabel="確認儲存"
           cancelLabel="取消"
           showCancel
           onConfirm={confirmSave}
+        />
+
+        {/* Template Save Confirmation */}
+        <AlertModal
+          open={showTemplateSaveConfirm}
+          onClose={() => setShowTemplateSaveConfirm(false)}
+          type="warning"
+          title="確認儲存履歷"
+          message="儲存後將無法再更改模板與配色，確定要儲存嗎？"
+          confirmLabel="確認儲存"
+          cancelLabel="取消"
+          showCancel
+          onConfirm={confirmTemplateSave}
         />
 
         {/* Header */}
@@ -379,10 +409,8 @@ const Optimize = () => {
                 <InitialPhase
                   originalData={originalData}
                   onStartOptimize={handleStartOptimize}
-                  resumes={resumes}
-                  selectedResumeId={selectedResumeId}
-                  onResumeChange={setSelectedResumeId}
-                  formatDate={formatDate}
+                  latestResumeName={latestResume?.name ?? ''}
+                  latestResumeDate={latestResume ? formatDate(latestResume.updatedAt) : ''}
                 />
               )}
 
@@ -407,6 +435,7 @@ const Optimize = () => {
                       onGenerate={() => setPhase('templates')}
                       onEdit={handleEnterEditMode}
                       onBack={handleSmartBack}
+                      isEditSaved={isEditSaved}
                     />
                   ) : (
                     <ResumeEditMode
@@ -461,6 +490,8 @@ const Optimize = () => {
                   onBackToTemplates={handleBackToTemplates}
                   onReset={handleReset}
                   onThemeChange={setSelectedThemeIndex}
+                  isTemplateSaved={isTemplateSaved}
+                  onSaveTemplate={() => setShowTemplateSaveConfirm(true)}
                 />
               )}
             </AnimatePresence>
@@ -487,8 +518,8 @@ const ThemeSwatchSelector = ({
         key={i}
         onClick={() => onChange(i)}
         className={`group relative h-7 w-7 rounded-full border-2 transition-all duration-200 ${selectedIndex === i
-            ? 'border-foreground scale-110 shadow-md'
-            : 'border-border/60 hover:scale-105'
+          ? 'border-foreground scale-110 shadow-md'
+          : 'border-border/60 hover:scale-105'
           }`}
         style={{ backgroundColor: theme.main }}
         title={theme.name}
@@ -505,17 +536,13 @@ const ThemeSwatchSelector = ({
 const InitialPhase = ({
   originalData,
   onStartOptimize,
-  resumes,
-  selectedResumeId,
-  onResumeChange,
-  formatDate,
+  latestResumeName,
+  latestResumeDate,
 }: {
   originalData: OriginalResumeData;
   onStartOptimize: () => void;
-  resumes: { id: number; name: string; updatedAt: string; content: string }[];
-  selectedResumeId: number | null;
-  onResumeChange: (id: number | null) => void;
-  formatDate: (d: string) => string;
+  latestResumeName: string;
+  latestResumeDate: string;
 }) => (
   <motion.div
     key="initial"
@@ -524,39 +551,16 @@ const InitialPhase = ({
     exit={{ opacity: 0, y: -20 }}
     className="space-y-6"
   >
-    {/* Resume Version Selector */}
-    <Card className="border-primary/30 shadow-[0_0_12px_rgba(141,73,3,0.1)]">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <FileText className="h-5 w-5 text-primary" />
-          選擇履歷版本
-        </CardTitle>
-        <CardDescription className="text-xs">
-          請選擇要優化的履歷版本，系統將根據該版本進行 AI 分析
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Select
-          value={selectedResumeId?.toString() ?? ''}
-          onValueChange={(val) => onResumeChange(parseInt(val, 10))}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="請選擇履歷" />
-          </SelectTrigger>
-          <SelectContent>
-            {resumes.map((r) => (
-              <SelectItem key={r.id} value={r.id.toString()}>
-                <span className="flex items-center gap-2">
-                  <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
-                  <span className="truncate">{r.name}</span>
-                  <span className="text-muted-foreground text-xs shrink-0">_{formatDate(r.updatedAt)}</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </CardContent>
-    </Card>
+    {/* Latest Resume Info Banner */}
+    {latestResumeName && (
+      <div className="flex items-center gap-3 p-4 rounded-lg border border-primary/30 bg-primary/5">
+        <FileText className="h-5 w-5 text-primary shrink-0" />
+        <p className="text-sm">
+          將使用您最新上傳的履歷 <span className="font-semibold text-foreground">「{latestResumeName}」</span>
+          <span className="text-muted-foreground ml-1">（更新於 {latestResumeDate}）</span> 進行優化
+        </p>
+      </div>
+    )}
 
     {/* Original Resume Data Display */}
     <Card>
@@ -597,7 +601,7 @@ const InitialPhase = ({
     </Card>
 
     <div className="flex justify-center">
-      <Button size="lg" className="gradient-primary gap-2" onClick={onStartOptimize} disabled={!selectedResumeId}>
+      <Button size="lg" className="gradient-primary gap-2" onClick={onStartOptimize}>
         <Sparkles className="h-5 w-5" />
         開始優化
       </Button>
@@ -634,12 +638,14 @@ const SuggestionsPhase = ({
   onGenerate,
   onEdit,
   onBack,
+  isEditSaved,
 }: {
   suggestions: Suggestion[];
   onDownload: () => void;
   onGenerate: () => void;
   onEdit: () => void;
   onBack: () => void;
+  isEditSaved: boolean;
 }) => (
   <motion.div
     key="suggestions"
@@ -653,6 +659,13 @@ const SuggestionsPhase = ({
       返回上一步
     </Button>
 
+    {isEditSaved && (
+      <div className="flex items-center gap-3 p-4 rounded-lg border border-green-500/30 bg-green-500/5">
+        <Check className="h-5 w-5 text-green-600 shrink-0" />
+        <p className="text-sm text-green-700 dark:text-green-400">履歷變更已儲存</p>
+      </div>
+    )}
+
     <Card>
       <CardHeader className="flex flex-row items-start justify-between">
         <div>
@@ -660,12 +673,14 @@ const SuggestionsPhase = ({
             <Sparkles className="h-5 w-5 text-primary" />
             履歷優化建議
           </CardTitle>
-          <CardDescription>AI 已分析您的履歷，以下是專業優化建議</CardDescription>
+          <CardDescription>已分析您的履歷，以下是專業優化建議</CardDescription>
         </div>
-        <Button variant="outline" className="gap-2 shrink-0" onClick={onEdit}>
-          <Edit3 className="h-4 w-4" />
-          編輯履歷
-        </Button>
+        {!isEditSaved && (
+          <Button variant="outline" className="gap-2 shrink-0" onClick={onEdit}>
+            <Edit3 className="h-4 w-4" />
+            編輯履歷
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {suggestions.map((s, i) => (
@@ -962,6 +977,8 @@ const ResultPhase = ({
   onBackToTemplates,
   onReset,
   onThemeChange,
+  isTemplateSaved,
+  onSaveTemplate,
 }: {
   resumeData: ResumeData;
   selectedTemplate: string;
@@ -977,6 +994,8 @@ const ResultPhase = ({
   onBackToTemplates: () => void;
   onReset: () => void;
   onThemeChange: (index: number) => void;
+  isTemplateSaved: boolean;
+  onSaveTemplate: () => void;
 }) => {
   const template = templates.find(t => t.id === selectedTemplate);
   const themes = TEMPLATE_THEMES[selectedTemplate] || TEMPLATE_THEMES.corporate;
@@ -994,6 +1013,8 @@ const ResultPhase = ({
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
+
+
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div
@@ -1008,7 +1029,7 @@ const ResultPhase = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        {!isTemplateSaved && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">配色：</span>
             <ThemeSwatchSelector
@@ -1017,14 +1038,7 @@ const ResultPhase = ({
               onChange={onThemeChange}
             />
           </div>
-
-          {!isEditing && (
-            <Button variant="outline" size="sm" className="gap-2" onClick={onEdit}>
-              <Edit3 className="h-4 w-4" />
-              編輯
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
       <Card className={isEditing ? 'ring-2 ring-primary/50 shadow-[0_0_20px_rgba(141,73,3,0.15)]' : ''}>
@@ -1067,12 +1081,23 @@ const ResultPhase = ({
         </div>
       ) : (
         <div className="flex flex-wrap gap-4">
-          <Button variant="outline" className="gap-2" onClick={onBackToTemplates}>
-            <Palette className="h-4 w-4" />重新選擇樣板
-          </Button>
+          {!isTemplateSaved && (
+            <Button variant="outline" className="gap-2" onClick={onBackToTemplates}>
+              <Palette className="h-4 w-4" />重新選擇樣板
+            </Button>
+          )}
           <Button variant="outline" className="gap-2" onClick={onReset}>
             <RotateCcw className="h-4 w-4" />重新填寫
           </Button>
+          {!isTemplateSaved && (
+            <Button
+              className="gap-2"
+              style={{ backgroundColor: theme.main, color: 'white' }}
+              onClick={onSaveTemplate}
+            >
+              <Save className="h-4 w-4" />儲存履歷
+            </Button>
+          )}
           <Button
             className="flex-1 gap-2 text-white"
             style={{ backgroundColor: theme.main }}
