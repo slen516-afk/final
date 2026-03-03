@@ -90,7 +90,7 @@ def create_app():
     app.register_blueprint(export_bp, url_prefix='/api/resumes')
 
 # 3. 履歷處理
-app.register_blueprint(resume_proc_bp, url_prefix='/api/resume_process')
+    app.register_blueprint(resume_proc_bp, url_prefix='/api/resume_process')
 
 # 4. 分析報告
     app.register_blueprint(analysis_bp, url_prefix='/api/analysis')
