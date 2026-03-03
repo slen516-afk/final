@@ -1,29 +1,8 @@
-# 後端入口統一變更為main.py，app.py僅保留Flask入口
+# 後端入口統一變更為 main.py，app.py 僅保留 Flask App 組裝邏輯
 # 組裝 Flask App、註冊路由與掛載 OCR 模型
 
-import sys
 import os
-
-# ====== 1. 解決路徑問題 =================
-current_dir = os.path.dirname(os.path.abspath(__file__))
-backend_dir = os.path.dirname(current_dir)
-sys.path.insert(0, backend_dir)                      
-
-service_dir = os.path.join(backend_dir, "service")
-sys.path.insert(0, service_dir)                       
-
-llm_service_dir = os.path.join(service_dir, "llm_service")
-sys.path.insert(0, llm_service_dir)                   
-
-analysis_dir = os.path.join(llm_service_dir, 'src', 'analysis')
-if analysis_dir not in sys.path:
-    sys.path.insert(0, analysis_dir)
-
-# ====== 2. 標準 import =================================================
-import json
-import uuid
-from datetime import datetime
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 from flask_cors import CORS
 
 # API Blueprints
@@ -60,80 +39,78 @@ try:
 except ImportError:
     pass
 
-# ====== 4. 建立 Flask App ==============================================
-app = Flask(__name__)
-CORS(app)
 
-UPLOAD_FOLDER = os.path.join(current_dir, 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# ====== Flask App Factory ====================================================
+def create_app():
+    app = Flask(__name__)
+    CORS(app)
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    upload_folder = os.path.join(current_dir, 'uploads')
+    os.makedirs(upload_folder, exist_ok=True)
 
 # ====== 5. OCR 模型初始化 =======================================
-print("------------------------------------------------")
-print("[System] 正在初始化 Flask 伺服器...")
+    print("------------------------------------------------")
+    print("[System] 正在初始化 Flask 伺服器...")
 
-try:
+    try:
     # ✅ 優先使用新版：ResumeOCRService
-    if ResumeOCRService is not None:
-        ocr_service = ResumeOCRService() 
-        ocr_service.load_model()
-        app.config["OCR_HANDLER"] = ocr_service.extract_text_from_image
-        app.extract_text_from_image = ocr_service.extract_text_from_image
-        print("[System] ✅ OCR 模型初始化完成 (使用 ResumeOCRService)")
+        if ResumeOCRService is not None:
+            ocr_service = ResumeOCRService()
+            ocr_service.load_model()
+            app.config["OCR_HANDLER"] = ocr_service.extract_text_from_image
+            app.extract_text_from_image = ocr_service.extract_text_from_image
+            print("[System] ✅ OCR 模型初始化完成 (使用 ResumeOCRService)")
         
     # ✅ 備用方案：使用舊版 load_model
-    elif load_model is not None:
-        load_model()
-        app.config["OCR_HANDLER"] = extract_text_from_image
-        app.extract_text_from_image = extract_text_from_image
-        print("[System] ✅ OCR 模型初始化完成 (使用 load_model)")
+        elif load_model is not None:
+            load_model()
+            app.config["OCR_HANDLER"] = extract_text_from_image
+            app.extract_text_from_image = extract_text_from_image
+            print("[System] ✅ OCR 模型初始化完成 (使用 load_model)")
         
     # ❌ 都沒找到
-    else:
+        else:
+            app.config["OCR_HANDLER"] = None
+            app.extract_text_from_image = None
+            print("[Warning] 找不到任何 OCR 服務，已略過載入。")
+
+    except Exception as e:
+        print(f"[Error] OCR 模型初始化失敗: {e}")
         app.config["OCR_HANDLER"] = None
         app.extract_text_from_image = None
-        print("[Warning] 找不到任何 OCR 服務，已略過載入。")
 
-except Exception as e:
-    print(f"[Error] OCR 模型初始化失敗: {e}")
-    app.config["OCR_HANDLER"] = None
-    app.extract_text_from_image = None
-    
 
 # ====== 6. 註冊路由 ====================================================
 # 1. 認證功能
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
 
 # 2. 履歷核心
-app.register_blueprint(resume_bp, url_prefix='/api/resumes')
-app.register_blueprint(export_bp, url_prefix='/api/resumes')
+    app.register_blueprint(resume_bp, url_prefix='/api/resumes')
+    app.register_blueprint(export_bp, url_prefix='/api/resumes')
 
 # 3. 履歷處理
 app.register_blueprint(resume_proc_bp, url_prefix='/api/resume_process')
 
 # 4. 分析報告
-app.register_blueprint(analysis_bp, url_prefix='/api/analysis')
-app.register_blueprint(ocr_bp, url_prefix='/api/ocr')
+    app.register_blueprint(analysis_bp, url_prefix='/api/analysis')
+    app.register_blueprint(ocr_bp, url_prefix='/api/ocr')
 
 # 5. 使用者偏好與推薦
-app.register_blueprint(user_preference_bp, url_prefix='/api')
-app.register_blueprint(rec_bp, url_prefix='/api')
+    app.register_blueprint(user_preference_bp, url_prefix='/api')
+    app.register_blueprint(rec_bp, url_prefix='/api')
 
 # 6. 非同步任務 (選用)
-if _has_async_tasks:
-    app.register_blueprint(async_tasks_bp, url_prefix='/api/tasks')
+    if _has_async_tasks:
+        app.register_blueprint(async_tasks_bp, url_prefix='/api/tasks')
 
 # ====== 7. 系統健康檢查 ================================================
-@app.route("/health", methods=["GET"])
-def health_check():
-    return jsonify({
-        "status": "healthy",
-        "service": "Career Pilot API",
-        "ocr_loaded": "ready" if app.config.get("OCR_HANDLER") else "offline",
-    }), 200
-def create_app():
+    @app.route("/health", methods=["GET"])
+    def health_check():
+        return jsonify({
+            "status": "healthy",
+            "service": "Career Pilot API",
+            "ocr_loaded": "ready" if app.config.get("OCR_HANDLER") else "offline",
+        }), 200
+
     return app
-
-
-# ====== 8. 啟動 ========================================================
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)

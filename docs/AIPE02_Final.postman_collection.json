@@ -58,13 +58,13 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{base_url}}/dream-jobs/job_17149a592266",
+          "raw": "{{base_url}}/dream-jobs/job_2b95a888d647",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "dream-jobs",
-            "job_17149a592266"
+            "job_2b95a888d647"
           ]
         }
       },
