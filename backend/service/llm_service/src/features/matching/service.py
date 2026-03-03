@@ -4,10 +4,10 @@ from qdrant_client import QdrantClient
 from typing import List, Dict, Any
 
 # 匯入本模組的其他組件
-from src.features.matching.qdrant_retriever import JobMatchRetriever, UserProfileRetriever
-from src.features.matching.matcher import JobMatcher
-from src.features.matching.advisor import CareerLLMAdvisor
-from src.features.matching.schemas import JobMatchRequest, JobMatchingResponse
+from .qdrant_retriever import JobMatchRetriever, UserProfileRetriever
+from .matcher import JobMatcher
+from .advisor import CareerLLMAdvisor
+from .schemas import JobMatchRequest, JobMatchingResponse
 
 class CareerMatchingService:
     """
@@ -120,10 +120,10 @@ class CareerMatchingService:
             print("正在向 Supabase 提取職缺細節與能力要求...")
             job_ids = [job['job_id'] for job in primary_candidates]
 
-            # 1. 查詢職缺內容
+            # 1. 查詢職缺內容 (🌟 這裡補上了 city, salary_min, salary_max)
             response_jobs = (
                 self.supabase_client.table('job_posting')
-                .select('job_id, job_title, job_description, requirements, full_address, source_url, company_id, d1_frontend, d2_backend, d3_devops, d4_ai_data, d5_quality, d6_soft_skills')
+                .select('job_id, job_title, job_description, requirements, full_address, city, salary_min, salary_max, source_url, company_id, d1_frontend, d2_backend, d3_devops, d4_ai_data, d5_quality, d6_soft_skills')
                 .in_('job_id', job_ids)
                 .execute()
             )
@@ -201,16 +201,31 @@ class CareerMatchingService:
                         match_score=f_final_pct
                     )
                     
+                    # 🌟 新增：把薪水的數學邏輯搬過來，轉成前端愛看的字串
+                    s_min = details.get('salary_min') or 0
+                    s_max = details.get('salary_max') or 0
+                    if s_min > 100000: s_min = int(s_min / 12)
+                    if s_max > 100000: s_max = int(s_max / 12)
+                    
+                    if s_min == s_max or s_max == 0:
+                        salary_str = f"{int(s_min/1000)}k"
+                    else:
+                        salary_str = f"{int(s_min/1000)}k - {int(s_max/1000)}k"
+
+                    # 🌟 替換：直接輸出前端 React 認識的 Key！
                     return {
-                        "job_id": str(details.get('job_id', '')),
-                        "job_title": str(details.get('job_title', '')),
-                        "job_description": str(details.get('job_description', '')),
+                        "id": str(details.get('job_id', '')),                   # 換成 id
+                        "title": str(details.get('job_title', '')),             # 換成 title
+                        "description": str(details.get('job_description', '')),
                         "requirements": clean_requirements,
-                        "company_name": str(details.get('company_name', '')),
+                        "company": str(details.get('company_name', '')),        # 換成 company
                         "industry": str(details.get('industry', '')),
-                        "full_address": str(details.get('full_address', '')),
-                        "source_url": str(details.get('source_url', '')),
-                        "final_score": f_final_pct,
+                        "location": str(details.get('city', '')),               # 用 city 填入 location
+                        "salary_range": salary_str,                             # 補上薪水！
+                        "externalUrl": str(details.get('source_url', '')),      # 換成 externalUrl
+                        
+                        # 底下是 AI 算出來的新玩具，我們先保留著，等前端來接！
+                        "match_score": f_final_pct,
                         "recommendation_reason": ai_insights.get("recommendation_reason", ""),
                         "strengths": ai_insights.get("strengths", ""),
                         "weaknesses": ai_insights.get("weaknesses", ""),

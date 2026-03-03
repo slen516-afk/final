@@ -93,21 +93,8 @@ export const ARCHETYPE_DETAILS: Record<string, ArchetypeDetail> = {
     energyCost: '常在跨部門或跨專業合作中成為關鍵連結點。',
     scenarios: ['跨職能合作', '需要溝通、轉譯與整合的角色'],
   },
-  GENERALIST: {
-    id: 'GENERALIST',
-    name: '綜合型',
-    englishName: 'Generalist',
-    image: '/mascots/fullstack.png',
-    bgColor: '#fbf1e8',
-    accentColor: '#8d4903',
-    accentColorLight: 'rgba(141,73,3,0.1)',
-    cardShadow: '0 4px 20px rgba(150,105,73,0.08)',
-    strength: '各維度能力均衡發展，能在多元情境中靈活適應。',
-    energyCost: '沒有明顯的單一耗能短板，但也需留意是否缺乏深度聚焦。',
-    scenarios: ['多元任務並行', '需要廣泛技能的通才型角色'],
-  },
 };
 
 export function getArchetypeDetail(id: string): ArchetypeDetail {
-  return ARCHETYPE_DETAILS[id] || ARCHETYPE_DETAILS.GENERALIST;
+  return ARCHETYPE_DETAILS[id] || ARCHETYPE_DETAILS.STRUCTURE_ARCHITECT;
 }

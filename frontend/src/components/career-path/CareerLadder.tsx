@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Star } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -34,16 +34,16 @@ const ChevronArrow = ({
   const pathD = `M0,0 L${w - point},0 L${w},${h / 2} L${w - point},${h} L0,${h} L${point},${h / 2} Z`;
 
   const fillColor = isCurrentStep
-    ? 'hsl(152 69% 45%)'
+    ? 'hsl(27 95% 28%)'
     : isReal
-      ? 'hsl(152 55% 82%)'
-      : 'hsl(150 12% 92%)';
+      ? 'hsl(30 40% 85%)'
+      : 'hsl(30 15% 92%)';
 
   const strokeColor = isCurrentStep
-    ? 'hsl(152 65% 35%)'
+    ? 'hsl(27 90% 22%)'
     : isReal
-      ? 'hsl(152 45% 68%)'
-      : 'hsl(150 10% 82%)';
+      ? 'hsl(30 35% 72%)'
+      : 'hsl(30 10% 82%)';
 
   const textColor = isCurrentStep
     ? 'text-white font-bold'
@@ -143,7 +143,7 @@ const ContentBlock = ({
           )}>
             <span className={cn(
               'h-1 w-1 rounded-full mt-[5px] shrink-0',
-              isCurrentStep ? 'bg-primary' : isReal ? 'bg-primary/50' : 'bg-muted-foreground/40'
+              isCurrentStep ? 'bg-primary' : isReal ? 'bg-primary/40' : 'bg-muted-foreground/40'
             )} />
             {duty}
           </li>
@@ -167,21 +167,10 @@ const TransitionMarker = ({ isMobile }: { isMobile: boolean }) => (
   </div>
 );
 
-/* ── Template Switcher ── */
-const templateKeys = Object.keys(careerTemplates) as Array<keyof typeof careerTemplates>;
-const templateLabels: Record<string, string> = {
-  frontend: '前端',
-  backend: '後端',
-  fullstack: '全端',
-  data: '資料科學',
-  ai: 'AI',
-  devops: 'DevOps',
-};
-
 /* ── Main Component ── */
 const CareerLadder = ({ isLoading }: { isLoading: boolean }) => {
   const isMobile = useIsMobile();
-  const [activeTemplate, setActiveTemplate] = useState<string>(mockTargetCareer);
+  const activeTemplate = mockTargetCareer;
   const template = careerTemplates[activeTemplate];
 
   const steps = useMemo<StepData[]>(() => {
@@ -227,20 +216,6 @@ const CareerLadder = ({ isLoading }: { isLoading: boolean }) => {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-2 md:pb-4 overflow-hidden">
-        {/* Template switcher */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {templateKeys.map((key) => (
-            <Button
-              key={key}
-              size="sm"
-              variant={activeTemplate === key ? 'default' : 'outline'}
-              className="text-xs h-7 px-2.5"
-              onClick={() => setActiveTemplate(key)}
-            >
-              {templateLabels[key]}
-            </Button>
-          ))}
-        </div>
 
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -302,7 +277,7 @@ const CareerLadder = ({ isLoading }: { isLoading: boolean }) => {
         {/* Legend */}
         <div className="flex items-center gap-4 mt-3 text-[10px] md:text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: 'hsl(152 55% 82%)' }} />
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: 'hsl(30 40% 85%)' }} />
             真實經歷
           </span>
           <span className="flex items-center gap-1.5">
@@ -310,7 +285,7 @@ const CareerLadder = ({ isLoading }: { isLoading: boolean }) => {
             建議路徑
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm bg-primary" style={{ boxShadow: '0 0 6px hsl(152 69% 45% / 0.5)' }} />
+            <span className="h-2.5 w-2.5 rounded-sm bg-primary" style={{ boxShadow: '0 0 6px hsl(27 95% 28% / 0.5)' }} />
             當前位置
           </span>
         </div>

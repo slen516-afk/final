@@ -44,10 +44,10 @@ const TEMPLATE_THEMES: Record<string, ThemeColors[]> = {
     { name: '靜謐藍灰', main: '#334155', secondary: '#94A3B8', accent: '#22D3EE', text: '#1E293B' },
   ],
   creative: [
-    { name: '莫蘭迪粉橘', main: '#E07A5F', secondary: '#F2CC8F', accent: '#3D405B', text: '#2B2B2B' },
-    { name: '紫藍創意系', main: '#6D28D9', secondary: '#A78BFA', accent: '#F472B6', text: '#1F1F1F' },
-    { name: '活力橘藍對比', main: '#F97316', secondary: '#2563EB', accent: '#FACC15', text: '#222222' },
-    { name: '黑底霓虹', main: '#0F172A', secondary: '#1E293B', accent: '#F43F5E', text: '#F8FAFC' },
+    { name: '莫蘭迪粉橘', main: '#E07A5F', secondary: '#C9604A', accent: '#E8A87C', text: '#2B2B2B' },
+    { name: '紫藍創意系', main: '#6D28D9', secondary: '#5320A8', accent: '#9F6CEE', text: '#1F1F1F' },
+    { name: '活力橘藍對比', main: '#F97316', secondary: '#D95F0E', accent: '#FDBA74', text: '#222222' },
+    { name: '黑底霓虹', main: '#0F172A', secondary: '#1E293B', accent: '#475569', text: '#2B2B2B' },
   ],
 };
 
@@ -124,7 +124,7 @@ const loadOptimizeState = (): PersistedOptimizeState | null => {
   try {
     const saved = localStorage.getItem(OPTIMIZE_RESULT_KEY);
     if (saved) return JSON.parse(saved);
-  } catch {}
+  } catch { }
   return null;
 };
 
@@ -198,11 +198,12 @@ const Optimize = () => {
     saveOptimizeState({ phase: 'result', suggestions, selectedTemplate: templateId, selectedThemeIndex: 0, resumeData, originalData });
   };
 
-  const handleDownloadSuggestions = () => {
-    const content = suggestions.map(s =>
-      `【${s.section}】\n原始：${s.original}\n優化：${s.optimized}\n`
-    ).join('\n');
-    downloadTextFile(content, '履歷優化建議.txt');
+  const handleDownloadSuggestions = async () => {
+    const { exportHtmlToPdf, buildSuggestionsReportHtml } = await import('@/utils/pdfExport');
+    await exportHtmlToPdf({
+      filename: '履歷優化建議報告.pdf',
+      htmlContent: buildSuggestionsReportHtml(suggestions),
+    });
   };
 
   const handleDownloadResume = async () => {
@@ -485,11 +486,10 @@ const ThemeSwatchSelector = ({
       <button
         key={i}
         onClick={() => onChange(i)}
-        className={`group relative h-7 w-7 rounded-full border-2 transition-all duration-200 ${
-          selectedIndex === i
+        className={`group relative h-7 w-7 rounded-full border-2 transition-all duration-200 ${selectedIndex === i
             ? 'border-foreground scale-110 shadow-md'
             : 'border-border/60 hover:scale-105'
-        }`}
+          }`}
         style={{ backgroundColor: theme.main }}
         title={theme.name}
       >
@@ -525,7 +525,7 @@ const InitialPhase = ({
     className="space-y-6"
   >
     {/* Resume Version Selector */}
-    <Card className="border-primary/30 shadow-[0_0_12px_rgba(34,197,94,0.1)]">
+    <Card className="border-primary/30 shadow-[0_0_12px_rgba(141,73,3,0.1)]">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
@@ -755,7 +755,7 @@ const ResumeEditMode = ({
         </Button>
       </div>
 
-      <Card className="ring-2 ring-primary/30 shadow-[0_0_20px_rgba(34,197,94,0.15)]">
+      <Card className="ring-2 ring-primary/30 shadow-[0_0_20px_rgba(141,73,3,0.15)]">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Edit3 className="h-5 w-5 text-primary" />
@@ -782,7 +782,7 @@ const ResumeEditMode = ({
                     value={value}
                     onChange={(e) => handleFieldChange(field.key as keyof OriginalResumeData, e.target.value)}
                     placeholder={`請輸入${field.label}`}
-                    className="ring-1 ring-primary/20 focus:ring-primary/50 shadow-[0_0_8px_rgba(34,197,94,0.1)] focus:shadow-[0_0_12px_rgba(34,197,94,0.2)] transition-all"
+                    className="ring-1 ring-primary/20 focus:ring-primary/50 shadow-[0_0_8px_rgba(141,73,3,0.1)] focus:shadow-[0_0_12px_rgba(141,73,3,0.2)] transition-all"
                     rows={4}
                   />
                 ) : (
@@ -790,7 +790,7 @@ const ResumeEditMode = ({
                     value={value}
                     onChange={(e) => handleFieldChange(field.key as keyof OriginalResumeData, e.target.value)}
                     placeholder={`請輸入${field.label}`}
-                    className="ring-1 ring-primary/20 focus:ring-primary/50 shadow-[0_0_8px_rgba(34,197,94,0.1)] focus:shadow-[0_0_12px_rgba(34,197,94,0.2)] transition-all"
+                    className="ring-1 ring-primary/20 focus:ring-primary/50 shadow-[0_0_8px_rgba(141,73,3,0.1)] focus:shadow-[0_0_12px_rgba(141,73,3,0.2)] transition-all"
                   />
                 )}
               </div>
@@ -1027,7 +1027,7 @@ const ResultPhase = ({
         </div>
       </div>
 
-      <Card className={isEditing ? 'ring-2 ring-primary/50 shadow-[0_0_20px_rgba(34,197,94,0.15)]' : ''}>
+      <Card className={isEditing ? 'ring-2 ring-primary/50 shadow-[0_0_20px_rgba(141,73,3,0.15)]' : ''}>
         <CardContent className="p-6">
           <div ref={resumeRef} className="pdf-container bg-white text-foreground">
             {selectedTemplate === 'corporate' && (
@@ -1106,7 +1106,7 @@ const EditableField = ({
     return <span className={`whitespace-pre-line ${className}`}>{value}</span>;
   }
 
-  const editClass = 'ring-1 ring-primary/30 shadow-[0_0_8px_rgba(34,197,94,0.2)] transition-shadow';
+  const editClass = 'ring-1 ring-primary/30 shadow-[0_0_8px_rgba(141,73,3,0.2)] transition-shadow';
 
   if (multiline) {
     return (

@@ -45,7 +45,7 @@ except ImportError as e:
 
 # ====== 3. OCR Service (選用，失敗不影響啟動) ==========================
 try:
-    from service.ocr_service.ocr_service import load_model, extract_text_from_image
+    from service.ocr_service.ocr_service import ResumeOCRService
     print("[System] 成功引入 OCR Service")
 except ImportError as e:
     print(f"[Critical] 無法引入 ocr_service！請檢查路徑。錯誤: {e}")
@@ -67,14 +67,18 @@ print("[System] 正在初始化 Flask 伺服器...")
 if load_model:
     try:
         print("[System] 正在初始化 OCR 模型...")
-        load_model()
-        app.config["OCR_HANDLER"] = extract_text_from_image
-        print("[System] OCR 模型初始化完成")
-    except Exception as e:
-        print(f"[Error] OCR 模型初始化失敗: {e}")
+        try:
+        # ✅ 先建立管家，再請管家做事
+            ocr_service = ResumeOCRService() 
+            ocr_service.load_model()
+        except Exception as e:
+            print(f"[Error] OCR 模型初始化失敗: {e}")
+        
+    except ImportError as e:
+        print(f"[Critical] 無法引入 ocr_service！請檢查路徑。錯誤: {e}")
+        # 這裡不 exit，避免為了 OCR 讓整個 App 掛掉
         app.config["OCR_HANDLER"] = None
-else:
-    app.config["OCR_HANDLER"] = None
+    
 
 # ====== 6. 註冊路由 ====================================================
 # 1. 認證功能

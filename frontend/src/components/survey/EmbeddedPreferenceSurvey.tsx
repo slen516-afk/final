@@ -16,11 +16,11 @@ const taiwanCities = [
   '台東縣', '澎湖縣', '金門縣', '連江縣'
 ];
 
-const workModes = [
-  { id: 'onsite', label: '實體辦公' },
-  { id: 'remote', label: '完全遠端' },
-  { id: 'hybrid', label: '混合模式' },
-];
+// const workModes = [
+//   { id: 'onsite', label: '實體辦公' },
+//   { id: 'remote', label: '完全遠端' },
+//   { id: 'hybrid', label: '混合模式' },
+// ];
 
 interface EmbeddedPreferenceSurveyProps {
   onComplete: (surveyData: any) => void;
@@ -30,7 +30,7 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
   const [regionType, setRegionType] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [salaryRange, setSalaryRange] = useState<number[]>([40000, 80000]);
-  const [workMode, setWorkMode] = useState('');
+  // const [workMode, setWorkMode] = useState('');
   const [showIncompleteAlert, setShowIncompleteAlert] = useState(false);
 
   const formatSalary = (value: number) => {
@@ -46,7 +46,7 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
 
   const handleSubmit = () => {
     const isTaiwanWithoutCity = regionType === 'taiwan' && !selectedCity;
-    if (!regionType || isTaiwanWithoutCity || !workMode) {
+    if (!regionType || isTaiwanWithoutCity) {
       setShowIncompleteAlert(true);
       return;
     }
@@ -56,7 +56,7 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
       city: selectedCity,
       minSalary: salaryRange[0],
       maxSalary: salaryRange[1],
-      workMode: workMode
+      // workMode: workMode
     };
     onComplete(realSurveyData);
   };
@@ -150,7 +150,7 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
           </CardContent>
         </Card>
 
-        {/* Work Mode */}
+        {/* Work Mode
         <Card>
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
@@ -180,7 +180,7 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
               ))}
             </RadioGroup>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <div className="flex justify-end">
           <Button onClick={handleSubmit} className="gradient-primary w-full sm:w-auto text-sm md:text-base">

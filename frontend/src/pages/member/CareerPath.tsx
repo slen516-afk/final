@@ -65,9 +65,25 @@ const CareerPath = () => {
     setTimeout(() => setDrawerLoading(false), 800);
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
+    if (!selectedAnalysis) return;
     setIsDownloading(true);
-    setTimeout(() => setIsDownloading(false), 1500);
+    try {
+      const { exportHtmlToPdf, buildCareerAnalysisHtml } = await import('@/utils/pdfExport');
+      await exportHtmlToPdf({
+        filename: `${selectedAnalysis.title}.pdf`,
+        htmlContent: buildCareerAnalysisHtml({
+          title: selectedAnalysis.title,
+          date: selectedAnalysis.date,
+          summary: selectedAnalysis.summary,
+          strengths: selectedAnalysis.content.strengths,
+          improvements: selectedAnalysis.content.improvements,
+          recommendations: selectedAnalysis.content.recommendations,
+        }),
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
 

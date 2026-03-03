@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 # 引用 TaskType
 from .task_types import TaskType
+from .result_handlers import HandlerRegistry
+from ..database.supabase_client import get_next_version_number, get_supabase_client
 
 # 載入環境變數
 load_dotenv()

@@ -21,19 +21,17 @@ const MyResumes = () => {
 
   const handleDownload = async () => {
     if (!selectedResume) return;
-    
+
     setIsDownloading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const blob = new Blob([selectedResume.content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = selectedResume.name;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    setIsDownloading(false);
+    try {
+      const { exportHtmlToPdf, buildResumeContentHtml } = await import('@/utils/pdfExport');
+      await exportHtmlToPdf({
+        filename: `${selectedResume.name.replace(/\.[^.]+$/, '')}.pdf`,
+        htmlContent: buildResumeContentHtml(selectedResume.name, selectedResume.content),
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
