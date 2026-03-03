@@ -12,6 +12,7 @@ export interface CareerTemplate {
   name: string;
   mascot: string;
   levels: CareerLevel[];
+  targetRadar: { axis: string; score: number }[];
 }
 
 export const careerTemplates: Record<string, CareerTemplate> = {
@@ -26,6 +27,14 @@ export const careerTemplates: Record<string, CareerTemplate> = {
       { level: 4, title: '前端架構師', duties: ['跨端技術選型', '微前端架構', 'BFF/Node.js 優化'] },
       { level: 5, title: '前端技術總監', duties: ['技術版圖規劃', '使用者體驗策略', '研發團隊效能提升'] },
     ],
+    targetRadar: [
+      { axis: '前端開發', score: 4.5 },
+      { axis: '後端開發', score: 2.0 },
+      { axis: '運維部署', score: 2.0 },
+      { axis: 'AI 與數據', score: 1.5 },
+      { axis: '工程品質', score: 4.0 },
+      { axis: '軟實力', score: 3.5 },
+    ],
   },
   backend: {
     id: 'backend',
@@ -37,6 +46,14 @@ export const careerTemplates: Record<string, CareerTemplate> = {
       { level: 3, title: '資深後端工程師', duties: ['分散式系統設計', '微服務架構', '訊息佇列處理'] },
       { level: 4, title: '系統架構師', duties: ['高併發系統規劃', '資料治理', '安全性架構設計'] },
       { level: 5, title: '技術長 (CTO)', duties: ['技術棧決策', '資安風險管理', '產品技術轉型'] },
+    ],
+    targetRadar: [
+      { axis: '前端開發', score: 2.0 },
+      { axis: '後端開發', score: 4.5 },
+      { axis: '運維部署', score: 3.5 },
+      { axis: 'AI 與數據', score: 2.0 },
+      { axis: '工程品質', score: 4.0 },
+      { axis: '軟實力', score: 3.5 },
     ],
   },
   fullstack: {
@@ -50,6 +67,14 @@ export const careerTemplates: Record<string, CareerTemplate> = {
       { level: 4, title: '產品工程師', duties: ['結合技術與商務邏輯', '快速原型開發 (MVP)', '產品視角出發'] },
       { level: 5, title: '技術負責人', duties: ['帶領全棧團隊', '平衡速度與品質', '技術路線規劃'] },
     ],
+    targetRadar: [
+      { axis: '前端開發', score: 4.0 },
+      { axis: '後端開發', score: 4.0 },
+      { axis: '運維部署', score: 3.0 },
+      { axis: 'AI 與數據', score: 2.0 },
+      { axis: '工程品質', score: 3.5 },
+      { axis: '軟實力', score: 4.0 },
+    ],
   },
   data: {
     id: 'data',
@@ -62,17 +87,33 @@ export const careerTemplates: Record<string, CareerTemplate> = {
       { level: 4, title: '資深資料科學家', duties: ['複雜演算法設計', '推薦系統架構', '解決業務難點'] },
       { level: 5, title: '資料長 (CDO)', duties: ['數據戰略制定', '數據驅動文化', '隱私合規管理'] },
     ],
+    targetRadar: [
+      { axis: '前端開發', score: 1.5 },
+      { axis: '後端開發', score: 3.0 },
+      { axis: '運維部署', score: 2.5 },
+      { axis: 'AI 與數據', score: 4.5 },
+      { axis: '工程品質', score: 3.5 },
+      { axis: '軟實力', score: 4.0 },
+    ],
   },
   ai: {
     id: 'ai',
     name: 'AI/演算法工程師',
     mascot: '/mascots/ai.png',
     levels: [
-      { level: 1, title: '助理演算法工程師', duties: ['資料預處理', '模型訓練與調整', '文獻閱讀'] },
+      { level: 1, title: '助理演算法工程師', duties: ['資料預處理', '模型訓練與調整', '文賢閱讀'] },
       { level: 2, title: 'AI/演算法工程師', duties: ['模型優化', '領域演算法開發', 'CV/NLP/Speech'] },
       { level: 3, title: '資深演算法工程師', duties: ['大規模推論效率', '自研核心算法', '解決落地痛點'] },
       { level: 4, title: '首席 AI 工程師', duties: ['前瞻技術研究', '引領技術突破', 'SOTA 研究'] },
       { level: 5, title: 'AI 技術科學家', duties: ['AI 轉化產品力', '決定技術天花板', '跨領域創新'] },
+    ],
+    targetRadar: [
+      { axis: '前端開發', score: 1.0 },
+      { axis: '後端開發', score: 3.5 },
+      { axis: '運維部署', score: 2.5 },
+      { axis: 'AI 與數據', score: 4.8 },
+      { axis: '工程品質', score: 4.0 },
+      { axis: '軟實力', score: 3.5 },
     ],
   },
   devops: {
@@ -85,6 +126,14 @@ export const careerTemplates: Record<string, CareerTemplate> = {
       { level: 3, title: '資深 SRE 工程師', duties: ['穩定性工程', '大規模雲端優化', '自動化故障自癒'] },
       { level: 4, title: '雲端架構師', duties: ['多雲架構策略', '雲端成本控制', '安全性架構'] },
       { level: 5, title: '基礎建設負責人', duties: ['雲端戰略規劃', '研發效率工具化', '組織基礎設施'] },
+    ],
+    targetRadar: [
+      { axis: '前端開發', score: 1.5 },
+      { axis: '後端開發', score: 3.5 },
+      { axis: '運維部署', score: 4.8 },
+      { axis: 'AI 與數據', score: 2.0 },
+      { axis: '工程品質', score: 4.5 },
+      { axis: '軟實力', score: 3.5 },
     ],
   },
 };

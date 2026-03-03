@@ -128,7 +128,17 @@ export function calculateScaledScores(raw: Record<Dimension, number>): Record<Di
 // Step C: Archetype determination
 export function determineArchetypes(scaled: Record<Dimension, number>): Archetype[] {
   const matched = ARCHETYPE_RULES.filter((r) => r.check(scaled)).map(({ id, name }) => ({ id, name }));
-  return matched.length > 0 ? matched : [{ id: 'GENERALIST', name: '綜合型' }];
+  if (matched.length > 0) return matched;
+  // Fallback: pick archetype based on highest scoring dimension
+  const DIM_TO_ARCHETYPE: Record<Dimension, Archetype> = {
+    structure: { id: 'STRUCTURE_ARCHITECT', name: '結構建模者' },
+    ambiguity: { id: 'AMBIGUITY_NAVIGATOR', name: '模糊探索者' },
+    decision: { id: 'RAPID_DECISION_MAKER', name: '快速決策者' },
+    learning: { id: 'LEARNING_ACCELERATOR', name: '成長加速者' },
+    transfer: { id: 'CROSS_DOMAIN_INTEGRATOR', name: '跨域整合者' },
+  };
+  const topDim = DIMENSIONS.reduce((a, b) => (scaled[a] >= scaled[b] ? a : b));
+  return [DIM_TO_ARCHETYPE[topDim]];
 }
 
 export interface PersonalityResult {

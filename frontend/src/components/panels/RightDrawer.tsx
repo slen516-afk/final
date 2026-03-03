@@ -38,7 +38,7 @@ const RightDrawer = ({
 
           {/* Drawer */}
           <motion.div
-            className="fixed right-0 top-0 z-50 h-full w-full max-w-md bg-background shadow-large border-l"
+            className="fixed right-0 top-0 z-50 h-full w-full max-w-md bg-card shadow-large border-l"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -64,7 +64,7 @@ const RightDrawer = ({
 
             {/* Footer */}
             {showDownload && (
-              <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-background">
+              <div className="absolute bottom-0 left-0 right-0 p-4 border-t bg-card">
                 <Button
                   className="w-full gradient-primary gap-2"
                   onClick={onDownload}

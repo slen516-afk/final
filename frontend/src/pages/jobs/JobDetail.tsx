@@ -140,7 +140,9 @@ const JobDetail = () => {
     };
 
     fetchJob();
+
   }, [id]);
+
 
   const handleGenerateLetter = async () => {
     // Check login status first

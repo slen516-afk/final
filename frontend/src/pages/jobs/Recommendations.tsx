@@ -56,7 +56,7 @@ const JobCardSkeleton = () => (
 );
 
 const JobCard = ({ job }: { job: JobData }) => (
-  <Card className="overflow-hidden hover:shadow-medium hover:-translate-y-1 transition-all duration-300 group border-border hover:border-primary/30 hover:shadow-[0_8px_30px_rgba(34,197,94,0.12)]">
+  <Card className="overflow-hidden hover:shadow-medium hover:-translate-y-1 transition-all duration-300 group border-border hover:border-primary/30 hover:shadow-[0_8px_30px_rgba(141,73,3,0.12)]">
     <CardHeader className="pb-3">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
@@ -106,12 +106,14 @@ const JobCard = ({ job }: { job: JobData }) => (
   </Card>
 );
 
+
 type Stage = "survey" | "loading" | "results";
 
 const Recommendations = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isJobPreferenceQuizDone, setIsJobPreferenceQuizDone } = useAppState();
   const { selectedResumeId } = useResumes();
+
 
   const [stage, setStage] = useState<Stage>(isJobPreferenceQuizDone ? "results" : "survey");
   const [showRefillAlert, setShowRefillAlert] = useState(false);
@@ -133,7 +135,6 @@ const Recommendations = () => {
       console.log("🚀 真的打 API 囉！(如果有快取，你就不會看到這行)");
       const response = await getJobRecommendationsAPI(surveyPayload);
       const backendJobs = response.recommendations || [];
-
       return backendJobs.map((bJob: any) => ({
         id: bJob.id,
         title: bJob.title,
@@ -237,12 +238,12 @@ const Recommendations = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="text-center mb-8 md:mb-12">
-                <div className="inline-flex items-center justify-center h-14 w-14 md:h-16 md:w-16 rounded-full bg-primary/10 mb-4 md:mb-6">
-                  <Heart className="h-7 w-7 md:h-8 md:w-8 text-primary" />
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mb-6">
+                  <Heart className="h-8 w-8 text-primary" />
                 </div>
-                <h1 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">設定您的工作偏好</h1>
-                <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto">
+                <h1 className="text-3xl font-bold mb-4">設定您的工作偏好</h1>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
                   告訴我們您的工作偏好，我們將為您精準匹配最適合的職缺
                 </p>
               </div>
@@ -276,19 +277,16 @@ const Recommendations = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <motion.div
-                className="text-center mb-8 md:mb-10"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div className="inline-flex items-center justify-center h-16 w-16 rounded-full gradient-primary mb-6 shadow-medium">
-                  <Star className="h-8 w-8 text-primary-foreground" />
+              {/* Header */}
+              <div className="text-center mb-12">
+                <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 mb-6">
+                  <Star className="h-8 w-8 text-primary" />
                 </div>
-                <h1 className="text-3xl md:text-4xl font-bold mb-4">推薦職缺</h1>
-                <p className="text-muted-foreground max-w-2xl mx-auto text-base md:text-lg">
+                <h1 className="text-3xl font-bold mb-4">推薦職缺</h1>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
                   我們根據您的履歷、個性特質與工作偏好，精心挑選最適合您的職位機會
                 </p>
-              </motion.div>
+              </div>
 
               <div className="max-w-4xl mx-auto mb-6">
                 <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowRefillAlert(true)}>

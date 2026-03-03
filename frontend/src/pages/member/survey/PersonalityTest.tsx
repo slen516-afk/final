@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import LoginRequired from '@/components/gatekeeper/LoginRequired';
 import { personalityTestModules, type PTModule } from '@/data/personalityTestQuestions';
 import { computePersonalityResult, type PersonalityResult } from '@/data/personalityScoring';
-import { MOCK_RESULTS } from '@/data/mockPersonalityResults';
+
 import PersonalityTestResult from '@/components/personality/PersonalityTestResult';
 
 const STORAGE_KEY = 'personality-test-progress';
@@ -28,7 +28,7 @@ const loadProgress = (): TestProgress => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved);
-  } catch {}
+  } catch { }
   return { answers: {}, currentStep: 0 };
 };
 
@@ -54,7 +54,7 @@ const PersonalityTest = () => {
     try {
       const saved = localStorage.getItem(RESULT_KEY);
       if (saved) return JSON.parse(saved);
-    } catch {}
+    } catch { }
     return null;
   });
   const [showResult, setShowResult] = useState(() => {
@@ -157,18 +157,6 @@ const PersonalityTest = () => {
           <p className="text-muted-foreground text-sm md:text-base max-w-2xl mx-auto">
             探索您的認知風格與決策偏好，幫助我們提供更精準的職涯建議
           </p>
-          {/* Dev shortcut */}
-          {!showResult && (
-            <button
-              onClick={() => {
-                setResult(MOCK_RESULTS.STRUCTURE_ARCHITECT);
-                setShowResult(true);
-              }}
-              className="mt-3 px-3 py-1 rounded border-2 border-dashed border-primary/30 text-xs text-primary hover:bg-primary/5 transition-colors"
-            >
-              🔧 DEV: 直接預覽結果頁
-            </button>
-          )}
         </div>
 
         <div className="max-w-2xl mx-auto">
@@ -179,11 +167,6 @@ const PersonalityTest = () => {
             {/* Result View */}
             {showResult && result ? (
               <PersonalityTestResult result={result} onReset={handleReset} />
-            ) : showResult ? (
-              <PersonalityTestResult
-                result={{ rawScores: { structure: 0, ambiguity: 0, decision: 0, learning: 0, transfer: 0 }, scaledScores: { structure: 0, ambiguity: 0, decision: 0, learning: 0, transfer: 0 }, archetypes: [{ id: 'GENERALIST', name: '綜合型' }] }}
-                onReset={handleReset}
-              />
             ) : (
               /* Module Step */
               <motion.div
@@ -209,11 +192,10 @@ const PersonalityTest = () => {
                     return (
                       <Card
                         key={q.id}
-                        className={`rounded-2xl border-0 bg-white shadow-[0_4px_20px_rgba(150,105,73,0.08)] transition-all ${
-                          invalidIds.has(q.id)
+                        className={`rounded-2xl border-0 bg-white shadow-[0_4px_20px_rgba(150,105,73,0.08)] transition-all ${invalidIds.has(q.id)
                             ? 'ring-2 ring-destructive/50 shadow-[0_4px_20px_rgba(150,105,73,0.08),0_0_8px_hsl(var(--destructive)/0.25)]'
                             : ''
-                        }`}
+                          }`}
                       >
                         <CardContent className="p-6 md:p-8">
                           <div className="space-y-4">
@@ -230,11 +212,10 @@ const PersonalityTest = () => {
                               {q.options.map((opt) => (
                                 <div
                                   key={opt.key}
-                                  className={`flex items-start space-x-3 p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-muted/40 ${
-                                    answers[q.id] === opt.key
+                                  className={`flex items-start space-x-3 p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-muted/40 ${answers[q.id] === opt.key
                                       ? 'border-primary/60 bg-primary/5 shadow-[0_0_8px_hsl(var(--primary)/0.15)]'
                                       : 'border-border/60'
-                                  }`}
+                                    }`}
                                 >
                                   <RadioGroupItem value={opt.key} id={`${q.id}-${opt.key}`} className="mt-0.5" />
                                   <Label htmlFor={`${q.id}-${opt.key}`} className="flex-1 cursor-pointer text-sm md:text-base leading-relaxed">
