@@ -43,14 +43,22 @@ except ImportError as e:
     print(f"[Warning] 無法引入 async_tasks Blueprint: {e}")
     _has_async_tasks = False
 
-# ====== 3. OCR Service (選用，失敗不影響啟動) ==========================
+# ====== 3. OCR Service 引入 (防彈版) ==========================
+# 🌟 1. 先宣告所有變數，徹底消滅 NameError！
+ResumeOCRService = None
+load_model = None
+extract_text_from_image = None
+
+# 🌟 2. 嘗試引入各種版本的 OCR
 try:
     from service.ocr_service.ocr_service import ResumeOCRService
-    print("[System] 成功引入 OCR Service")
-except ImportError as e:
-    print(f"[Critical] 無法引入 ocr_service！請檢查路徑。錯誤: {e}")
-    load_model = None
-    extract_text_from_image = None
+except ImportError:
+    pass
+
+try:
+    from service.ocr_service.ocr_service import load_model, extract_text_from_image
+except ImportError:
+    pass
 
 # ====== 4. 建立 Flask App ==============================================
 app = Flask(__name__)
@@ -59,25 +67,36 @@ CORS(app)
 UPLOAD_FOLDER = os.path.join(current_dir, 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-app.extract_text_from_image = extract_text_from_image
-
-# ====== 5. OCR 模型預載入 (選用) =======================================
+# ====== 5. OCR 模型初始化 =======================================
 print("------------------------------------------------")
 print("[System] 正在初始化 Flask 伺服器...")
-if load_model:
-    try:
-        print("[System] 正在初始化 OCR 模型...")
-        try:
-        # ✅ 先建立管家，再請管家做事
-            ocr_service = ResumeOCRService() 
-            ocr_service.load_model()
-        except Exception as e:
-            print(f"[Error] OCR 模型初始化失敗: {e}")
+
+try:
+    # ✅ 優先使用新版：ResumeOCRService
+    if ResumeOCRService is not None:
+        ocr_service = ResumeOCRService() 
+        ocr_service.load_model()
+        app.config["OCR_HANDLER"] = ocr_service.extract_text_from_image
+        app.extract_text_from_image = ocr_service.extract_text_from_image
+        print("[System] ✅ OCR 模型初始化完成 (使用 ResumeOCRService)")
         
-    except ImportError as e:
-        print(f"[Critical] 無法引入 ocr_service！請檢查路徑。錯誤: {e}")
-        # 這裡不 exit，避免為了 OCR 讓整個 App 掛掉
+    # ✅ 備用方案：使用舊版 load_model
+    elif load_model is not None:
+        load_model()
+        app.config["OCR_HANDLER"] = extract_text_from_image
+        app.extract_text_from_image = extract_text_from_image
+        print("[System] ✅ OCR 模型初始化完成 (使用 load_model)")
+        
+    # ❌ 都沒找到
+    else:
         app.config["OCR_HANDLER"] = None
+        app.extract_text_from_image = None
+        print("[Warning] 找不到任何 OCR 服務，已略過載入。")
+
+except Exception as e:
+    print(f"[Error] OCR 模型初始化失敗: {e}")
+    app.config["OCR_HANDLER"] = None
+    app.extract_text_from_image = None
     
 
 # ====== 6. 註冊路由 ====================================================
@@ -111,6 +130,8 @@ def health_check():
         "service": "Career Pilot API",
         "ocr_loaded": "ready" if app.config.get("OCR_HANDLER") else "offline",
     }), 200
+def create_app():
+    return app
 
 
 # ====== 8. 啟動 ========================================================
