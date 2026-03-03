@@ -4,6 +4,28 @@
 
 ---
 
+## 目錄
+
+- [安裝與依賴](#安裝與依賴)
+- [使用方式](#使用方式)
+- [函數一覽](#函數一覽)
+- [各函數必填參數一覽](#各函數必填參數一覽)
+  - [insert_career_survey](#insert_career_survey)
+  - [upsert_user_profile](#upsert_user_profile)
+  - [create_resume](#create_resume)
+  - [create_resume_version](#create_resume_version)
+  - [create_upload_event](#create_upload_event)
+  - [add_user_skill](#add_user_skill)
+  - [update_user_skill](#update_user_skill)
+  - [save_cover_letter](#save_cover_letter)
+  - [mark_cover_letter_sent](#mark_cover_letter_sent)
+- [詳細使用說明（以「上傳記錄」為例）](#詳細使用說明以上傳記錄為例)
+- [範例（後端 API）](#範例後端-api)
+- [測試與範例檔（本資料夾內）](#測試與範例檔本資料夾內)
+- [暫未實作（依需求後補）](#暫未實作依需求後補)
+
+---
+
 ## 安裝與依賴
 
 - 專案需能 import `db_function`（例如將 `supabase_control` 加入 PYTHONPATH）。
@@ -48,6 +70,112 @@ from db_function.db_writes import (
 
 ---
 
+## 各函數必填參數一覽
+
+以下列出每個函數的**必填參數**。未列在此的參數多為選填，或已有預設值；細節可看 `db_writes.py` 內各函數的 docstring。
+
+### insert_career_survey
+
+寫入一筆職涯問卷。前端提交問卷後呼叫。
+
+| 參數       | 型別 | 說明 |
+|------------|------|------|
+| `user_id`  | int  | 使用者 ID，由後端從 session/JWT 取得。 |
+| `payload`  | dict | 問卷資料（非空）。建議含 `questionnaire_response` 等，詳見 docstring。 |
+
+---
+
+### upsert_user_profile
+
+新增或更新使用者個人檔案。前端編輯個人資料後呼叫。
+
+| 參數       | 型別 | 說明 |
+|------------|------|------|
+| `user_id`  | int  | 使用者 ID。 |
+| `payload`  | dict | 個人資料欄位（如 `full_name`、`location` 等），可為空 dict。 |
+
+---
+
+### create_resume
+
+建立一筆履歷主檔。使用者建立或上傳履歷後呼叫。
+
+| 參數       | 型別 | 說明 |
+|------------|------|------|
+| `user_id`  | int  | 使用者 ID。 |
+| `payload`  | dict | 履歷資料。**必須含** `template_id`（int）。建議含 `resume_type`、`structured_data` 等。 |
+
+---
+
+### create_resume_version
+
+建立一筆履歷版本。使用者儲存新版本或匯出後呼叫。
+
+| 參數        | 型別 | 說明 |
+|-------------|------|------|
+| `resume_id` | int  | 履歷 ID。 |
+| `payload`   | dict | 版本資料。**必須含** `version_number`（int）。建議含 `content`、`file_path` 等。 |
+
+---
+
+### create_upload_event
+
+記錄一筆上傳事件。檔案已存到 Storage 後呼叫。
+
+| 參數        | 型別 | 說明 |
+|-------------|------|------|
+| `user_id`   | int  | 使用者 ID。 |
+| `file_name` | str  | 檔案名稱（例如 `resume.pdf`）。 |
+| `file_path` | str  | 儲存路徑（例如 Storage 的 path 或 URL）。 |
+
+---
+
+### add_user_skill
+
+新增一筆使用者技能。前端「新增技能」後呼叫。
+
+| 參數       | 型別 | 說明 |
+|------------|------|------|
+| `user_id`  | int  | 使用者 ID。 |
+| `skill_id` | int  | 技能 ID（對應 skill_master 表）。 |
+| `payload`  | dict | 技能細項。可含 `proficiency_level`、`years_of_experience`、`verified`；未傳則用預設值。 |
+
+---
+
+### update_user_skill
+
+更新一筆使用者技能。前端「編輯技能」後呼叫。
+
+| 參數            | 型別 | 說明 |
+|-----------------|------|------|
+| `user_skill_id` | int  | 使用者技能記錄 ID。 |
+| `payload`       | dict | 要更新的欄位（如 `proficiency_level`、`years_of_experience`、`verified`）。可為空則不更新，只回傳原資料。 |
+
+---
+
+### save_cover_letter
+
+儲存一筆求職信。前端產生或編輯求職信後呼叫。
+
+| 參數       | 型別 | 說明 |
+|------------|------|------|
+| `user_id`  | int  | 使用者 ID。 |
+| `job_id`   | int  | 職缺 ID。 |
+| `subject`  | str  | 郵件主旨（不可為空）。 |
+| `content`  | str  | 求職信正文（不可為空）。 |
+
+---
+
+### mark_cover_letter_sent
+
+將求職信標記為已發送。前端「標記已寄出」時呼叫。
+
+| 參數              | 型別 | 說明 |
+|-------------------|------|------|
+| `cover_letter_id` | int  | 求職信 ID。 |
+
+---
+
 ## 詳細使用說明（以「上傳記錄」為例）
 
 各函數邏輯相同：**後端收到前端資料 → 從 session/JWT 取得 `user_id` → 呼叫對應的 db_writes 函數 → 回傳寫入後的資料**。以下用 `create_upload_event` 示範，其餘函數用法類推。
@@ -88,8 +216,7 @@ from db_function.db_writes import (
 2. 後端從 session/JWT 取得 `current_user_id`，呼叫 `create_upload_event(user_id=current_user_id, file_name=..., file_path=..., ...)`。
 3. 把回傳的 dict 用 `jsonify(result)` 回給前端，或只回 `event_id`。
 
-**其他函數**（問卷、個人檔案、履歷、技能、求職信）用法相同：  
-`payload` 或個別參數 = 前端送來的 JSON 或表單欄位；`user_id`（或 `resume_id`、`job_id` 等）由後端從登入狀態或 path 取得。可直接看 `db_writes.py` 裡各函數的 docstring。
+其他函數用法相同：`payload` 或個別參數來自前端 JSON；`user_id`、`resume_id`、`job_id` 等由後端從登入狀態或 path 取得。各函數必填參數見上方「各函數必填參數一覽」。
 
 ---
 
@@ -102,6 +229,12 @@ result = insert_career_survey(user_id=current_user_id, payload=request.json)
 # 個人檔案：PUT /api/profile
 result = upsert_user_profile(user_id=current_user_id, payload=request.json)
 
+# 建立履歷（payload 需含 template_id）
+result = create_resume(user_id=current_user_id, payload=request.json)
+
+# 履歷版本（payload 需含 version_number）
+result = create_resume_version(resume_id=resume_id, payload=request.json)
+
 # 上傳：檔案已存到 Storage 後記錄
 result = create_upload_event(
     user_id=current_user_id,
@@ -109,6 +242,12 @@ result = create_upload_event(
     file_path=storage_path,
     upload_type="resume",
 )
+
+# 新增技能
+result = add_user_skill(user_id=current_user_id, skill_id=skill_id, payload=request.json)
+
+# 編輯技能
+result = update_user_skill(user_skill_id=user_skill_id, payload=request.json)
 
 # 求職信：產生/儲存後
 result = save_cover_letter(
@@ -118,6 +257,9 @@ result = save_cover_letter(
     content=body["content"],
     resume_id=body.get("resume_id"),
 )
+
+# 標記求職信已寄出
+result = mark_cover_letter_sent(cover_letter_id=cover_letter_id)
 ```
 
 ---
