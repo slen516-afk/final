@@ -19,9 +19,9 @@
 
 1. [環境準備](#1-環境準備)
 2. [職缺意向 (User Preference)](#2-職缺意向-user-preference)
-3. [履歷管理 (Resume)](#3-履歷管理-resume)
-4. [履歷分析 (Analysis)](#4-履歷分析-analysis)
-5. [匯出 (Export)](#5-匯出-export)
+3. [問卷作答 (Questionnaire Response)](#3-問卷作答-questionnaire-response)
+4. [履歷管理 (Resume)](#4-履歷管理-resume)
+5. [履歷分析 (Analysis)](#5-履歷分析-analysis)
 6. [架構說明與除錯](#6-架構說明與除錯)
 
 ---
@@ -265,7 +265,140 @@ Authorization: Bearer {{token}}
 
 ---
 
-## 3. 履歷管理 (Resume)
+## 3. 問卷作答 (Questionnaire Response)
+
+### E-01 儲存問卷作答結果
+
+- **權限**: Protected
+- **Method**: `POST`
+- **Path**: `/questionnaire-response`
+- **用途**: 將前端完整問卷 JSON 存入 `career_survey.questionnaire_response`。若該使用者已有 survey 紀錄則更新，否則新增一筆。
+
+| 參數         | 類型 | 必填 | 說明                         |
+| ------------ | ---- | ---- | ---------------------------- |
+| `module_a` | JSON | Yes  | 專業技能 (Skills, q1~q8)     |
+| `module_b` | JSON | Yes  | 軟實力 (Soft Skills, q9~q15) |
+| `module_c` | JSON | Yes  | 現況與目標 (q16~q19)         |
+| `module_d` | JSON | Yes  | 價值觀與學習風格 (q20~q23)   |
+
+**Request Body**
+
+```json
+{
+  "module_a": {
+    "q1_languages": [{"name": "Python", "score": 5}, {"name": "SQL", "score": 4}, {"name": "Git", "score": 4}],
+    "q2_frontend": "unfamiliar",
+    "q3_backend": "distributed_system",
+    "q4_database": ["rdbms_sql", "key_value_cache"],
+    "q5_devops": "k8s_cicd",
+    "q6_ai_data": "api_consumer",
+    "q7_security": "framework_default",
+    "q8_domain": "電子商務"
+  },
+  "module_b": {
+    "q9_troubleshoot": "incident_analysis",
+    "q10_tech_choice": "tradeoff_analysis",
+    "q11_communication": "alternative_solution",
+    "q12_code_review": "architecture_solid",
+    "q13_learning": "deep_dive_sharing",
+    "q14_process": "process_optimization",
+    "q15_english": "global_comm"
+  },
+  "module_c": {
+    "q16_current_level": "senior",
+    "q17_target_role": "backend",
+    "q18_industry": "product_company",
+    "q19_search_status": "passive_open"
+  },
+  "module_d": {
+    "q20_values_top3": ["technical_growth", "social_impact", "financial_reward"],
+    "q21_pressure": "consider_short_term",
+    "q22_career_type": "specialist",
+    "q23_learning_style": ["official_docs", "hands_on_projects"]
+  }
+}
+```
+
+**Response 201 Created**
+
+```json
+{
+  "survey_id": 42,
+  "status": "saved",
+  "updated_at": "2026-03-03T08:30:00+00:00"
+}
+```
+
+**錯誤碼**
+
+| HTTP Code | 情境                            |
+| --------- | ------------------------------- |
+| `400`   | Request body 為空或缺少必填模組 |
+| `401`   | 未登入 / Token 無效             |
+| `500`   | 資料庫寫入失敗                  |
+
+### E-02 儲存人格特質結果
+
+- **權限**: Protected
+- **Method**: `POST`
+- **Path**: `/personality`
+- **用途**: 將前端計算完的人格特質 JSON 存入 `career_survey.personality`。若該使用者已有 survey 紀錄則更新，否則新增一筆。
+
+| 參數                        | 類型      | 必填 | 說明                                |
+| --------------------------- | --------- | ---- | ----------------------------------- |
+| `trait_raw_responses`     | JSON      | Yes  | 每題原始作答 (`{"Q1": "C", ...}`) |
+| `trait_calculation_debug` | JSON      | No   | 各維度原始分                        |
+| `trait_normalized_scores` | JSON      | Yes  | 正規化後各維度分數 (0~100)          |
+| `primary_archetype`       | String    | Yes  | 主要人格原型                        |
+| `secondary_archetypes`    | list[str] | No   | 次要人格原型                        |
+| `trait_created_at`        | String    | No   | 人格特質建立時間 (ISO 8601)         |
+
+**Request Body**
+
+```json
+{
+  "trait_raw_responses": {"Q1": "C", "Q2": "A", "Q3": "B", "Q4": "C", "Q5": "A", "Q6": "B", "Q7": "B", "Q8": "A", "Q9": "A", "Q10": "A"},
+  "trait_calculation_debug": {
+    "structure_raw": 10,
+    "ambiguity_raw": 0,
+    "decision_raw": 2,
+    "learning_raw": 4,
+    "transfer_raw": 5
+  },
+  "trait_normalized_scores": {
+    "structure": 95,
+    "ambiguity": 35,
+    "decision": 50,
+    "learning": 60,
+    "transfer": 85
+  },
+  "primary_archetype": "STRUCTURE_ARCHITECT",
+  "secondary_archetypes": ["CROSS_DOMAIN_INTEGRATOR"],
+  "trait_created_at": "2026-02-15T10:00:00Z"
+}
+```
+
+**Response 201 Created**
+
+```json
+{
+  "survey_id": 42,
+  "status": "saved",
+  "updated_at": "2026-03-03T08:30:00+00:00"
+}
+```
+
+**錯誤碼**
+
+| HTTP Code | 情境                                                       |
+| --------- | ---------------------------------------------------------- |
+| `400`   | Request body 為空或缺少 `trait_raw_responses` 等必填欄位 |
+| `401`   | 未登入 / Token 無效                                        |
+| `500`   | 資料庫寫入失敗                                             |
+
+---
+
+## 4. 履歷管理 (Resume)
 
 ### C-02 建立履歷（表單填寫）
 
@@ -584,54 +717,6 @@ Authorization: Bearer {{token}}
   "error": "超過重試上限 (3 次): ..."
 }
 ```
-
----
-
-## 5. 匯出 (Export)
-
-### E-01 匯出履歷文件
-
-- **權限**: Protected
-- **Method**: `GET`
-- **Path**: `/resumes/{id}/export`
-- **用途**: 從 `resume_optimization` 取最新（或指定版本）優化履歷，下載 PDF/DOCX。
-
-```http
-GET /api/resumes/{resume_id}/export?format={pdf|docx}
-Authorization: Bearer <token>
-```
-
-**Query Parameters**
-
-| 參數        | 必填 | 預設    | 說明                                 |
-| ----------- | ---- | ------- | ------------------------------------ |
-| `format`  | 否   | `pdf` | 匯出格式：`pdf`、`docx`          |
-| `version` | 否   |         | 指定優化版本號（整數），未帶則取最新 |
-
-**Response — PDF**
-
-- Content-Type: `application/pdf`
-- Content-Disposition: `attachment; filename=resume_{id}.pdf`
-- 回傳 PDF 二進位串流
-
-**Response — DOCX**
-
-- Content-Type: `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
-- Content-Disposition: `attachment; filename=resume_{id}.docx`
-- 回傳 DOCX 二進位串流
-
-**錯誤碼**
-
-| HTTP Code | 情境                         |
-| --------- | ---------------------------- |
-| `400`   | 不支援的 format              |
-| `401`   | 未登入 / Token 失效          |
-| `404`   | 找不到履歷 或 不屬於該使用者 |
-| `500`   | 伺服器錯誤                   |
-
-> **注意**：不要在 Headers 手動加 `Accept`，讓 Postman 自動處理即可。
->
-> **相依套件**：`fpdf2`（PDF）、`python-docx`（DOCX）
 
 ---
 
