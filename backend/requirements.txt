@@ -1,6 +1,11 @@
+# 0.Redis (Job Queue)
+redis>=5.0.0
+
 # 1.Web 框架與 API 相關 (Backend & API)
 flask
 flask-cors
+supabase
+python-dotenv
 fastapi
 uvicorn
 python-multipart
@@ -27,6 +32,8 @@ scipy
 # 5. 文件解析與影像處理 (Document & Image)
 PyMuPDF
 Pillow
+fpdf2
+python-docx
 
 # 6. 深度學習核心與視覺模型 (Deep Learning & Vision)
 torch

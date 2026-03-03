@@ -3,35 +3,69 @@
 
 import sys
 import os
-import json
-from crewai import Agent, Task, Crew
-import uuid
-from flask import Flask, app, jsonify
-from flask_cors import CORS
-from service.llm_service.src.features.course.tools import CourseRecommendationTool
 
-
-# ====== 1. 解決路徑問題 (修正版) =================
-
+# ====== 1. 解決路徑問題 =================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 backend_dir = os.path.dirname(current_dir)
+sys.path.insert(0, backend_dir)                      
+
 service_dir = os.path.join(backend_dir, "service")
-sys.path.append(service_dir)
+sys.path.insert(0, service_dir)                       
 
-def create_app():
-    app = Flask(__name__)
-    CORS(app, origins=["http://localhost:3000"])  # 啟用 CORS
+llm_service_dir = os.path.join(service_dir, "llm_service")
+sys.path.insert(0, llm_service_dir)                   
 
-    # --- Celery 配置 ---
-    app.config.update(
-        CELERY_BROKER_URL='redis://redis:6379/0',
-        CELERY_RESULT_BACKEND='redis://redis:6379/0'
-    )
+analysis_dir = os.path.join(llm_service_dir, 'src', 'analysis')
+if analysis_dir not in sys.path:
+    sys.path.insert(0, analysis_dir)
 
-    # --- OCR模型預載入 ---
+# ====== 2. 標準 import =================================================
+import json
+import uuid
+from datetime import datetime
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+
+# API Blueprints
+from api.auth import auth_bp
+from api.user_preference import user_preference_bp
+from api.resume import resume_bp
+from api.export import export_bp
+from api.analysis import analysis_bp
+from api.resume_processing import resume_proc_bp
+from api.recommendation import rec_bp
+from api.ocr import ocr_bp
+
+try:
+    from api.async_tasks import api_bp as async_tasks_bp
+    _has_async_tasks = True
+except ImportError as e:
+    print(f"[Warning] 無法引入 async_tasks Blueprint: {e}")
+    _has_async_tasks = False
+
+# ====== 3. OCR Service (選用，失敗不影響啟動) ==========================
+try:
+    from service.ocr_service.ocr_service import ResumeOCRService
+    print("[System] 成功引入 OCR Service")
+except ImportError as e:
+    print(f"[Critical] 無法引入 ocr_service！請檢查路徑。錯誤: {e}")
+    load_model = None
+    extract_text_from_image = None
+
+# ====== 4. 建立 Flask App ==============================================
+app = Flask(__name__)
+CORS(app)
+
+UPLOAD_FOLDER = os.path.join(current_dir, 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+app.extract_text_from_image = extract_text_from_image
+
+# ====== 5. OCR 模型預載入 (選用) =======================================
+print("------------------------------------------------")
+print("[System] 正在初始化 Flask 伺服器...")
+if load_model:
     try:
-        from service.ocr_service.ocr_service import ResumeOCRService
-
         print("[System] 正在初始化 OCR 模型...")
         try:
         # ✅ 先建立管家，再請管家做事
@@ -46,53 +80,39 @@ def create_app():
         app.config["OCR_HANDLER"] = None
     
 
-    # --- 註冊路由 ---
-    from api.auth import auth_bp
-    from api.user_preference import user_preference_bp
-    from api.resume import resume_bp
-    from api.ocr import ocr_bp
-    from api.analysis import analysis_bp
-    from api.resume_processing import resume_proc_bp
-    from api.recommendation import rec_bp
-    from api.async_tasks import api_bp as async_tasks_bp
+# ====== 6. 註冊路由 ====================================================
+# 1. 認證功能
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
 
-    # 1. 認證功能模組
-    app.register_blueprint(auth_bp, url_prefix="/api/auth")
+# 2. 履歷核心
+app.register_blueprint(resume_bp, url_prefix='/api/resumes')
+app.register_blueprint(export_bp, url_prefix='/api/resumes')
 
-    # 2. 履歷核心模組
-    app.register_blueprint(resume_bp, url_prefix="/api/resumes")
+# 3. 履歷處理
+app.register_blueprint(resume_proc_bp, url_prefix='/api/resumes')
 
-    # 3. 履歷處理模組
-    app.register_blueprint(resume_proc_bp, url_prefix="/api/resume_process")
+# 4. 分析報告
+app.register_blueprint(analysis_bp, url_prefix='/api/analysis')
+app.register_blueprint(ocr_bp, url_prefix='/api/ocr')
 
-    # 4. 分析報告模組
-    app.register_blueprint(ocr_bp, url_prefix="/api/ocr")
-    app.register_blueprint(analysis_bp, url_prefix="/api/analysis")
+# 5. 使用者偏好與推薦
+app.register_blueprint(user_preference_bp, url_prefix='/api')
+app.register_blueprint(rec_bp, url_prefix='/api')
 
-    # 5. 使用者偏好與推薦模組
-    app.register_blueprint(user_preference_bp, url_prefix="/api/preferences")
-    app.register_blueprint(rec_bp, url_prefix="/api")
+# 6. 非同步任務 (選用)
+if _has_async_tasks:
+    app.register_blueprint(async_tasks_bp, url_prefix='/api/tasks')
 
-    # 6. 非同步任務模組
-    app.register_blueprint(async_tasks_bp, url_prefix="/api/tasks")
-
-    # --- 系統健康檢查 ---
-    @app.route("/health", methods=["GET"])
-    def health_check():
-        return (
-            jsonify(
-                {
-                    "status": "healthy",
-                    "service": "Career Pilot API",
-                    "ocr_loaded": (
-                        "ready" if app.config.get("OCR_HANDLER") else "offline"
-                    ),
-                }
-            ),
-            200,
-        )
-
-    return app
+# ====== 7. 系統健康檢查 ================================================
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "service": "Career Pilot API",
+        "ocr_loaded": "ready" if app.config.get("OCR_HANDLER") else "offline",
+    }), 200
 
 
-
+# ====== 8. 啟動 ========================================================
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5000)

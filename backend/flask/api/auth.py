@@ -31,8 +31,20 @@ def register():
             }
         )
 
+        # 同步寫入 USER 表（auth_uuid 橋接）
+        if result.user:
+            try:
+                supabase.table("USER").insert({
+                    "email": email,
+                    "password_hash": "supabase_managed",
+                    "auth_uid": result.user.id,
+                    "auth_provider": "Email",
+                    "is_active": True
+                }).execute()
+            except Exception as db_e:
+                print(f"[Auth] USER 表寫入失敗（可能已存在）: {db_e}")
+
         # 驗證用戶信箱
-        # Supabase -> Sign In / Providers -> Supabase Auth -> Confirm email(Open)
         if result.user and not result.session:
             return (
                 jsonify(
@@ -110,11 +122,21 @@ def login_required(f):
 
         try:
             # 使用 Supabase SDK 驗證用戶資訊
-            # 以get_user驗證JWT並回傳用戶資訊
             user_info = supabase.auth.get_user(token)
+            auth_user = user_info.user
 
-            # 將 user_id 存入 Flask 的全域變數 g，供後續業務流程使用
-            g.user_id = user_info.user.id
+            # g.user_id = Supabase auth UUID (保留向下相容)
+            g.user_id = auth_user.id
+
+            # g.db_user_id = USER 表的 integer user_id (用 auth_uuid 橋接)
+            db_user = (
+                supabase.table("USER")
+                .select("user_id")
+                .eq("auth_uid", auth_user.id)
+                .single()
+                .execute()
+            )
+            g.db_user_id = db_user.data["user_id"] if db_user.data else None
 
         except Exception as e:
             return jsonify({"message": "Token 無效 / 逾期"}), 401

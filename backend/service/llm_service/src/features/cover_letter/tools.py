@@ -47,7 +47,7 @@ class DatabaseTools:
                 .single() \
                 .execute()
 
-            if not response.data:
+            if not response.data:            
                 return {"error": "找不到該用戶優化後履歷資料"}
 
             return response.data

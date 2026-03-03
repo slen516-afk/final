@@ -1,6 +1,15 @@
 version: '3.8'
 
 services:
+  # 0. Redis (Job Queue)
+  redis:
+    image: redis:7-alpine
+    container_name: final-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - default
+
   # 1. 後端 (Python) - 通用環境
   backend:
     build: ./backend
@@ -13,10 +22,13 @@ services:
     environment:
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
     networks:
       - default
     command: sleep infinity
-    env_file:          
+    env_file:
       - .env
   supabase_control:
     image: python:3.10-slim
@@ -71,15 +83,6 @@ services:
     # 如果你有用 .env 存 API Key，記得把下面這兩行註解打開
     env_file:
       - .env
-    networks:
-      - default
-
-  # --- 新增的 Redis 服務 ---
-  redis:
-    image: redis:alpine
-    container_name: final-redis
-    ports:
-      - "6380:6379" # 外部用 6380 避開衝突，內部維持 6379
     networks:
       - default
 
