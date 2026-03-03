@@ -54,8 +54,8 @@ docker compose up -d redis
 ### 1.3 啟動 Flask
 
 ```powershell
-cd .\final\backend\flask\
-python app.py
+cd .\final\backend\
+python main.py
 ```
 
 ### 1.4 啟動 Worker
@@ -63,7 +63,7 @@ python app.py
 **另開一個 Terminal**：
 
 ```powershell
-cd .\final\backend\flask\
+cd .\final\backend\flask
 # 如要啟動mock模式
 # CMD: set MOCK_MODE=true
 # PowerShell: $env:MOCK_MODE="true"
@@ -84,7 +84,7 @@ python get_token.py
 
 | Variable     | Value                         |
 | ------------ | ----------------------------- |
-| `base_url` | `http://127.0.0.1:5000/api` |
+| `base_url` | `http://127.0.0.1:8000/api` |
 | `token`    | `<貼上 Access Token>`       |
 
 所有 Protected API Header：
@@ -643,7 +643,7 @@ Authorization: Bearer <token>
 ┌──────────────┐   POST /dream-jobs          ┌──────────────┐
 │              │   POST /analysis/tasks      │              │
 │   Client     │ ─────────────────────────► │  Flask App   │
-│  (Postman)   │ ◄───────────────────────── │  :5000       │
+│  (Postman)   │ ◄───────────────────────── │  :8000       │
 │              │   202 { job_id }            │              │
 └──────────────┘                            └──────┬───────┘
                                                    │ XADD
@@ -688,10 +688,10 @@ queued ──► processing ──► done
 | `Connection refused` on Redis    | Redis 容器沒起來      | `docker compose up -d redis`                           |
 | Flask 啟動報 `SUPABASE_URL` 錯誤 | `.env` 缺少或路徑錯 | 確認 `backend/.env` 存在且有正確的金鑰                 |
 | API 回 `401 請先登入`            | Token 過期或格式錯    | 重跑 `get_token.py`，注意 Header 是 `Bearer <token>` |
-| 任務一直卡 `queued`              | Worker 沒啟動         | 另開 Terminal 跑 `python -m worker.cv_worker`          |
+| 任務一直卡 `queued`              | Worker 沒啟動         | 另開 Terminal 跑 `python -m flask.worker.cv_worker`    |
 | 任務 `failed`                    | Worker 處理出錯       | 檢查 Worker Terminal 的錯誤訊息                          |
 | `BUSYGROUP` 警告                 | Consumer Group 已存在 | 正常現象，不影響功能                                     |
-| Port 5000 已佔用                   | 另一個 Flask 還在跑   | 關掉舊的 Flask 進程                                      |
+| Port 8000 已佔用                   | 另一個 Flask 還在跑   | 關掉舊的 Flask 進程                                      |
 
 ### 停止服務
 
