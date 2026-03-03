@@ -85,9 +85,9 @@ class ResumeOptHandler(BaseResultHandler):
     def process(self, pydantic_result: any, **kwargs):
         user_id = kwargs.get("user_id")
 
-        # 1. 從 resume 表撈出該用戶最原始的 resume_id
+        # 1. 從 resume 表撈出該用戶最新的 resume_id 跟 resume_name
         resume_info = self.supabase.table("resume") \
-            .select("resume_id") \
+            .select("resume_id, resume_name") \
             .eq("user_id", user_id) \
             .order("created_at", desc=True) \
             .limit(1) \
@@ -98,6 +98,8 @@ class ResumeOptHandler(BaseResultHandler):
             raise ValueError(f"找不到用戶 {user_id} 的原始履歷，無法存儲優化結果")
 
         target_resume_id = resume_info.data['resume_id']
+        resume_name = resume_info.data['resume_name']
+        target_resume_name = f"{resume_name}_優化"
 
         # 2. 計算版本號 (取目前最大版本 + 1)
         res = self.supabase.table("resume_optimization") \
@@ -116,6 +118,7 @@ class ResumeOptHandler(BaseResultHandler):
             "resume_id": target_resume_id, # 這是額外撈出的值
             "optimization_version": new_version, # 這是計算出的值
             **pydantic_result, # AI 生成的欄位
+            "resume_name": target_resume_name, # 這是額外撈出的值
             # "created_at": "now()"
         }
 
