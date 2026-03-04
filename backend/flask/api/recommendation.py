@@ -22,6 +22,55 @@ rec_bp = Blueprint('recommendation', __name__)
 
 
 # =====================================================================
+# 🌟 取得使用者履歷清單 API
+# =====================================================================
+@rec_bp.route('/users/<int:user_id>/resumes', methods=['GET'])
+def get_user_resumes(user_id):
+    """
+    取得使用者的所有履歷 (包含原版 resume 與優化版 optimization)
+    """
+    try:
+        # 🌟 1. 改用 resume_id 去撈 resume 表
+        raw_resp = supabase.table("resume").select("resume_id, resume_name, created_at").eq("user_id", user_id).execute()
+        raw_resumes = raw_resp.data if raw_resp.data else []
+        
+        # 🌟 2. 去 resume_optimization 表撈 (⚠️ 注意：如果這張表的 ID 欄位也不叫 id，請幫我把下面的 id 改成正確的名稱！)
+        opt_resp = supabase.table("resume_optimization").select("resume_id, resume_name, created_at").eq("user_id", user_id).execute()
+        opt_resumes = opt_resp.data if opt_resp.data else []
+        
+        combined_list = []
+        
+        # 🌟 3. 將撈出來的 resume_id 塞給前端要的 id 變數
+        for r in raw_resumes:
+            combined_list.append({
+                "id": r.get("resume_id"),  # 👈 這裡改成抓 resume_id
+                "title": r.get("resume_name") or f"原版履歷 {r.get('resume_id')}",
+                "type": "RESUME",
+                "created_at": r.get("created_at", "")
+            })
+            
+        for r in opt_resumes:
+            combined_list.append({
+                "id": r.get("id"), # 👈 如果 optimization 表的欄位叫別的 (例如 opt_id)，記得這裡也要改！
+                "title": r.get("resume_name") or f"AI 優化版履歷 {r.get('id')}",
+                "type": "OPTIMIZATION",
+                "created_at": r.get("created_at", "")
+            })
+            
+        combined_list.sort(key=lambda x: x["created_at"], reverse=True)
+        
+        return jsonify({
+            "status": "success",
+            "data": combined_list
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ 獲取履歷列表發生錯誤: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"伺服器錯誤: {str(e)}"
+        }), 500
+# =====================================================================
 # 🌟 V1 舊版引擎 (保留備用)
 # =====================================================================
 @rec_bp.route('/jobs/recommendations', methods=['POST'])
