@@ -111,6 +111,33 @@ def analyze_resume_async(self, file_path):
         self.update_state(state='FAILURE', meta={'error': str(e)})
         return {"status": "error", "message": str(e)}
 
+@celery_app.task(name='process_cover_letter')
+def process_cover_letter(user_id: int, job_id: str, optimization_id: str, resume_id: str):
+    """
+    執行 CrewAI 求職信生成任務 (Manager.py 邏輯)
+    """
+    try:
+        manager = CareerAgentManager(model_name="o3-mini")
+        
+        # 根據文件，如果選擇優化履歷則 resume_id 為空字串，如果選擇原始履歷則 optimization_id 為空字串
+        user_input = {
+            "user_id": user_id,
+            "job_id": job_id,
+            "optimization_id": optimization_id,
+            "resume_id": resume_id
+        }
+        
+        # 執行 CrewAI 流程
+        result = manager.run_task(
+            task_type_str="cover_letter", 
+            user_input=user_input
+        )
+        
+        return result
+    except Exception as e:
+        print(f"Cover Letter Task Failed: {e}")
+        return {"status": "error", "message": str(e)}
+
 # for test purpose, not real processing
 @celery_app.task(name='test_connection')
 def test_connection(user_id=None, content=None):

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   User,
   FileText,
@@ -23,44 +23,95 @@ import { useAppState } from "@/contexts/AppContext";
 import EditProfileModal from "@/components/member/EditProfileModal";
 import PasswordModal from "@/components/member/PasswordModal";
 import LoginRequired from "@/components/gatekeeper/LoginRequired";
+import { getMyProfile, uploadAvatar } from "@/services/memberService";
 import { mockUserId, mockProfile } from "@/mocks/member";
+import type { UserProfile } from "@/types/member";
 import logoCat from "@/assets/logocat.png";
 
-const displayName = (name: string, userId: string) => (name?.trim() ? name : `用戶_${userId}`);
+
+const displayName = (name: string, userId: string | number) => (name?.trim() ? name : `用戶_${userId}`);
 
 const fallback = (value: string | undefined) => (value?.trim() ? value : "無");
 
 const MemberCenter = () => {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getMyProfile();
+        setProfile(data);
+      } catch (err) {
+        console.error("載入個人資料失敗，啟動備援方案:", err);
+        // 備援方案：載入寫定的 Mock 資料
+        setProfile(mockProfile);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) return;
+    if (!file.type.startsWith('image/')) {
+      alert("請上傳圖片檔案");
+      return;
+    }
+
+    // 1. 前端預覽 (Optimistic UI)
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setAvatarUrl(dataUrl);
+      setAvatarUrl(reader.result as string);
     };
     reader.readAsDataURL(file);
-    e.target.value = "";
+
+    // 2. 使用 memberService 上傳到後端
+    try {
+      const data = await uploadAvatar(file);
+      if (data.avatar_url) {
+        setAvatarUrl(data.avatar_url);
+        // 更新當前 profile 狀態
+        if (profile) setProfile({ ...profile, avatarUrl: data.avatar_url });
+      }
+    } catch (error: any) {
+      console.error("更新大頭貼錯誤:", error);
+      if (error.message?.includes("401")) {
+        alert("登入已逾期，請重新登入");
+        window.location.href = "/login";
+      } else {
+        alert("照片上傳發生錯誤，請稍後再試。");
+      }
+    } finally {
+      e.target.value = '';
+    }
   };
+
   const { isResumeUploaded, isPersonalityQuizDone, isPersonalityTestDone, avatarUrl, setAvatarUrl } = useAppState();
 
-  const name = displayName(mockProfile.fullName, mockUserId);
-  const titleText = fallback(mockProfile.title);
-  const locationText = fallback(mockProfile.location);
-  const experienceText = fallback(mockProfile.experience);
-  const educationText = fallback(mockProfile.education);
-  const githubText = fallback(mockProfile.github);
+  const currentUserId = (profile as any)?.id || mockUserId;
+  const name = profile
+    ? displayName(profile.fullName, currentUserId)
+    : displayName(mockProfile.fullName, mockUserId);
+
+  const titleText = fallback(profile?.title);
+  const locationText = fallback(profile?.location);
+  const experienceText = fallback(profile?.experience);
+  const educationText = fallback(profile?.education);
+  const githubText = fallback(profile?.github);
   const isEmpty = (v: string) => v === "無";
+
 
   return (
     <LoginRequired>
@@ -89,7 +140,7 @@ const MemberCenter = () => {
                   aria-label="上傳大頭貼"
                 >
                   <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-border">
-                    <AvatarImage src={avatarUrl || mockProfile.avatarUrl || logoCat} alt={name} />
+                    <AvatarImage src={avatarUrl || profile?.avatarUrl || logoCat} alt={name} />
                     <AvatarFallback className="bg-secondary text-muted-foreground text-2xl md:text-3xl font-semibold">
                       {name.charAt(0)}
                     </AvatarFallback>
@@ -109,7 +160,7 @@ const MemberCenter = () => {
                   </p>
                   <div className="flex items-center gap-1.5 mt-2 justify-center sm:justify-start">
                     <Mail className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-sm text-muted-foreground">{mockProfile.email}</span>
+                    <span className="text-sm text-muted-foreground">{profile?.email}</span>
                   </div>
                 </div>
 

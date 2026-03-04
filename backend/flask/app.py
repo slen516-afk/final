@@ -14,6 +14,7 @@ from api.analysis import analysis_bp
 from api.resume_processing import resume_proc_bp
 from api.recommendation import rec_bp
 from api.ocr import ocr_bp
+from api.cover_letter import cover_letter_bp
 
 try:
     from api.async_tasks import api_bp as async_tasks_bp
@@ -53,6 +54,12 @@ def create_app():
     print("------------------------------------------------")
     print("[System] 正在初始化 Flask 伺服器...")
 
+    # 在測試模式或指定跳過時，不載入大型模型
+    # if app.config.get("TESTING") or os.getenv("SKIP_OCR") == "True":
+    #     print("[System] 測試模式或 SKIP_OCR=True，跳過 OCR 模型載入。")
+    #     app.config["OCR_HANDLER"] = None
+    #     app.extract_text_from_image = None
+    # else:
     try:
     # ✅ 優先使用新版：ResumeOCRService
         if ResumeOCRService is not None:
@@ -95,6 +102,7 @@ def create_app():
 # 4. 分析報告
     app.register_blueprint(analysis_bp, url_prefix='/api/analysis')
     app.register_blueprint(ocr_bp, url_prefix='/api/ocr')
+    app.register_blueprint(cover_letter_bp, url_prefix="/api/cover_letter")
 
 # 5. 使用者偏好與推薦
     app.register_blueprint(user_preference_bp, url_prefix='/api')

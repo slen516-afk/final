@@ -4,9 +4,10 @@ import type { UserProfile } from '@/types/member';
 export const mockUserId = '5F82A';
 
 // TODO: Replace with API call
+// User id 55
 export const mockProfile: UserProfile = {
-  fullName: '',
-  email: 'user@example.com',
+  fullName: '里昂',
+  email: 'Leon_SK@example.com',
   avatarUrl: '',
   title: '',
   location: '',
