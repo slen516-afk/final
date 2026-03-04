@@ -36,24 +36,23 @@
 | 3 | 職涯調查問卷 | CAREER_SURVEY | ⚪ 基礎 | 儲存使用者職涯目標與偏好 |
 | 4 | 履歷主表 | RESUME | 🔵 履歷生成 | 儲存履歷核心資料 |
 | 5 | 履歷版本 | RESUME_VERSION | 🔵 履歷生成 | 管理履歷多版本內容 |
-| 6 | 履歷模板 | RESUME_TEMPLATE | 🔵 履歷生成 | 定義履歷格式與結構 |
-| 7 | 上傳事件記錄 | UPLOAD_EVENT | 🔵 履歷生成 | 追蹤檔案上傳事件 |
-| 8 | OCR 辨識結果 | OCR_RESULT | 🔵 履歷生成 | 儲存文件解析結果 |
-| 9 | 公司資訊 | COMPANY_INFO | 🟢 職缺推薦 | 儲存企業基本資料 |
-| 10 | 職缺資訊 | JOB_POSTING | 🟢 職缺推薦 | 儲存職缺詳細資訊 |
-| 11 | 職缺技能需求 | JOB_SKILL_REQUIREMENT | 🟢 職缺推薦 | 定義職缺所需技能 |
-| 12 | 技能主檔 | SKILL_MASTER | ⚪ 共用 | 技能標準化字典 |
-| 13 | 使用者技能 | USER_SKILL | ⚪ 共用 | 記錄使用者擁有的技能 |
-| 14 | 職缺媒合記錄 | JOB_MATCHING | 🟢 職缺推薦 | 記錄履歷與職缺的配對 |
-| 15 | 媒合分數 | MATCH_SCORE | 🟢 職缺推薦 | 儲存配適度評分細節 |
-| 16 | 投遞記錄 | APPLICATION_RECORD | 🟢 職缺推薦 | 追蹤求職投遞狀態 |
-| 17 | 職涯分析報告 | CAREER_ANALYSIS_REPORT | 🟠 職能分析 | 儲存 AI 生成的分析報告 |
-| 18 | Side Project 推薦 | SIDE_PROJECT_RECOMMENDATION | 🟠 職能分析 | 推薦學習專案 |
-| 19 | 課程主表 | COURSE | 🟣 課程推薦 | 儲存推薦用課程（如 Coursera），依技能與職缺/職能落差分析匹配 |
-| 20 | 履歷分析報告 | RESUME_ANALYSIS | 🔵 履歷生成 | 儲存 AI 對履歷的完整診斷分析結果，含各區塊問題清單（critical_issues） |
-| 21 | 履歷優化結果 | RESUME_OPTIMIZATION | 🔵 履歷生成 | 儲存 AI 優化後的完整履歷內容 |
-| 22 | 求職信 | COVER_LETTER | 🟢 職缺推薦 | 儲存針對特定職缺 AI 生成的求職信 |
-| 23 | Agent 調用記錄 | AGENT_SESSION | ⚙️ 系統追蹤 | 記錄每次 Agent 調用的工具使用情況與效能指標 |
+| 6 | 上傳事件記錄 | UPLOAD_EVENT | 🔵 履歷生成 | 追蹤檔案上傳事件 |
+| 7 | OCR 辨識結果 | OCR_RESULT | 🔵 履歷生成 | 儲存文件解析結果 |
+| 8 | 公司資訊 | COMPANY_INFO | 🟢 職缺推薦 | 儲存企業基本資料 |
+| 9 | 職缺資訊 | JOB_POSTING | 🟢 職缺推薦 | 儲存職缺詳細資訊 |
+| 10 | 職缺技能需求 | JOB_SKILL_REQUIREMENT | 🟢 職缺推薦 | 定義職缺所需技能 |
+| 11 | 技能主檔 | SKILL_MASTER | ⚪ 共用 | 技能標準化字典 |
+| 12 | 使用者技能 | USER_SKILL | ⚪ 共用 | 記錄使用者擁有的技能 |
+| 13 | 職缺媒合記錄 | JOB_MATCHING | 🟢 職缺推薦 | 記錄履歷與職缺的配對 |
+| 14 | 媒合分數 | MATCH_SCORE | 🟢 職缺推薦 | 儲存配適度評分細節 |
+| 15 | 投遞記錄 | APPLICATION_RECORD | 🟢 職缺推薦 | 追蹤求職投遞狀態 |
+| 16 | 職涯分析報告 | CAREER_ANALYSIS_REPORT | 🟠 職能分析 | 儲存 AI 生成的分析報告 |
+| 17 | Side Project 推薦 | SIDE_PROJECT_RECOMMENDATION | 🟠 職能分析 | 推薦學習專案 |
+| 18 | 課程主表 | COURSE | 🟣 課程推薦 | 儲存推薦用課程（如 Coursera），依技能與職缺/職能落差分析匹配 |
+| 19 | 履歷分析報告 | RESUME_ANALYSIS | 🔵 履歷生成 | 儲存 AI 對履歷的完整診斷分析結果，含各區塊問題清單（critical_issues） |
+| 20 | 履歷優化結果 | RESUME_OPTIMIZATION | 🔵 履歷生成 | 儲存 AI 優化後的完整履歷內容 |
+| 21 | 求職信 | COVER_LETTER | 🟢 職缺推薦 | 儲存針對特定職缺 AI 生成的求職信 |
+| 22 | Agent 調用記錄 | AGENT_SESSION | ⚙️ 系統追蹤 | 記錄每次 Agent 調用的工具使用情況與效能指標 |
 
 ---
 
@@ -92,6 +91,7 @@
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY, UNIQUE |
 | github_repo | GitHub 帳號 | GitHub Repository | VARCHAR(100) | GitHub 帳號網址 | - |
 | full_name | 姓名 | Full Name | VARCHAR(100) | 使用者姓名 | - |
+| avatar_url | 頭像網址 | Avatar URL | VARCHAR(500) | 使用者頭像圖片 URL | - |
 | location | 所在地區 | Location | VARCHAR(100) | 所在地區 | - |
 | years_of_experience | 工作年資 | Years of Experience | INT | 工作年資 | - |
 | current_position | 目前職位 | Current Position | VARCHAR(100) | 目前職位 | - |
@@ -157,7 +157,6 @@
 |---------|---------|-----|---------|------|---------|
 | resume_id | 履歷識別碼 | Resume ID | INT | 履歷識別碼 | PRIMARY KEY |
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
-| template_id | 模板識別碼 | Template ID | INT | 使用的模板 | FOREIGN KEY |
 | resume_type | 履歷類型 | Resume Type | VARCHAR(50) | 履歷類型 (uploaded/generated) | NOT NULL |
 | structured_data | 結構化資料 | Structured Data | JSONB | 結構化履歷資料 | - |
 | normalized_data | 標準化資料 | Normalized Data | JSONB | 標準化後資料 | - |
@@ -202,35 +201,6 @@
     - 使用者第 2 次修改履歷時，可能同時針對「Google 職缺」和「Microsoft 職缺」各產生一個版本
     - 這兩個版本的 `version_id` 不同，但 `version_number` 都是 2
   - **資料約束**: `UNIQUE (resume_id, version_number, optimization_target)`  組成唯一鍵 同一份履歷、同一版本號、針對同一個職位，只能有一個記錄
-
----
-
-### 3.3 RESUME_TEMPLATE(履歷模板)🔵
-
-**功能說明**:定義履歷的格式與結構,支援不同產業與職位需求
-
-| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
-|---------|---------|-----|---------|------|---------|
-| template_id | 模板識別碼 | Template ID | INT | 模板識別碼 | PRIMARY KEY |
-| template_name | 模板名稱 | Template Name | VARCHAR(100) | 模板名稱 | NOT NULL |
-| template_type | 模板類型 | Template Type | VARCHAR(50) | 模板類型 (ATS/Creative/Standard) | - |
-| template_structure | 模板結構 | Template Structure | JSONB | 模板結構定義 | - |
-| created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
-
-**設計說明**:
-- 對應流程圖「動作: 用戶選擇履歷模板」
-- **template_type 說明**:
-  - `ATS`:適合自動篩選系統的簡潔格式
-  - `Creative`:適合設計/行銷產業的視覺化格式
-  - `Standard`:通用標準格式
-- **template_structure 範例**:
-  ```json
-  {
-    "sections": ["summary", "experience", "education", "skills"],
-    "order": ["summary", "skills", "experience", "education"],
-    "max_pages": 2
-  }
-  ```
 
 ---
 
@@ -286,7 +256,7 @@
 | autobiography | 自傳 | Autobiography | TEXT | 保留原風格的優化後完整自傳 | - |
 | llm_model_used | 使用的 LLM 模型 | LLM Model Used | VARCHAR(100) | 產生此優化使用的 LLM 版本 | - |
 | optimization_version | 優化版本 | Optimization Version | VARCHAR(10) | Schema 版本 | DEFAULT '1.0' |
-| template_color | 顏色模板名稱 | Template Color | VARCHAR(50) | 用戶確認優化結果時選擇的顏色模板名稱（如：'深海藍經典'），前端依此名稱對應 hex 色碼渲染 | - |
+| template_color | 樣板與配色 | Template & Color | JSONB | 用戶確認優化結果時選擇的履歷樣板與配色方案；存 template（樣板類型/名稱）與 color_scheme（所選配色名稱），結構見下方說明 | - |
 | vector_id | 向量識別碼 | Vector ID | UUID | 對應 Qdrant optimized_resume_vectors 中的 Point ID，向量化腳本回填用 | - |
 | is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 是否已寫入 Qdrant optimized_resume_vectors | DEFAULT FALSE |
 | created_at | 建立時間 | Created At | TIMESTAMPTZ | 優化產生時間 | NOT NULL, DEFAULT NOW() |
@@ -298,6 +268,51 @@
   - `version_id` → `RESUME_VERSION`：可選，若優化結果已存為新版本則關聯
 - **注意**: name/phone/email/linkedin/github 為個人敏感資料，不由 LLM 輸出寫入，此表不儲存，由前端從 USER_PROFILE 取得
 - **向量化**: `vector_id`、`is_embedded` 供優化後履歷向量化腳本寫入 Qdrant `optimized_resume_vectors` 後回填，職缺推薦時可選擇以優化前/後履歷做比對
+
+**template_color (JSONB) 結構說明**  
+對應「選擇履歷樣板」流程：用戶選擇一樣板類型（如經典專業型、現代極簡型、創意視覺型）與一組配色方案，前端將所選結果寫入此欄位。建議結構：
+
+| 鍵名 | 型態 | 說明 |
+|------|------|------|
+| template_key | string | 樣板識別碼，供程式對應（如 `corporate_classic`、`modern_minimalist`、`creative_portfolio`） |
+| template_name_zh | string | 樣板中文名稱（如「經典專業型」「現代極簡型」「創意視覺型」） |
+| template_name_en | string | 樣板英文名稱（如 The Corporate Classic、Modern Minimalist、Creative Portfolio），可選 |
+| color_scheme_name | string | 用戶所選配色方案名稱（如「深海藍經典」） |
+| color_hex | string | 所選配色之主色 hex（如 `#1e3a5f`），供前端渲染 |
+
+**template_color 範例**（用戶選擇「現代極簡型」+ 某藍色配色）：
+```json
+{
+  "template_key": "modern_minimalist",
+  "template_name_zh": "現代極簡型",
+  "template_name_en": "Modern Minimalist",
+  "color_scheme_name": "深海藍經典",
+  "color_hex": "#1e3a5f"
+}
+```
+
+前端依 `template_key` 與 `color_hex` 決定版型與配色渲染。
+
+**內建樣板與預設配色清單**  
+目前規劃的樣板與主色 hex 如下，供前後端對齊（`template_key` 由前端實作時決定，建議依英文名稱或類型命名）：
+
+- **corporate（經典專業型）**
+  - 深海藍經典：`#1F3A5F`
+  - 石墨灰商務：`#2E2E2E`
+  - 酒紅權威：`#6A1B2E`
+  - 深綠金融系：`#1B4332`
+
+- **modern（現代極簡型）**
+  - 科技藍：`#2563EB`
+  - 冷灰＋電光綠：`#374151`
+  - 黑白極簡：`#111111`
+  - 靜謐藍灰：`#334155`
+
+- **creative（創意視覺型）**
+  - 莫蘭迪粉橘：`#E07A5F`
+  - 紫藍創意系：`#6D28D9`
+  - 活力橘藍對比：`#F97316`
+  - 黑底霓虹：`#0F172A`
 
 ---
 

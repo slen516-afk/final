@@ -30,6 +30,7 @@
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY, UNIQUE |
 | github_repo | GitHub 帳號 | GitHub Repository | VARCHAR(100) | GitHub 帳號網址 | - |
 | full_name | 姓名 | Full Name | VARCHAR(100) | 使用者姓名 | - |
+| avatar_url | 頭像網址 | Avatar URL | VARCHAR(500) | 使用者頭像圖片 URL | - |
 | location | 所在地區 | Location | VARCHAR(100) | 所在地區 | - |
 | years_of_experience | 工作年資 | Years of Experience | INT | 工作年資 | - |
 | current_position | 目前職位 | Current Position | VARCHAR(100) | 目前職位 | - |
@@ -64,7 +65,6 @@
 |---------|---------|-----|---------|------|---------|
 | resume_id | 履歷識別碼 | Resume ID | INT | 履歷識別碼 | PRIMARY KEY |
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
-| template_id | 模板識別碼 | Template ID | INT | 使用的模板 | FOREIGN KEY |
 | resume_type | 履歷類型 | Resume Type | VARCHAR(50) | 履歷類型 (uploaded/generated) | NOT NULL |
 | structured_data | 結構化資料 | Structured Data | JSONB | 結構化履歷資料 | - |
 | normalized_data | 標準化資料 | Normalized Data | JSONB | 標準化後資料 | - |
@@ -86,18 +86,6 @@
 | file_path | 檔案儲存路徑 | File Path | VARCHAR(255) | 該版本的檔案儲存路徑 | - |
 | content | 版本內容 | Content | JSONB | 版本完整內容 | - |
 | optimization_target | 優化目標職位 | Optimization Target | VARCHAR(100) | 優化目標職位 | - |
-| created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
-
----
-
-### 3.3 RESUME_TEMPLATE(履歷模板)🔵
-
-| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
-|---------|---------|-----|---------|------|---------|
-| template_id | 模板識別碼 | Template ID | INT | 模板識別碼 | PRIMARY KEY |
-| template_name | 模板名稱 | Template Name | VARCHAR(100) | 模板名稱 | NOT NULL |
-| template_type | 模板類型 | Template Type | VARCHAR(50) | 模板類型 (ATS/Creative/Standard) | - |
-| template_structure | 模板結構 | Template Structure | JSONB | 模板結構定義 | - |
 | created_at | 建立時間 | Created At | DATETIME | 建立時間 | NOT NULL |
 
 ---
@@ -368,10 +356,11 @@
 | autobiography | 自傳 | Autobiography | TEXT | 保留原風格的優化後完整自傳 | - |
 | llm_model_used | 使用的 LLM 模型 | LLM Model Used | VARCHAR(100) | 產生此優化使用的 LLM 版本 | - |
 | optimization_version | 優化版本 | Optimization Version | VARCHAR(10) | Schema 版本 | DEFAULT '1.0' |
-| template_color | 顏色模板名稱 | Template Color | VARCHAR(50) | 用戶確認優化結果時選擇的顏色模板名稱（如：'深海藍經典'），前端依此名稱對應 hex 色碼渲染 | - |
+| template_color | 樣板與配色 | Template & Color | JSONB | 用戶確認優化結果時選擇的履歷樣板與配色方案；存 template（樣板類型/名稱）與 color_scheme（所選配色名稱、hex），結構見說明文件 | - |
 | vector_id | 向量識別碼 | Vector ID | UUID | 對應 Qdrant optimized_resume_vectors 中的 Point ID，向量化腳本回填用 | - |
 | is_embedded | 是否已向量化 | Is Embedded | BOOLEAN | 是否已寫入 Qdrant optimized_resume_vectors | DEFAULT FALSE |
 | created_at | 建立時間 | Created At | TIMESTAMPTZ | 優化產生時間 | NOT NULL, DEFAULT NOW() |
+
 
 ---
 
