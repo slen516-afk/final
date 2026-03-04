@@ -34007,3 +34007,76 @@
 2026-03-01 15:36:23,800 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
 2026-03-01 15:36:23,992 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points/payload?wait=true "HTTP/1.1 200 OK"
 2026-03-01 15:36:24,186 - INFO - HTTP Request: POST https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/optimized_resume_vectors/points "HTTP/1.1 200 OK"
+2026-03-04 18:02:01,272 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-04 18:02:01,277 - INFO - ============================================================
+2026-03-04 18:02:01,277 - INFO - Career Pilot 履歷向量化作業
+2026-03-04 18:02:01,277 - INFO - 執行時間: 2026-03-04 18:02:01
+2026-03-04 18:02:01,277 - INFO - 模型: text-embedding-3-large，維度: 1536
+2026-03-04 18:02:01,278 - INFO - 本輪處理筆數上限: 10
+2026-03-04 18:02:01,278 - INFO - ============================================================
+2026-03-04 18:02:03,365 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?select=resume_id&is_embedded=eq.False "HTTP/2 200 OK"
+2026-03-04 18:02:03,366 - INFO - 📊 待處理履歷總數: 13，本輪將處理: 10 筆
+2026-03-04 18:02:52,843 - INFO - ❌ 使用者取消作業
+2026-03-04 18:04:24,162 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-04 18:04:24,167 - INFO - ============================================================
+2026-03-04 18:04:24,167 - INFO - Career Pilot 履歷向量化作業
+2026-03-04 18:04:24,168 - INFO - 執行時間: 2026-03-04 18:04:24
+2026-03-04 18:04:24,168 - INFO - 模型: text-embedding-3-large，維度: 1536
+2026-03-04 18:04:24,168 - INFO - 本輪處理筆數上限: 20
+2026-03-04 18:04:24,168 - INFO - ============================================================
+2026-03-04 18:04:24,928 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?select=resume_id&is_embedded=eq.False "HTTP/2 200 OK"
+2026-03-04 18:04:24,930 - INFO - 📊 待處理履歷總數: 13，本輪將處理: 13 筆
+2026-03-04 18:04:28,973 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?select=resume_id%2Cuser_id%2Ctemplate_id%2Cresume_type%2Cstructured_data%2Cnormalized_data&is_embedded=eq.False&offset=0&limit=13 "HTTP/2 400 Bad Request"
+2026-03-04 18:04:28,974 - ERROR - ❌ Supabase 查詢履歷失敗 (offset=0, resume_ids=None): {'message': 'column resume.template_id does not exist', 'code': '42703', 'hint': None, 'details': None}
+2026-03-04 18:04:28,974 - INFO - 📈 進度: 成功=0, 失敗=0, 跳過=0 (本批 成功=0, 失敗=0, 跳過=0)
+2026-03-04 18:04:28,974 - INFO - ============================================================
+2026-03-04 18:04:28,974 - INFO - 🎉 本輪履歷向量化作業完成
+2026-03-04 18:04:28,975 - INFO - ✅ 成功轉出並回寫: 0 筆（已寫入 Qdrant 並更新 resume.vector_id / resume.is_embedded）
+2026-03-04 18:04:28,975 - INFO - ❌ 失敗: 0 筆
+2026-03-04 18:04:28,975 - INFO - ⚠️  跳過（無有效文本）: 0 筆
+2026-03-04 18:04:28,975 - INFO - ============================================================
+2026-03-04 18:10:31,984 - INFO - HTTP Request: GET https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333 "HTTP/1.1 200 OK"
+2026-03-04 18:10:31,988 - INFO - ============================================================
+2026-03-04 18:10:31,989 - INFO - Career Pilot 履歷向量化作業
+2026-03-04 18:10:31,989 - INFO - 執行時間: 2026-03-04 18:10:31
+2026-03-04 18:10:31,989 - INFO - 模型: text-embedding-3-large，維度: 1536
+2026-03-04 18:10:31,989 - INFO - 本輪處理筆數上限: 20
+2026-03-04 18:10:31,989 - INFO - ============================================================
+2026-03-04 18:10:33,005 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?select=resume_id&is_embedded=eq.False "HTTP/2 200 OK"
+2026-03-04 18:10:33,006 - INFO - 📊 待處理履歷總數: 13，本輪將處理: 13 筆
+2026-03-04 18:10:39,974 - INFO - HTTP Request: GET https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?select=resume_id%2Cuser_id%2Cresume_type%2Cstructured_data%2Cnormalized_data&is_embedded=eq.False&offset=0&limit=13 "HTTP/2 200 OK"
+2026-03-04 18:10:42,638 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:42,863 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:45,786 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:46,002 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:46,222 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:46,458 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:46,823 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:47,039 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:47,324 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:47,547 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:47,765 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:48,004 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:48,277 - INFO - HTTP Request: POST https://api.openai.com/v1/embeddings "HTTP/1.1 200 OK"
+2026-03-04 18:10:49,917 - INFO - HTTP Request: PUT https://0c6a8a5c-e773-4580-b02f-bd914b109ca3.us-east4-0.gcp.cloud.qdrant.io:6333/collections/resume_vectors/points?wait=true "HTTP/1.1 200 OK"
+2026-03-04 18:10:49,918 - INFO - ✅ Qdrant 寫入 13 筆履歷向量
+2026-03-04 18:10:50,302 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.14 "HTTP/2 200 OK"
+2026-03-04 18:10:50,635 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.15 "HTTP/2 200 OK"
+2026-03-04 18:10:50,966 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.17 "HTTP/2 200 OK"
+2026-03-04 18:10:51,323 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.16 "HTTP/2 200 OK"
+2026-03-04 18:10:51,659 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.18 "HTTP/2 200 OK"
+2026-03-04 18:10:51,992 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.19 "HTTP/2 200 OK"
+2026-03-04 18:10:52,512 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.27 "HTTP/2 200 OK"
+2026-03-04 18:10:52,841 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.11 "HTTP/2 200 OK"
+2026-03-04 18:10:53,166 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.20 "HTTP/2 200 OK"
+2026-03-04 18:10:53,499 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.26 "HTTP/2 200 OK"
+2026-03-04 18:10:53,832 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.12 "HTTP/2 200 OK"
+2026-03-04 18:10:54,160 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.13 "HTTP/2 200 OK"
+2026-03-04 18:10:54,490 - INFO - HTTP Request: PATCH https://nyslsqlgsavvfwiducdu.supabase.co/rest/v1/resume?resume_id=eq.25 "HTTP/2 200 OK"
+2026-03-04 18:10:54,491 - INFO - 📈 進度: 成功=13, 失敗=0, 跳過=0 (本批 成功=13, 失敗=0, 跳過=0)
+2026-03-04 18:10:54,491 - INFO - ============================================================
+2026-03-04 18:10:54,491 - INFO - 🎉 本輪履歷向量化作業完成
+2026-03-04 18:10:54,492 - INFO - ✅ 成功轉出並回寫: 13 筆（已寫入 Qdrant 並更新 resume.vector_id / resume.is_embedded）
+2026-03-04 18:10:54,492 - INFO - ❌ 失敗: 0 筆
+2026-03-04 18:10:54,492 - INFO - ⚠️  跳過（無有效文本）: 0 筆
+2026-03-04 18:10:54,492 - INFO - ============================================================

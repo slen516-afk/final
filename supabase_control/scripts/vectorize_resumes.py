@@ -46,8 +46,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# 本腳本預設只處理前 N 筆（可透過 RESUME_LIMIT 環境變數覆寫）
-RESUME_LIMIT = int(os.getenv("RESUME_LIMIT", "10"))
+# 本腳本預設只處理前 N 筆（可透過 RESUME_LIMIT 環境變數覆寫），但一輪上限固定為 20 筆
+MAX_RESUME_PER_RUN = 20
+RESUME_LIMIT = int(os.getenv("RESUME_LIMIT", str(MAX_RESUME_PER_RUN)))
 # 後端觸發「指定履歷」向量化時可傳 RESUME_IDS=1,2,3，只處理這些 resume_id（仍限 is_embedded=False）
 _RESUME_IDS_ENV = os.getenv("RESUME_IDS", "").strip()
 RESUME_IDS = [int(x.strip()) for x in _RESUME_IDS_ENV.split(",") if x.strip().isdigit()] if _RESUME_IDS_ENV else None
@@ -170,7 +171,7 @@ def vectorize_resumes_batch(limit: int, offset: int = 0, resume_ids: Optional[Li
         q = (
             supabase.table("resume")
             .select(
-                "resume_id, user_id, template_id, resume_type, structured_data, normalized_data"
+                "resume_id, user_id, resume_type, structured_data, normalized_data"
             )
             .eq("is_embedded", False)
         )
@@ -182,7 +183,8 @@ def vectorize_resumes_batch(limit: int, offset: int = 0, resume_ids: Optional[Li
         rows = response.data or []
     except Exception as e:
         logger.error("❌ Supabase 查詢履歷失敗 (offset=%s, resume_ids=%s): %s", offset, resume_ids, e)
-        return (0, 0, 0)
+        # 將錯誤向上拋出，讓主流程記錄為「本輪失敗」，而不是顯示 0 筆完成
+        raise
 
     if not rows:
         return (0, 0, 0)
@@ -286,7 +288,8 @@ def main():
         logger.info("✅ 所有履歷已完成向量化，無待處理筆數")
         return
 
-    run_limit = min(RESUME_LIMIT, total_pending)
+    # 一輪實際處理筆數上限：不超過環境指定 RESUME_LIMIT、也不超過 MAX_RESUME_PER_RUN
+    run_limit = min(RESUME_LIMIT, MAX_RESUME_PER_RUN, total_pending)
     logger.info("📊 待處理履歷總數: %s，本輪將處理: %s 筆", total_pending, run_limit)
 
     confirm = input("\n是否繼續執行？(y/n): ")
