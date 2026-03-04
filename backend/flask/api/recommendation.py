@@ -1,6 +1,6 @@
 # api/recommendation.py
+from service.llm_service.src.features.course.course_matching import CourseRecommendationService
 from flask import Blueprint, request, jsonify
-from service.llm_service.src.features.course.tools import CourseRecommendationTool
 from crewai import Agent, Task, Crew
 import json
 import re
@@ -109,37 +109,32 @@ def suggest_projects():
 # =====================================================================
 @rec_bp.route('/learning/recommendations', methods=['POST'])
 def recommend_learning():
+    # 1. 取得前端傳來的資料
     data = request.get_json() or {}
     user_id = data.get("user_id", 1)
     
-    print(f"🚀 開始呼叫 CrewAI，幫使用者 {user_id} 尋找課程...")
-    course_tool = CourseRecommendationTool()
-    learning_advisor = Agent(
-        role='資深技術培訓顧問',
-        goal='根據使用者的技能缺口與程度，推薦最適合的線上課程',
-        backstory='你是一位精通各類線上課程平台的專家。',
-        tools=[course_tool],
-        verbose=True,
-        allow_delegation=False
-    )
-    recommend_task = Task(
-        description=f"請使用工具，查詢 user_id 為 '{user_id}' 的推薦課程。",
-        expected_output="必須嚴格輸出合法的 JSON 陣列 (Array)。",
-        agent=learning_advisor
-    )
-    crew = Crew(agents=[learning_advisor], tasks=[recommend_task], verbose=True)
-    raw_result = crew.kickoff()
-
+    print(f"🚀 開始使用精準演算法，幫使用者 {user_id} 尋找課程...")
+    
     try:
-        clean_result = raw_result.raw.replace("```json", "").replace("```", "").strip()
-        parsed_resources = json.loads(clean_result)
+        # 2. 實例化組員寫的推薦服務 (請確認這裡的 Class 名稱正確)
+        course_service = CourseRecommendationService()
+
+        recommended_courses = course_service.get_recommendations(user_id=str(user_id), top_k=5)
+        
+        print(f"✅ 成功取得 {len(recommended_courses)} 堂推薦課程！")
+
+        # 4. 依照原本的格式回傳，讓前端無縫接軌！
         return jsonify({
             "status": "success",
-            "resources": parsed_resources
+            "resources": recommended_courses
         }), 200
-    except json.JSONDecodeError as e:
-        print(f"❌ AI 格式錯亂: {e}")
-        return jsonify({"status": "error", "message": "AI 未回傳正確格式"}), 500
+        
+    except Exception as e:
+        print(f"❌ 課程推薦發生致命錯誤: {e}")
+        return jsonify({
+            "status": "error", 
+            "message": f"伺服器處理失敗: {str(e)}"
+        }), 500
 
 
 # =====================================================================
