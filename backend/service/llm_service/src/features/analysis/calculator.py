@@ -54,10 +54,24 @@ class CareerAnalyzer:
         normalized_category = [l.lower() for l in category_langs]
         for item in user_langs:
             lang_name = item['name'].lower().strip()
+            # --- 舊版邏輯 (保留以供切換) ---
+            # try:
+            #     lang_score = float(item['score'])
+            # except:
+            #     lang_score = 1.0
+            # --- 舊版邏輯結束 (保留以供切換) ---
+
+            # --- 新版邏輯 ---
             try:
-                lang_score = float(item['score'])
-            except:
-                lang_score = 1.0
+                score_val = item.get('score')
+                if score_val in [None, "", "null"]:
+                    lang_score = 0.0
+                else:
+                    lang_score = float(score_val)
+            except (TypeError, ValueError):
+                lang_score = 0.0
+            # --- 新版邏輯結束 ---
+            
             # 模糊比對: 例如使用者填 "Python 3.9" 也能對應到 "python"
             # 不符合實際狀況，可以修改
             if any(c_lang in lang_name for c_lang in normalized_category):

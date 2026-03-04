@@ -75,6 +75,13 @@ def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional
 
         # 初始化 Task 零件
         transition_task = create_discovery_mentor_task(mentor, tools=mentor_tools)
+
+        # [NEW] 注入問卷與使用者 ID 參數
+        transition_task.description = transition_task.description.format(
+            user_id=inputs.get("user_id", "Unknown"),
+            survey_json=inputs.get("survey_json", "{}")
+        )
+        
         final_entry_task = create_entry_level_final_task(advisor)
 
         return {
