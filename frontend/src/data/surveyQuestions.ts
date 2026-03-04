@@ -167,7 +167,7 @@ export const surveyModules: SurveyModule[] = [
         id: 'Q8',
         type: 'text',
         required: false,
-        question: '[領域專精] 除了 coding，您在哪個領域有額外 Domain Knowledge？(選填)',
+        question: '[領域專精] 除了 coding，您在哪個領域有額外 Domain Knowledge？',
         placeholder: '例如：FinTech, E-commerce, Healthcare...',
       },
     ],
