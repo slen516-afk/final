@@ -28,8 +28,9 @@ def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional
     
     # === 設定 1: 有經驗者職涯分析 ===
     if task_type == TaskType.CAREER_ANALYSIS_EXPERIENCED:
-        # 初始化工具
-        tech_tools = [FetchResumeFromDBTool(), CalculateTechVectorsTool(), CalculateMatchScoreTool()]
+        # 初始化工具，預先將 survey_json 注入給 CalculateTechVectorsTool
+        calc_tool = CalculateTechVectorsTool(survey_json_str=inputs.get('survey_json', '{}'))
+        tech_tools = [FetchResumeFromDBTool(), calc_tool, CalculateMatchScoreTool()]
 
         # 初始化 Agent 零件
         tech_lead = create_tech_lead_agent(tools=tech_tools)
@@ -74,6 +75,13 @@ def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional
 
         # 初始化 Task 零件
         transition_task = create_discovery_mentor_task(mentor, tools=mentor_tools)
+
+        # [NEW] 注入問卷與使用者 ID 參數
+        transition_task.description = transition_task.description.format(
+            user_id=inputs.get("user_id", "Unknown"),
+            survey_json=inputs.get("survey_json", "{}")
+        )
+        
         final_entry_task = create_entry_level_final_task(advisor)
 
         return {

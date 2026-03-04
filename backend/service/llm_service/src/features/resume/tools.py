@@ -37,7 +37,7 @@ class DatabaseTools:
         supabase = get_supabase_client()
         try:
             response = supabase.table("career_survey") \
-                .select("career_preference") \
+                .select("questionnaire_response") \
                 .eq("user_id", user_id) \
                 .order("completed_at", desc=True) \
                 .limit(1) \
@@ -47,9 +47,15 @@ class DatabaseTools:
             if not response.data:
                 return {"error": "找不到該用戶問卷資料"}
 
-            # 提取 career_preference 中的 target_role
-            pref = response.data.get("career_preference", {})
-            return pref.get("target_role", "未指定目標職位")
+            # 安全處理 questionnaire_response
+            # 確保提取時不會因為欄位為 None 導致報錯
+            resp = response.data.get("questionnaire_response") or {}
+
+            # 確保提取 module_c 時不會報錯
+            module_c = resp.get("module_c") or {}
+
+            # 提取 q17_target_role
+            return module_c.get("q17_target_role", "未指定目標職位")
 
         except Exception as e:
             return {"error": f"資料庫抓取失敗: {str(e)}"}
