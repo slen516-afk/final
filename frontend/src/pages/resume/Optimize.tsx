@@ -14,7 +14,6 @@ import LoginRequired from '@/components/gatekeeper/LoginRequired';
 import AlertModal from '@/components/modals/AlertModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { templateThumbnailComponents } from '@/components/resume/TemplateThumbnails';
-import html2pdf from 'html2pdf.js';
 import RightDrawer from '@/components/panels/RightDrawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { OriginalResumeData, ResumeData, Suggestion } from '@/types/resume';
@@ -222,40 +221,15 @@ const Optimize = () => {
     setIsDownloading(true);
 
     try {
-      const element = resumeRef.current;
+      const { exportResumeToPdf } = await import('@/utils/pdfExport');
       const themes = TEMPLATE_THEMES[selectedTemplate] || TEMPLATE_THEMES.corporate;
       const theme = themes[selectedThemeIndex] || themes[0];
+      const filename = `優化履歷_${selectedTemplate}_${theme.name}.pdf`;
 
-      const sections = element.querySelectorAll('[data-pdf-section]');
-      sections.forEach((section) => {
-        (section as HTMLElement).style.pageBreakInside = 'avoid';
-        (section as HTMLElement).style.breakInside = 'avoid';
+      await exportResumeToPdf({
+        element: resumeRef.current,
+        filename,
       });
-
-      const opt = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
-        filename: `優化履歷_${selectedTemplate}_${theme.name}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          logging: false,
-        },
-        jsPDF: {
-          unit: 'mm' as const,
-          format: 'a4' as const,
-          orientation: 'portrait' as const,
-        },
-        pagebreak: {
-          mode: ['avoid-all', 'css', 'legacy'],
-          before: '.page-break-before',
-          after: '.page-break-after',
-          avoid: ['[data-pdf-section]', '.avoid-break'],
-        },
-      };
-
-      await html2pdf().set(opt).from(element).save();
     } catch (error) {
       console.error('PDF generation failed:', error);
     } finally {
