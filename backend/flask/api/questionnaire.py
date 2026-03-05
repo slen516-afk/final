@@ -67,7 +67,13 @@ def save_personality():
         if not data:
             return jsonify({"error": "Request body is required"}), 400
 
-        required_fields = ["trait_raw_responses", "trait_normalized_scores", "primary_archetype"]
+        required_fields = [
+            "trait_calculation_debug",
+            "trait_normalized_scores",
+            "primary_archetype",
+            "secondary_archetypes",
+            "trait_created_at",
+        ]
         for field in required_fields:
             if field not in data:
                 return jsonify({"error": f"Missing required field: {field}"}), 400
