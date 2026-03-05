@@ -8,9 +8,9 @@ resume_bp = Blueprint('resume', __name__)
 
 @resume_bp.route('/form', methods=['POST'])
 @login_required
-def create_resume_form():
+def create_resume():
     """
-    C-02 建立履歷 (表單填寫)
+    C-02 建立原始履歷
     DB: RESUME — 存原始履歷
     """
     try:
@@ -23,7 +23,6 @@ def create_resume_form():
         if 'structured_data' not in data:
             return jsonify({'error': 'Missing structured_data'}), 400
 
-        template_id = data.get('template_id', 1)
         resume_type = data.get('resume_type')
         if resume_type not in ('uploaded', 'generic'):
             return jsonify({'error': "resume_type must be 'uploaded' or 'generic'"}), 400
@@ -33,10 +32,8 @@ def create_resume_form():
         insert_payload = {
             "user_id": int(user_id),
             "resume_name": data['resume_name'],
-            "template_id": int(template_id),
             "resume_type": resume_type,
             "structured_data": data['structured_data'],
-            "normalized_data": data.get('normalized_data', {}),
             "vector_id": None,
             "is_embedded": False,
             "is_primary": True,
@@ -92,9 +89,9 @@ def get_resume(id):
 
 @resume_bp.route('/<int:id>', methods=['PUT'])
 @login_required
-def update_resume(id):
+def create_opt_resume(id):
     """
-    C-05 用戶更新/確認履歷內容 → 寫入 resume_optimization
+    C-05 建立優化履歷
     每次 PUT 自動產生新版本 (optimization_version 遞增)
     DB: RESUME_OPTIMIZATION
     """
@@ -144,23 +141,15 @@ def update_resume(id):
             "user_id": int(user_id),
             "resume_name": opt_resume_name,
             "optimization_version": next_ver,
-            "professional_summary": sd.get('professional_summary')
-                or data.get('professional_summary'),
-            "professional_experience": sd.get('professional_experience')
-                or sd.get('work_experience')
-                or data.get('professional_experience'),
-            "core_skills": sd.get('core_skills')
-                or sd.get('skills')
-                or data.get('core_skills'),
-            "projects": sd.get('projects')
-                or data.get('projects'),
-            "education": sd.get('education')
-                or data.get('education'),
-            "autobiography": sd.get('autobiography')
-                or data.get('autobiography'),
+            "professional_summary": data.get('professional_summary'), # 假設保留給自備
+            "professional_experience": sd.get('work_experience') or data.get('professional_experience'),
+            "core_skills": sd.get('skills') or data.get('core_skills'),
+            "projects": sd.get('certificate_projects') or data.get('projects'),
+            "education": sd.get('education') or data.get('education'),
+            "autobiography": sd.get('autobiography') or data.get('autobiography'),
         }
 
-        # template_color: JSON { template_id, style_color } 存入 DB 同名欄位
+        # template_color: JSON { template_id, style_color } 存入 DB
         style = data.get('style_settings', {})
         if isinstance(style, dict):
             template_color = {}
@@ -170,9 +159,6 @@ def update_resume(id):
                 template_color['style_color'] = style['style_color']
             if template_color:
                 insert_payload['template_color'] = template_color
-
-        if data.get('version_id'):
-            insert_payload["version_id"] = int(data['version_id'])
 
         insert_payload = {k: v for k, v in insert_payload.items() if v is not None}
 

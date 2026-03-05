@@ -12,8 +12,7 @@ questionnaire_bp = Blueprint("questionnaire", __name__)
 @login_required
 def save_questionnaire_response():
     """
-    前端傳入完整問卷 JSON，新增一筆至 career_survey.questionnaire_response。
-    同一個 user 可以有多筆問卷紀錄。
+    前端傳入職能問卷 JSON，新增一筆至 career_survey.questionnaire_response。
     """
     try:
         user_id = g.db_user_id
@@ -58,7 +57,6 @@ def save_questionnaire_response():
 def save_personality():
     """
     前端傳入人格特質 JSON，新增一筆至 career_survey.personality。
-    同一個 user 可以有多筆紀錄。
     """
     try:
         user_id = g.db_user_id
