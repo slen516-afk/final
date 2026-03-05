@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
         // 容器內網址
         // target: "http://backend:8000",
         // 在本機運行 npm run dev，用 127.0.0.1 或 localhost
-        target: "http://127.0.0.1:8000",
+        target: 'http://backend:8000',
         changeOrigin: true,
       },
     },
