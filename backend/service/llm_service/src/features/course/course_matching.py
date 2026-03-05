@@ -151,6 +151,9 @@ class CourseRecommendationService:
             distance = abs(level_val - ability_position)
             distance_score = 1 / (1 + distance ** 2)
             policy_weight = USER_TO_COURSE_DISTRIBUTION[user_level].get(level_val, 0)
+            # --- 重點：過濾掉權重為 0 的課程 ---
+            if policy_weight <= 0:
+                continue
             priority_score = distance_score * policy_weight
 
             # 2. Quality Score (基於評價與評論數)
