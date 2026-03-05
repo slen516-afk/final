@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Download, Trash2, Eye } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,13 +6,31 @@ import { Link } from 'react-router-dom';
 import RightDrawer from '@/components/panels/RightDrawer';
 import { motion } from 'framer-motion';
 import LoginRequired from '@/components/gatekeeper/LoginRequired';
-import { useResumes, type ResumeItem } from '@/contexts/ResumeContext';
+
+// 👉 1. 記得引入我們剛寫好的 getResumes API，並確認路徑正確！
+// 假設你把它放在 @/types/resume 裡面
+import { getResumes, type ResumeItem } from '@/mocks/resumes';
 
 const MyResumes = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState<ResumeItem | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  const { resumes } = useResumes();
+
+  // 👉 2. 移除原本的 useResumes()，改用 useState 自己管資料
+  const [resumes, setResumes] = useState<ResumeItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 👉 3. 加入 useEffect，一進到這頁面就去 Supabase 撈資料
+  useEffect(() => {
+    const fetchCloudData = async () => {
+      setIsLoading(true);
+      const data = await getResumes(); // 呼叫你寫好的雙資料表合併函式
+      setResumes(data);
+      setIsLoading(false);
+    };
+
+    fetchCloudData();
+  }, []);
 
   const handlePreview = (resume: ResumeItem) => {
     setSelectedResume(resume);
@@ -54,41 +72,61 @@ const MyResumes = () => {
             </Link>
           </div>
 
-          <div className="space-y-3 md:space-y-4">
-            {resumes.map((resume, index) => (
-              <motion.div
-                key={resume.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="hover:shadow-medium transition-shadow">
-                  <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 md:py-4 gap-3">
-                    <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
-                      <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+          {/* 👉 4. 加上載入中的提示，提升 UX */}
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>正在從雲端載入履歷中...</p>
+            </div>
+          ) : (
+            <div className="space-y-3 md:space-y-4">
+              {resumes.map((resume, index) => (
+                <motion.div
+                  key={resume.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="hover:shadow-medium transition-shadow">
+                    <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 md:py-4 gap-3">
+                      <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
+                        <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm md:text-base truncate">
+                            {resume.name}
+                            {/* 👉 可以在這裡偷偷顯示一下 sourceType 標籤，確認有沒有接對 */}
+                            <span className="ml-2 text-xs text-primary/60">
+                              ({resume.sourceType === 'OPTIMIZATION' ? '已優化' : '一般'})
+                            </span>
+                          </p>
+                          <p className="text-xs md:text-sm text-muted-foreground">更新於 {resume.updatedAt}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm md:text-base truncate">{resume.name}</p>
-                        <p className="text-xs md:text-sm text-muted-foreground">更新於 {resume.updatedAt}</p>
+                      <div className="flex gap-1 md:gap-2 w-full sm:w-auto justify-end">
+                        <Button variant="ghost" size="icon" onClick={() => handlePreview(resume)} className="h-8 w-8 md:h-9 md:w-9">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={handleDownload} className="h-8 w-8 md:h-9 md:w-9">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 md:h-9 md:w-9">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </div>
-                    <div className="flex gap-1 md:gap-2 w-full sm:w-auto justify-end">
-                      <Button variant="ghost" size="icon" onClick={() => handlePreview(resume)} className="h-8 w-8 md:h-9 md:w-9">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive h-8 w-8 md:h-9 md:w-9">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+
+              {/* 如果撈回來發現沒有履歷的空狀態 */}
+              {resumes.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground bg-muted/30 rounded-lg">
+                  <p>您還沒有上傳任何履歷喔！</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <RightDrawer
