@@ -82,22 +82,28 @@ const MemberCenter = () => {
               <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
                 {/* Avatar with upload hint */}
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                <button
-                  type="button"
-                  className="group relative shrink-0"
-                  onClick={handleAvatarClick}
-                  aria-label="上傳大頭貼"
-                >
-                  <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-border">
-                    <AvatarImage src={avatarUrl || mockProfile.avatarUrl || logoCat} alt={name} />
-                    <AvatarFallback className="bg-secondary text-muted-foreground text-2xl md:text-3xl font-semibold">
-                      {name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="h-5 w-5 text-card" />
-                  </span>
-                </button>
+                <div className="flex flex-col items-center gap-1.5">
+                  <button
+                    type="button"
+                    className="group relative shrink-0"
+                    onClick={handleAvatarClick}
+                    aria-label="上傳大頭貼"
+                  >
+                    <Avatar className="h-20 w-20 md:h-24 md:w-24 border-2 border-border">
+                      <AvatarImage src={avatarUrl || mockProfile.avatarUrl || logoCat} alt={name} />
+                      <AvatarFallback className="bg-secondary text-muted-foreground text-2xl md:text-3xl font-semibold">
+                        {name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="h-5 w-5 text-card" />
+                    </span>
+                  </button>
+                  <p className="text-xs text-muted-foreground/70 flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-primary" />
+                    建議上傳，此頭像將用於優化履歷
+                  </p>
+                </div>
 
                 {/* Primary info */}
                 <div className="flex-1 text-center sm:text-left">
