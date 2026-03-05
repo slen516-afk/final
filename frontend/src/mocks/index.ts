@@ -1,4 +1,4 @@
-export { MOCK_RESUMES, mockOriginalResumeData, mockResumeData, mockSuggestions } from './resumes';
+export { MOCK_RESUMES, mockOriginalResumeData, mockResumeData, mockSuggestions, mockDiagnosticResult } from './resumes';
 export { generateMockJobs, getMockJobDetail, mockCoverLetter, JOB_CATEGORIES, ICON_NAME_MAP } from './jobs';
 export { mockUserId, mockProfile } from './member';
 export { mockAnalysisResult, learningResources, sideProjects, analysisHistory } from './analysis';

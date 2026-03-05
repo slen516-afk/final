@@ -1,8 +1,9 @@
-import { BarChart3, RefreshCw, Zap, Battery, Target } from 'lucide-react';
+import { BarChart3, RefreshCw, Zap, Battery, Target, Upload, ClipboardList } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useAppState } from '@/contexts/AppContext';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
 } from 'recharts';
@@ -26,6 +27,7 @@ const DIMENSION_FULL_LABELS: Record<string, string> = {
 
 const PersonalityTestResult = ({ result, onReset }: Props) => {
   const navigate = useNavigate();
+  const { isPersonalityQuizDone, isResumeUploaded } = useAppState();
   const { scaledScores, archetypes } = result;
   const primaryArchetype = archetypes[0];
   const secondaryArchetypes = archetypes.slice(1);
@@ -215,14 +217,34 @@ const PersonalityTestResult = ({ result, onReset }: Props) => {
 
       {/* Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Button
-          onClick={() => navigate('/analysis/skills')}
-          className="h-12 text-white transition-colors duration-500"
-          style={{ backgroundColor: accentColor }}
-        >
-          <BarChart3 className="h-4 w-4 mr-2" />
-          查看職能圖譜
-        </Button>
+        {!isPersonalityQuizDone ? (
+          <Button
+            onClick={() => navigate('/member/survey/personality')}
+            className="h-12 text-white transition-colors duration-500"
+            style={{ backgroundColor: accentColor }}
+          >
+            <ClipboardList className="h-4 w-4 mr-2" />
+            填寫職涯問卷
+          </Button>
+        ) : !isResumeUploaded ? (
+          <Button
+            onClick={() => navigate('/member/upload-resume')}
+            className="h-12 text-white transition-colors duration-500"
+            style={{ backgroundColor: accentColor }}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            前往上傳履歷
+          </Button>
+        ) : (
+          <Button
+            onClick={() => navigate('/analysis/skills')}
+            className="h-12 text-white transition-colors duration-500"
+            style={{ backgroundColor: accentColor }}
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            查看職能圖譜
+          </Button>
+        )}
         <Button
           variant="outline"
           onClick={onReset}

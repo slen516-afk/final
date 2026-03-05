@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Download, Edit3, Save, RotateCcw, Palette, ChevronRight, Briefcase, GraduationCap, Mail, Phone, Globe, Award, Languages, User, Star, Sparkles, Check, ChevronLeft, BookOpen, ArrowLeft, Loader2, Linkedin, FolderOpen, Code, MapPin, ShieldCheck, ExternalLink, MoreHorizontal } from 'lucide-react';
+import { FileText, Download, Edit3, Save, RotateCcw, Palette, ChevronRight, Briefcase, GraduationCap, Mail, Phone, Globe, Award, Languages, User, Star, Sparkles, Check, ChevronLeft, BookOpen, ArrowLeft, Loader2, Linkedin, FolderOpen, Code, MapPin, ShieldCheck, ExternalLink, MoreHorizontal, CheckCircle, AlertTriangle, Target, ArrowRight, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,11 +14,12 @@ import LoginRequired from '@/components/gatekeeper/LoginRequired';
 import AlertModal from '@/components/modals/AlertModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { templateThumbnailComponents } from '@/components/resume/TemplateThumbnails';
-import html2pdf from 'html2pdf.js';
 import RightDrawer from '@/components/panels/RightDrawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { OriginalResumeData, ResumeData, Suggestion } from '@/types/resume';
-import { mockOriginalResumeData, mockResumeData, mockSuggestions } from '@/mocks/resumes';
+import type { OriginalResumeData, ResumeData, Suggestion, ResumeDiagnosticResult } from '@/types/resume';
+import { mockOriginalResumeData, mockResumeData, mockSuggestions, mockDiagnosticResult } from '@/mocks/resumes';
+import { Badge } from '@/components/ui/badge';
+import logoCat from '@/assets/logocat.png';
 
 type Phase = 'initial' | 'analyzing' | 'suggestions' | 'templates' | 'generating' | 'result';
 
@@ -114,10 +115,13 @@ const OPTIMIZE_RESULT_KEY = 'resume-optimize-state';
 interface PersistedOptimizeState {
   phase: Phase;
   suggestions: Suggestion[];
+  diagnosticResult: ResumeDiagnosticResult | null;
   selectedTemplate: string;
   selectedThemeIndex: number;
   resumeData: ResumeData;
   originalData: OriginalResumeData;
+  isEditSaved: boolean;
+  isTemplateSaved: boolean;
 }
 
 const loadOptimizeState = (): PersistedOptimizeState | null => {
@@ -138,7 +142,7 @@ const clearOptimizeState = () => {
 
 const Optimize = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isResumeUploaded, isPersonalityQuizDone } = useAppState();
+  const { isLoggedIn, isResumeUploaded, isPersonalityQuizDone, avatarUrl } = useAppState();
   const { resumes } = useResumes();
 
   // Auto-select the latest resume
@@ -157,6 +161,7 @@ const Optimize = () => {
   const [resumeData, setResumeData] = useState<ResumeData>(canRestore ? persisted!.resumeData : mockResumeData);
   const [editedData, setEditedData] = useState<ResumeData>(canRestore ? persisted!.resumeData : mockResumeData);
   const [suggestions, setSuggestions] = useState<Suggestion[]>(canRestore ? persisted!.suggestions : []);
+  const [diagnosticResult, setDiagnosticResult] = useState<ResumeDiagnosticResult | null>(canRestore ? persisted!.diagnosticResult : null);
   const [selectedTemplate, setSelectedTemplate] = useState<string>(canRestore ? persisted!.selectedTemplate : '');
   const [selectedThemeIndex, setSelectedThemeIndex] = useState<number>(canRestore ? persisted!.selectedThemeIndex : 0);
   const [isEditing, setIsEditing] = useState(false);
@@ -167,8 +172,8 @@ const Optimize = () => {
   const resumeRef = useRef<HTMLDivElement>(null);
   const [showSuggestionsDrawer, setShowSuggestionsDrawer] = useState(false);
   const [editPhase, setEditPhase] = useState<'view' | 'edit'>('view');
-  const [isEditSaved, setIsEditSaved] = useState(false);
-  const [isTemplateSaved, setIsTemplateSaved] = useState(false);
+  const [isEditSaved, setIsEditSaved] = useState(canRestore ? !!persisted?.isEditSaved : false);
+  const [isTemplateSaved, setIsTemplateSaved] = useState(canRestore ? !!persisted?.isTemplateSaved : false);
   const [showTemplateSaveConfirm, setShowTemplateSaveConfirm] = useState(false);
 
   // Check access conditions
@@ -194,8 +199,19 @@ const Optimize = () => {
     // TODO: Replace with API call
     await new Promise(resolve => setTimeout(resolve, 3000));
     setSuggestions(mockSuggestions);
+    setDiagnosticResult(mockDiagnosticResult);
     setPhase('suggestions');
-    saveOptimizeState({ phase: 'suggestions', suggestions: mockSuggestions, selectedTemplate: '', selectedThemeIndex: 0, resumeData, originalData });
+    saveOptimizeState({
+      phase: 'suggestions',
+      suggestions: mockSuggestions,
+      diagnosticResult: mockDiagnosticResult,
+      selectedTemplate: '',
+      selectedThemeIndex: 0,
+      resumeData,
+      originalData,
+      isEditSaved: false,
+      isTemplateSaved: false
+    });
   };
 
   const handleSelectTemplate = async (templateId: string) => {
@@ -204,7 +220,8 @@ const Optimize = () => {
     setPhase('generating');
     await new Promise(resolve => setTimeout(resolve, 2500));
     setPhase('result');
-    saveOptimizeState({ phase: 'result', suggestions, selectedTemplate: templateId, selectedThemeIndex: 0, resumeData, originalData });
+    setPhase('result');
+    saveOptimizeState({ phase: 'result', suggestions, diagnosticResult, selectedTemplate: templateId, selectedThemeIndex: 0, resumeData, originalData, isEditSaved, isTemplateSaved: false });
   };
 
   const handleDownloadSuggestions = async () => {
@@ -221,40 +238,15 @@ const Optimize = () => {
     setIsDownloading(true);
 
     try {
-      const element = resumeRef.current;
+      const { exportResumeToPdf } = await import('@/utils/pdfExport');
       const themes = TEMPLATE_THEMES[selectedTemplate] || TEMPLATE_THEMES.corporate;
       const theme = themes[selectedThemeIndex] || themes[0];
+      const filename = `優化履歷_${selectedTemplate}_${theme.name}.pdf`;
 
-      const sections = element.querySelectorAll('[data-pdf-section]');
-      sections.forEach((section) => {
-        (section as HTMLElement).style.pageBreakInside = 'avoid';
-        (section as HTMLElement).style.breakInside = 'avoid';
+      await exportResumeToPdf({
+        element: resumeRef.current,
+        filename,
       });
-
-      const opt = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
-        filename: `優化履歷_${selectedTemplate}_${theme.name}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          logging: false,
-        },
-        jsPDF: {
-          unit: 'mm' as const,
-          format: 'a4' as const,
-          orientation: 'portrait' as const,
-        },
-        pagebreak: {
-          mode: ['avoid-all', 'css', 'legacy'],
-          before: '.page-break-before',
-          after: '.page-break-after',
-          avoid: ['[data-pdf-section]', '.avoid-break'],
-        },
-      };
-
-      await html2pdf().set(opt).from(element).save();
     } catch (error) {
       console.error('PDF generation failed:', error);
     } finally {
@@ -281,6 +273,7 @@ const Optimize = () => {
     setEditPhase('view');
     setIsEditSaved(true);
     setShowSaveConfirm(false);
+    saveOptimizeState({ phase, suggestions, diagnosticResult, selectedTemplate, selectedThemeIndex, resumeData, originalData: editedOriginalData, isEditSaved: true, isTemplateSaved });
   };
 
   const handleEnterEditMode = () => {
@@ -318,6 +311,7 @@ const Optimize = () => {
     setIsEditSaved(false);
     setIsTemplateSaved(false);
     setShowSuggestionsDrawer(false);
+    setDiagnosticResult(null);
     clearOptimizeState();
   };
 
@@ -431,6 +425,8 @@ const Optimize = () => {
                   {editPhase === 'view' ? (
                     <SuggestionsPhase
                       suggestions={suggestions}
+                      diagnosticResult={diagnosticResult}
+                      originalData={originalData}
                       onDownload={handleDownloadSuggestions}
                       onGenerate={() => setPhase('templates')}
                       onEdit={handleEnterEditMode}
@@ -441,6 +437,7 @@ const Optimize = () => {
                     <ResumeEditMode
                       originalData={editedOriginalData}
                       suggestions={suggestions}
+                      diagnosticResult={diagnosticResult}
                       onChange={setEditedOriginalData}
                       onSave={() => setShowSaveConfirm(true)}
                       onCancel={handleExitEditMode}
@@ -492,6 +489,7 @@ const Optimize = () => {
                   onThemeChange={setSelectedThemeIndex}
                   isTemplateSaved={isTemplateSaved}
                   onSaveTemplate={() => setShowTemplateSaveConfirm(true)}
+                  avatarUrl={avatarUrl}
                 />
               )}
             </AnimatePresence>
@@ -634,6 +632,8 @@ const ResumeField = ({
 // Suggestions Phase Component
 const SuggestionsPhase = ({
   suggestions,
+  diagnosticResult,
+  originalData,
   onDownload,
   onGenerate,
   onEdit,
@@ -641,92 +641,254 @@ const SuggestionsPhase = ({
   isEditSaved,
 }: {
   suggestions: Suggestion[];
+  diagnosticResult: ResumeDiagnosticResult | null;
+  originalData: OriginalResumeData;
   onDownload: () => void;
   onGenerate: () => void;
   onEdit: () => void;
   onBack: () => void;
   isEditSaved: boolean;
-}) => (
-  <motion.div
-    key="suggestions"
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -20 }}
-    className="space-y-6"
-  >
-    <Button variant="ghost" className="gap-2 -ml-2" onClick={onBack}>
-      <ChevronLeft className="h-4 w-4" />
-      返回上一步
-    </Button>
+}) => {
+  const severityColors: Record<string, string> = {
+    '嚴重扣分': 'bg-red-100 text-red-800 border-red-200',
+    '明顯扣分': 'bg-amber-100 text-amber-800 border-amber-200',
+    '中度扣分': 'bg-orange-100 text-orange-800 border-orange-200',
+    '輕微扣分': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  };
 
-    {isEditSaved && (
-      <div className="flex items-center gap-3 p-4 rounded-lg border border-green-500/30 bg-green-500/5">
-        <Check className="h-5 w-5 text-green-600 shrink-0" />
-        <p className="text-sm text-green-700 dark:text-green-400">履歷變更已儲存</p>
-      </div>
-    )}
-
-    <Card>
-      <CardHeader className="flex flex-row items-start justify-between">
-        <div>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            履歷優化建議
-          </CardTitle>
-          <CardDescription>已分析您的履歷，以下是專業優化建議</CardDescription>
-        </div>
+  return (
+    <motion.div
+      key="suggestions"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" className="gap-2 -ml-2" onClick={onBack}>
+          <ChevronLeft className="h-4 w-4" />
+          返回上一步
+        </Button>
         {!isEditSaved && (
-          <Button variant="outline" className="gap-2 shrink-0" onClick={onEdit}>
+          <Button variant="outline" className="gap-2" onClick={onEdit}>
             <Edit3 className="h-4 w-4" />
             編輯履歷
           </Button>
         )}
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {suggestions.map((s, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="space-y-3"
-          >
-            <h4 className="font-medium text-primary flex items-center gap-2">
-              <ChevronRight className="h-4 w-4" />
-              {s.section}
-            </h4>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-4 bg-muted/30 rounded-lg border border-transparent">
-                <p className="text-xs text-muted-foreground mb-2">原始內容</p>
-                <p className="text-sm">{s.original}</p>
-              </div>
-              <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-                <p className="text-xs text-primary mb-2">優化建議</p>
-                <p className="text-sm">{s.optimized}</p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </CardContent>
-    </Card>
+      </div>
 
-    <div className="flex gap-4">
-      <Button variant="outline" className="flex-1 gap-2" onClick={onDownload}>
-        <Download className="h-4 w-4" />
-        下載建議報告
-      </Button>
-      <Button className="flex-1 gradient-primary gap-2" onClick={onGenerate}>
-        <Palette className="h-4 w-4" />
-        生成優化履歷
-      </Button>
-    </div>
-  </motion.div>
-);
+      {isEditSaved && (
+        <>
+          <div className="flex items-center gap-3 p-4 rounded-lg border border-green-500/30 bg-green-500/5">
+            <Check className="h-5 w-5 text-green-600 shrink-0" />
+            <p className="text-sm text-green-700 dark:text-green-400">履歷變更已儲存</p>
+          </div>
+
+          {/* Updated Resume Preview */}
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  修改後的履歷內容
+                </CardTitle>
+                <CardDescription>以下為您儲存後的最新履歷資料</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Basic Info */}
+                <div className="flex items-start gap-6">
+                  <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <User className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <h3 className="text-xl font-bold">{originalData.name}</h3>
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1"><Mail className="h-4 w-4" />{originalData.email}</span>
+                      <span className="flex items-center gap-1"><Phone className="h-4 w-4" />{originalData.phone}</span>
+                      {originalData.address && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{originalData.address}</span>}
+                    </div>
+                  </div>
+                </div>
+                {/* Resume Fields */}
+                <div className="grid gap-3">
+                  {originalResumeFields
+                    .filter((f) => f.key !== 'name' && f.key !== 'phone' && f.key !== 'email' && f.key !== 'address')
+                    .map((field) => {
+                      const val = originalData[field.key as keyof OriginalResumeData];
+                      if (field.optional && !val) return null;
+                      return <ResumeField key={field.key} icon={field.icon} label={field.label} value={val} optional={field.optional} />;
+                    })}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </>
+      )}
+
+      {/* ── Diagnostic Report only shown before edit save ── */}
+      {!isEditSaved && (
+        <div className="space-y-6">
+          {/* ── 1. 核心定位 ── */}
+          {diagnosticResult && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+              <Card className="border-primary/20 shadow-md">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    核心定位分析
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 rounded-lg bg-primary/5 border border-primary/15">
+                    <h4 className="text-sm font-semibold text-primary mb-2">候選人定位</h4>
+                    <p className="text-sm leading-relaxed">{diagnosticResult.candidate_positioning}</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/40 border border-border">
+                    <h4 className="text-sm font-semibold text-foreground mb-2">目標職位落差摘要</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{diagnosticResult.target_role_gap_summary}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* ── 2. 優劣勢對比分析 ── */}
+          {diagnosticResult && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Card className="border-green-200/60">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2 text-green-700">
+                      <CheckCircle className="h-5 w-5" />
+                      整體優勢
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {diagnosticResult.overall_strengths.map((s, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-green-50/60">
+                        <CheckCircle className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                        <p className="text-sm leading-relaxed">{s}</p>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+                <Card className="border-primary/20">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2 text-primary">
+                      <AlertTriangle className="h-5 w-5" />
+                      待改善項目
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {diagnosticResult.overall_weaknesses.map((w, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-primary/5">
+                        <AlertTriangle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        <p className="text-sm leading-relaxed">{w}</p>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── 3. 關鍵問題診斷 ── */}
+          {diagnosticResult && diagnosticResult.critical_issues.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    關鍵問題診斷
+                  </CardTitle>
+                  <CardDescription>針對履歷各區塊的深度分析與改善方向</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {diagnosticResult.critical_issues.map((issue, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + i * 0.08 }}
+                      className="rounded-lg border border-border overflow-hidden"
+                    >
+                      <div className="flex items-center gap-3 px-4 py-3 bg-muted/30 border-b border-border">
+                        <span className="font-medium text-sm">{issue.section}</span>
+                        <Badge className={`text-xs border ${severityColors[issue.severity] || 'bg-muted text-muted-foreground'}`}>
+                          {issue.severity}
+                        </Badge>
+                      </div>
+                      <div className="p-4 space-y-4">
+                        <div className="p-3 rounded-md bg-muted/40 border border-border/60">
+                          <p className="text-xs text-muted-foreground mb-1 font-medium">原文內容</p>
+                          <p className="text-sm text-foreground/80 leading-relaxed">{issue.original_text}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1 font-medium">診斷分析</p>
+                          <p className="text-sm leading-relaxed">{issue.issue_reason}</p>
+                        </div>
+                        <div className="p-3 rounded-md bg-primary/5 border border-primary/15">
+                          <p className="text-xs text-primary mb-1 font-semibold">優化方向</p>
+                          <p className="text-sm leading-relaxed font-medium text-primary">{issue.improvement_direction}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* ── 4. 後續行動計畫 ── */}
+          {diagnosticResult && diagnosticResult.recommended_next_actions.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <Card className="bg-[#fbf1e8]/40 border-primary/15">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ListChecks className="h-5 w-5 text-primary" />
+                    後續行動計畫
+                  </CardTitle>
+                  <CardDescription>根據診斷結果，建議您依序完成以下事項</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {diagnosticResult.recommended_next_actions.map((action, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-background/80 border border-border/50">
+                        <div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">
+                          {i + 1}
+                        </div>
+                        <p className="text-sm leading-relaxed">{action}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </div>
+      )}
+
+
+      <div className="flex gap-4">
+        <Button variant="outline" className="flex-1 gap-2" onClick={onDownload}>
+          <Download className="h-4 w-4" />
+          下載建議報告
+        </Button>
+        <Button className="flex-1 gradient-primary gap-2" onClick={onGenerate}>
+          <Palette className="h-4 w-4" />
+          生成優化履歷
+        </Button>
+      </div>
+    </motion.div>
+  );
+};
+
 
 // Resume Edit Mode Component - uses ORIGINAL fields
 const ResumeEditMode = ({
   originalData,
   suggestions,
+  diagnosticResult,
   onChange,
   onSave,
   onCancel,
@@ -736,6 +898,7 @@ const ResumeEditMode = ({
 }: {
   originalData: OriginalResumeData;
   suggestions: Suggestion[];
+  diagnosticResult: ResumeDiagnosticResult | null;
   onChange: (data: OriginalResumeData) => void;
   onSave: () => void;
   onCancel: () => void;
@@ -832,24 +995,109 @@ const ResumeEditMode = ({
       >
         <ScrollArea className="h-full pr-4">
           <div className="space-y-6">
-            {suggestions.map((s, i) => (
-              <div key={i} className="space-y-3 pb-4 border-b border-border last:border-0">
-                <h4 className="font-medium text-primary flex items-center gap-2">
-                  <ChevronRight className="h-4 w-4" />
-                  {s.section}
-                </h4>
-                <div className="space-y-3">
-                  <div className="p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">原始內容</p>
-                    <p className="text-sm">{s.original}</p>
+            {/* ── 核心定位 ── */}
+            {diagnosticResult && (
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/15">
+                  <h4 className="text-xs font-semibold text-primary mb-1.5">候選人定位</h4>
+                  <p className="text-sm leading-relaxed">{diagnosticResult.candidate_positioning}</p>
+                </div>
+                <div className="p-3 rounded-lg bg-muted/40 border border-border">
+                  <h4 className="text-xs font-semibold text-foreground mb-1.5">目標職位落差摘要</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{diagnosticResult.target_role_gap_summary}</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── 優劣勢 ── */}
+            {diagnosticResult && (
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold text-green-700 flex items-center gap-1.5 mb-2">
+                    <CheckCircle className="h-4 w-4" />整體優勢
+                  </h4>
+                  <div className="space-y-2">
+                    {diagnosticResult.overall_strengths.map((s, i) => (
+                      <div key={i} className="flex items-start gap-2 p-2 rounded-md bg-green-50/60">
+                        <CheckCircle className="h-3.5 w-3.5 text-green-600 shrink-0 mt-0.5" />
+                        <p className="text-xs leading-relaxed">{s}</p>
+                      </div>
+                    ))}
                   </div>
-                  <div className="p-3 bg-primary/5 rounded-lg border border-primary/20">
-                    <p className="text-xs text-primary mb-1">優化建議</p>
-                    <p className="text-sm">{s.optimized}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-primary flex items-center gap-1.5 mb-2">
+                    <AlertTriangle className="h-4 w-4" />待改善項目
+                  </h4>
+                  <div className="space-y-2">
+                    {diagnosticResult.overall_weaknesses.map((w, i) => (
+                      <div key={i} className="flex items-start gap-2 p-2 rounded-md bg-primary/5">
+                        <AlertTriangle className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                        <p className="text-xs leading-relaxed">{w}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* ── 關鍵問題診斷 ── */}
+            {diagnosticResult && diagnosticResult.critical_issues.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-primary" />關鍵問題診斷
+                </h4>
+                {diagnosticResult.critical_issues.map((issue, i) => {
+                  const severityColors: Record<string, string> = {
+                    '嚴重扣分': 'bg-red-100 text-red-800 border-red-200',
+                    '明顯扣分': 'bg-amber-100 text-amber-800 border-amber-200',
+                    '中度扣分': 'bg-orange-100 text-orange-800 border-orange-200',
+                    '輕微扣分': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                  };
+                  return (
+                    <div key={i} className="rounded-lg border border-border overflow-hidden">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border">
+                        <span className="font-medium text-xs">{issue.section}</span>
+                        <Badge className={`text-[10px] border ${severityColors[issue.severity] || 'bg-muted text-muted-foreground'}`}>
+                          {issue.severity}
+                        </Badge>
+                      </div>
+                      <div className="p-3 space-y-2.5">
+                        <div className="p-2 rounded-md bg-muted/40 border border-border/60">
+                          <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">原文內容</p>
+                          <p className="text-xs text-foreground/80 leading-relaxed">{issue.original_text}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground mb-0.5 font-medium">診斷分析</p>
+                          <p className="text-xs leading-relaxed">{issue.issue_reason}</p>
+                        </div>
+                        <div className="p-2 rounded-md bg-primary/5 border border-primary/15">
+                          <p className="text-[10px] text-primary mb-0.5 font-semibold">優化方向</p>
+                          <p className="text-xs leading-relaxed font-medium text-primary">{issue.improvement_direction}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* ── 行動計畫 ── */}
+            {diagnosticResult && diagnosticResult.recommended_next_actions.length > 0 && (
+              <div className="space-y-2 p-3 rounded-lg bg-[#fbf1e8]/40 border border-primary/15">
+                <h4 className="text-sm font-semibold flex items-center gap-1.5">
+                  <ListChecks className="h-4 w-4 text-primary" />後續行動計畫
+                </h4>
+                {diagnosticResult.recommended_next_actions.map((action, i) => (
+                  <div key={i} className="flex items-start gap-2 p-2 rounded-md bg-background/80 border border-border/50">
+                    <div className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5">
+                      {i + 1}
+                    </div>
+                    <p className="text-xs leading-relaxed">{action}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </ScrollArea>
       </RightDrawer>
@@ -979,6 +1227,7 @@ const ResultPhase = ({
   onThemeChange,
   isTemplateSaved,
   onSaveTemplate,
+  avatarUrl,
 }: {
   resumeData: ResumeData;
   selectedTemplate: string;
@@ -996,6 +1245,7 @@ const ResultPhase = ({
   onThemeChange: (index: number) => void;
   isTemplateSaved: boolean;
   onSaveTemplate: () => void;
+  avatarUrl: string | null;
 }) => {
   const template = templates.find(t => t.id === selectedTemplate);
   const themes = TEMPLATE_THEMES[selectedTemplate] || TEMPLATE_THEMES.corporate;
@@ -1055,9 +1305,8 @@ const ResultPhase = ({
             {selectedTemplate === 'modern' && (
               <ModernTemplate
                 data={resumeData}
-                isEditing={isEditing}
-                onChange={handleFieldChange}
                 theme={theme}
+                avatarUrl={avatarUrl}
               />
             )}
             {selectedTemplate === 'creative' && (
@@ -1066,49 +1315,48 @@ const ResultPhase = ({
                 isEditing={isEditing}
                 onChange={handleFieldChange}
                 theme={theme}
+                avatarUrl={avatarUrl}
               />
             )}
           </div>
         </CardContent>
       </Card>
 
-      {isEditing ? (
-        <div className="flex gap-4">
-          <Button variant="outline" className="flex-1" onClick={onCancelEdit}>取消</Button>
-          <Button className="flex-1 gradient-primary gap-2" onClick={onSave}>
-            <Save className="h-4 w-4" />儲存
-          </Button>
-        </div>
-      ) : (
-        <div className="flex flex-wrap gap-4">
-          {!isTemplateSaved && (
-            <Button variant="outline" className="gap-2" onClick={onBackToTemplates}>
-              <Palette className="h-4 w-4" />重新選擇樣板
-            </Button>
-          )}
-          <Button variant="outline" className="gap-2" onClick={onReset}>
-            <RotateCcw className="h-4 w-4" />重新填寫
-          </Button>
-          {!isTemplateSaved && (
-            <Button
-              className="gap-2"
-              style={{ backgroundColor: theme.main, color: 'white' }}
-              onClick={onSaveTemplate}
-            >
-              <Save className="h-4 w-4" />儲存履歷
-            </Button>
-          )}
-          <Button
-            className="flex-1 gap-2 text-white"
-            style={{ backgroundColor: theme.main }}
-            onClick={onDownload}
-            disabled={isDownloading}
-          >
-            <Download className="h-4 w-4" />
-            {isDownloading ? '生成中...' : '下載履歷'}
-          </Button>
+      {!isTemplateSaved && (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+          <Save className="h-5 w-5 text-amber-600 shrink-0" />
+          <p className="text-sm text-amber-700 dark:text-amber-400">請先儲存履歷後才可下載 PDF 檔案</p>
         </div>
       )}
+
+      <div className="flex flex-wrap gap-4">
+        {!isTemplateSaved && (
+          <Button variant="outline" className="gap-2" onClick={onBackToTemplates}>
+            <Palette className="h-4 w-4" />重新選擇樣板
+          </Button>
+        )}
+        <Button variant="outline" className="gap-2" onClick={onReset}>
+          <RotateCcw className="h-4 w-4" />重新填寫
+        </Button>
+        {!isTemplateSaved && (
+          <Button
+            className="gap-2"
+            style={{ backgroundColor: theme.main, color: 'white' }}
+            onClick={onSaveTemplate}
+          >
+            <Save className="h-4 w-4" />儲存履歷
+          </Button>
+        )}
+        <Button
+          className="flex-1 gap-2 text-white"
+          style={{ backgroundColor: theme.main }}
+          onClick={onDownload}
+          disabled={isDownloading || !isTemplateSaved}
+        >
+          <Download className="h-4 w-4" />
+          {isDownloading ? '生成中...' : '下載履歷'}
+        </Button>
+      </div>
     </motion.div>
   );
 };
@@ -1234,13 +1482,16 @@ const ModernTemplate = ({
   isEditing,
   onChange,
   theme,
+  avatarUrl,
 }: {
   data: ResumeData;
   isEditing: boolean;
   onChange: (field: keyof ResumeData, value: string) => void;
   theme: ThemeColors;
+  avatarUrl: string | null;
 }) => {
   const skills = data.core_skills.split(',').map(s => s.trim());
+  const avatarSrc = avatarUrl || logoCat;
 
   return (
     <div className="grid md:grid-cols-[1fr_2.5fr] gap-6">
@@ -1251,10 +1502,10 @@ const ModernTemplate = ({
         style={{ backgroundColor: `${theme.main}10` }}
       >
         <div
-          className="h-32 w-32 mx-auto rounded-full flex items-center justify-center"
-          style={{ backgroundColor: theme.main }}
+          className="h-32 w-32 mx-auto rounded-full flex items-center justify-centerr overflow-hidden border-2"
+          style={{ borderColor: theme.main }}
         >
-          <span className="text-4xl font-bold text-white">{data.name.charAt(0)}</span>
+          <img src={avatarSrc} alt={data.name} className="h-full w-full object-cover" />
         </div>
 
         <div className="space-y-2 text-sm">
@@ -1385,133 +1636,134 @@ const CreativeTemplate = ({
   isEditing,
   onChange,
   theme,
+  avatarUrl,
 }: {
   data: ResumeData;
   isEditing: boolean;
   onChange: (field: keyof ResumeData, value: string) => void;
   theme: ThemeColors;
-}) => (
-  <div className="relative">
-    <div
-      className="absolute inset-0 rounded-lg opacity-10"
-      style={{ backgroundColor: theme.main }}
-    />
+  avatarUrl: string | null;
+}) => {
+  const avatarSrc = avatarUrl || logoCat;
 
-    <div className="relative p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row items-center gap-6 avoid-break" data-pdf-section>
-        <div className="relative">
-          <div
-            className="h-36 w-36 rounded-full p-1"
-            style={{ backgroundColor: theme.main }}
-          >
-            <div className="h-full w-full rounded-full bg-white flex items-center justify-center">
-              <span
-                className="text-5xl font-bold"
-                style={{ color: theme.main }}
-              >
-                {data.name.charAt(0)}
-              </span>
+  return (
+    <div className="relative">
+      <div
+        className="absolute inset-0 rounded-lg opacity-10"
+        style={{ backgroundColor: theme.main }}
+      />
+
+      <div className="relative p-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-center gap-6 avoid-break" data-pdf-section>
+          <div className="relative">
+            <div
+              className="h-36 w-36 rounded-full p-1"
+              style={{ backgroundColor: theme.main }}
+            >
+              <div className="h-full w-full rounded-full overflow-hidden">
+                <img src={avatarSrc} alt={data.name} className="h-full w-full object-cover" />
+              </div>
+            </div>
+            <div
+              className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: theme.accent }}
+            >
+              <Sparkles className="h-4 w-4 text-white" />
             </div>
           </div>
-          <div
-            className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: theme.accent }}
-          >
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-        </div>
 
-        <div className="text-center md:text-left flex-1">
-          <h1
-            className="text-4xl font-bold"
-            style={{ color: theme.main }}
-          >
-            <EditableField value={data.name} onChange={(v) => onChange('name', v)} isEditing={isEditing} />
-          </h1>
-          {data.professional_summary && (
-            <p className="mt-2" style={{ color: theme.text }}>
-              <EditableField value={data.professional_summary} onChange={(v) => onChange('professional_summary', v)} isEditing={isEditing} multiline />
-            </p>
-          )}
-          <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-3 text-sm">
-            <span className="flex items-center gap-1" style={{ color: theme.main }}>
-              <Mail className="h-4 w-4" />
-              <EditableField value={data.email} onChange={(v) => onChange('email', v)} isEditing={isEditing} />
-            </span>
-            <span className="flex items-center gap-1" style={{ color: theme.secondary }}>
-              <Phone className="h-4 w-4" />
-              <EditableField value={data.phone} onChange={(v) => onChange('phone', v)} isEditing={isEditing} />
-            </span>
-            {data.linkedin && (
-              <span className="flex items-center gap-1" style={{ color: theme.main }}>
-                <Linkedin className="h-4 w-4" />
-                <EditableField value={data.linkedin} onChange={(v) => onChange('linkedin', v)} isEditing={isEditing} />
-              </span>
+          <div className="text-center md:text-left flex-1">
+            <h1
+              className="text-4xl font-bold"
+              style={{ color: theme.main }}
+            >
+              <EditableField value={data.name} onChange={(v) => onChange('name', v)} isEditing={isEditing} />
+            </h1>
+            {data.professional_summary && (
+              <p className="mt-2" style={{ color: theme.text }}>
+                <EditableField value={data.professional_summary} onChange={(v) => onChange('professional_summary', v)} isEditing={isEditing} multiline />
+              </p>
             )}
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-3 text-sm">
+              <span className="flex items-center gap-1" style={{ color: theme.main }}>
+                <Mail className="h-4 w-4" />
+                <EditableField value={data.email} onChange={(v) => onChange('email', v)} isEditing={isEditing} />
+              </span>
+              <span className="flex items-center gap-1" style={{ color: theme.secondary }}>
+                <Phone className="h-4 w-4" />
+                <EditableField value={data.phone} onChange={(v) => onChange('phone', v)} isEditing={isEditing} />
+              </span>
+              {data.linkedin && (
+                <span className="flex items-center gap-1" style={{ color: theme.main }}>
+                  <Linkedin className="h-4 w-4" />
+                  <EditableField value={data.linkedin} onChange={(v) => onChange('linkedin', v)} isEditing={isEditing} />
+                </span>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Content Grid */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div data-pdf-section className="avoid-break">
+            <CreativeSectionWithColor title="工作經驗" theme={theme}>
+              <EditableField value={data.professional_experience} onChange={(v) => onChange('professional_experience', v)} isEditing={isEditing} multiline />
+            </CreativeSectionWithColor>
+          </div>
+
+          <div data-pdf-section className="avoid-break">
+            <CreativeSectionWithColor title="學歷" theme={theme} useSecondary>
+              <EditableField value={data.education} onChange={(v) => onChange('education', v)} isEditing={isEditing} multiline />
+            </CreativeSectionWithColor>
+          </div>
+        </div>
+
+        {/* Skills as Pills */}
+        <div data-pdf-section className="avoid-break">
+          <CreativeSectionWithColor title="技能專長" theme={theme} fullWidth>
+            {isEditing ? (
+              <EditableField value={data.core_skills} onChange={(v) => onChange('core_skills', v)} isEditing={isEditing} />
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {data.core_skills.split(',').map((skill, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 rounded-full text-sm"
+                    style={{
+                      backgroundColor: `${theme.accent}20`,
+                      color: theme.main,
+                    }}
+                  >
+                    {skill.trim()}
+                  </span>
+                ))}
+              </div>
+            )}
+          </CreativeSectionWithColor>
+        </div>
+
+        {/* Projects */}
+        {data.projects && (
+          <div data-pdf-section className="avoid-break">
+            <CreativeSectionWithColor title="專案作品集" theme={theme} fullWidth useSecondary>
+              <EditableField value={data.projects} onChange={(v) => onChange('projects', v)} isEditing={isEditing} multiline />
+            </CreativeSectionWithColor>
+          </div>
+        )}
+
+        {/* Autobiography */}
+        {data.autobiography && (
+          <div data-pdf-section className="avoid-break">
+            <CreativeSectionWithColor title="自傳" theme={theme} fullWidth>
+              <EditableField value={data.autobiography} onChange={(v) => onChange('autobiography', v)} isEditing={isEditing} multiline />
+            </CreativeSectionWithColor>
+          </div>
+        )}
       </div>
-
-      {/* Content Grid */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div data-pdf-section className="avoid-break">
-          <CreativeSectionWithColor title="工作經驗" theme={theme}>
-            <EditableField value={data.professional_experience} onChange={(v) => onChange('professional_experience', v)} isEditing={isEditing} multiline />
-          </CreativeSectionWithColor>
-        </div>
-
-        <div data-pdf-section className="avoid-break">
-          <CreativeSectionWithColor title="學歷" theme={theme} useSecondary>
-            <EditableField value={data.education} onChange={(v) => onChange('education', v)} isEditing={isEditing} multiline />
-          </CreativeSectionWithColor>
-        </div>
-      </div>
-
-      {/* Skills as Pills */}
-      <div data-pdf-section className="avoid-break">
-        <CreativeSectionWithColor title="技能專長" theme={theme} fullWidth>
-          {isEditing ? (
-            <EditableField value={data.core_skills} onChange={(v) => onChange('core_skills', v)} isEditing={isEditing} />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {data.core_skills.split(',').map((skill, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 rounded-full text-sm"
-                  style={{
-                    backgroundColor: `${theme.accent}20`,
-                    color: theme.main,
-                  }}
-                >
-                  {skill.trim()}
-                </span>
-              ))}
-            </div>
-          )}
-        </CreativeSectionWithColor>
-      </div>
-
-      {/* Projects */}
-      {data.projects && (
-        <div data-pdf-section className="avoid-break">
-          <CreativeSectionWithColor title="專案作品集" theme={theme} fullWidth useSecondary>
-            <EditableField value={data.projects} onChange={(v) => onChange('projects', v)} isEditing={isEditing} multiline />
-          </CreativeSectionWithColor>
-        </div>
-      )}
-
-      {/* Autobiography */}
-      {data.autobiography && (
-        <div data-pdf-section className="avoid-break">
-          <CreativeSectionWithColor title="自傳" theme={theme} fullWidth>
-            <EditableField value={data.autobiography} onChange={(v) => onChange('autobiography', v)} isEditing={isEditing} multiline />
-          </CreativeSectionWithColor>
-        </div>
-      )}
     </div>
-  </div>
-);
+  );
+};
 
 // Template Section Helper with Color
 const TemplateSectionWithColor = ({

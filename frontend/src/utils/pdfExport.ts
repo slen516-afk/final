@@ -40,6 +40,79 @@ export async function exportHtmlToPdf({
   }
 }
 
+interface ResumeExportOptions {
+  element: HTMLElement;
+  filename: string;
+}
+
+/**
+ * Generate and download a PDF from a DOM element (the resume).
+ * Ensures consistency with UI by forcing width and font styles.
+ */
+export async function exportResumeToPdf({
+  element,
+  filename,
+}: ResumeExportOptions): Promise<void> {
+  // 1. Prepare sections for page breaks
+  const sections = element.querySelectorAll('[data-pdf-section]');
+  sections.forEach((section) => {
+    (section as HTMLElement).style.pageBreakInside = 'avoid';
+    (section as HTMLElement).style.breakInside = 'avoid';
+  });
+
+  // 2. Force consistency styles
+  // We apply these to a clone or temporarily to the element to avoid flickering in UI
+  // But since html2pdf is async, we'll apply them and then revert if needed.
+  // Actually, html2pdf.from(element) takes the element as is.
+  const originalStyle = element.getAttribute('style') || '';
+
+  // A4 width at 96 DPI is approx 794px. We use 800px to match common desktop views.
+  element.style.width = '800px';
+  element.style.maxWidth = '800px';
+  element.style.minWidth = '800px';
+  element.style.padding = '40px'; // Add some padding for the PDF margin
+  element.style.backgroundColor = '#ffffff';
+  element.style.fontFamily = "'Noto Sans TC', 'Inter', system-ui, -apple-system, sans-serif";
+  element.style.color = '#000000';
+
+  const opt = {
+    margin: [0, 0, 0, 0] as [number, number, number, number], // Padding is handled in style
+    filename,
+    image: { type: 'jpeg' as const, quality: 1.0 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      letterRendering: true,
+      logging: false,
+      width: 800,
+      windowWidth: 1200, // Simulate desktop window width
+    },
+    jsPDF: {
+      unit: 'mm' as const,
+      format: 'a4' as const,
+      orientation: 'portrait' as const,
+    },
+    pagebreak: {
+      mode: ['avoid-all', 'css', 'legacy'],
+      before: '.page-break-before',
+      after: '.page-break-after',
+      avoid: ['[data-pdf-section]', '.avoid-break'],
+    },
+  };
+
+  try {
+    // Small delay to ensure any dynamic styles/fonts are settled
+    await new Promise(resolve => setTimeout(resolve, 100));
+    await html2pdf().set(opt).from(element).save();
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    throw error;
+  } finally {
+    // Revert styles
+    element.setAttribute('style', originalStyle);
+  }
+}
+
 /* ── Report HTML builders ── */
 
 const h = (tag: string, style: string, content: string) =>
