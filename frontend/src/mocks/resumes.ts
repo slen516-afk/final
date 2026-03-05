@@ -1,4 +1,4 @@
-import type { ResumeItem, OriginalResumeData, ResumeData, Suggestion } from '@/types/resume';
+import type { ResumeItem, OriginalResumeData, ResumeData, Suggestion, ResumeDiagnosticResult } from '@/types/resume';
 
 // TODO: Replace with API call
 export const MOCK_RESUMES: ResumeItem[] = [
@@ -71,3 +71,93 @@ export const mockSuggestions: Suggestion[] = [
     optimized: '具備 5 年經驗的全端工程師，專注於打造高效能、可擴展的現代 Web 應用，曾帶領 3 人團隊完成多項關鍵專案',
   },
 ];
+
+// TODO: Replace with API call
+export const mockDiagnosticResult: ResumeDiagnosticResult = {
+  candidate_positioning:
+    '具備 5 年前端開發經驗的中階工程師，擅長 React 生態系統與效能優化，正朝向全端資深工程師方向發展。具備碩士學歷與雲端認證，在技術深度上有明確優勢。',
+  target_role_gap_summary:
+    '目標職位「資深前端工程師」要求具備系統架構設計能力、跨團隊協作經驗與技術決策能力。目前履歷在量化成果與領導力展現上有明顯不足，建議強化 STAR 敘事法與技術影響力描述。',
+  ats_risk_level: '中',
+  screening_outcome_prediction:
+    '目前履歷通過 ATS 關鍵字篩選的機率約為 65%。主要風險在於技能描述過於簡略，缺乏與職缺 JD 對應的關鍵字密度；工作經歷未使用標準化職稱格式，可能被系統誤判。',
+  overall_strengths: [
+    '教育背景優秀，台大碩士學歷具備高度競爭力',
+    '持有 AWS 與 GCP 雙認證，展現持續學習能力',
+    '具備前端效能優化實戰經驗，有明確量化成果（載入速度提升 40%）',
+    '技術棧涵蓋前後端，具備全端發展潛力',
+  ],
+  overall_weaknesses: [
+    '工作經歷描述過於籠統，缺乏 STAR 結構化敘事',
+    '技能列表為簡單逗號分隔，缺乏熟練度分級與情境說明',
+    '自傳內容偏向敘述型，未突出個人差異化價值',
+    '缺少專案影響力的商業價值描述（如營收、用戶增長等）',
+  ],
+  critical_issues: [
+    {
+      section: '工作經歷',
+      severity: '嚴重扣分',
+      original_text: '負責公司官網與產品頁面開發',
+      issue_reason:
+        '使用「負責」開頭缺乏主動性，未描述專案規模、技術挑戰與最終成果。ATS 無法從中提取有效關鍵字，面試官也無法評估實際能力。',
+      improvement_direction:
+        '改用動詞開頭 + 量化指標，例如：「主導 5+ 個企業級 Web 應用開發，運用 React + TypeScript 重構前端架構，使頁面載入速度提升 40%，用戶留存率提高 25%」',
+    },
+    {
+      section: '技能專長',
+      severity: '明顯扣分',
+      original_text: 'React, TypeScript, JavaScript, Node.js, Python, Git, SQL, Docker',
+      issue_reason:
+        '技能以逗號平鋪列出，無法區分核心技能與輔助技能的熟練度差異。ATS 雖能匹配關鍵字，但面試官無法快速判斷技術深度。',
+      improvement_direction:
+        '建議分類呈現：「核心技能：React (5年)、TypeScript (3年)」「後端技能：Node.js、Python」「工具鏈：Git、Docker、CI/CD」',
+    },
+    {
+      section: '自傳',
+      severity: '中度扣分',
+      original_text:
+        '我是一名前端工程師，具備 5 年軟體開發經驗。從大學時期便開始接觸程式設計...',
+      issue_reason:
+        '開頭過於平淡，缺乏記憶點。全文以時間軸敘述為主，未突出個人獨特價值主張與未來願景。',
+      improvement_direction:
+        '以「價值主張」開頭，例如：「我專注於將複雜的技術挑戰轉化為優雅的用戶體驗」，再以具體案例佐證，最後連結職涯目標。',
+    },
+    {
+      section: '證照與專案成就',
+      severity: '輕微扣分',
+      original_text: 'AWS Certified Developer - Associate\nGoogle Cloud Professional Data Engineer',
+      issue_reason:
+        '僅列出證照名稱，未說明取得時間、應用場景或與目標職位的關聯性。',
+      improvement_direction:
+        '補充取得年份與實際應用，例如：「AWS Certified Developer (2023)：應用於公司 CI/CD 流程遷移至 AWS，部署時間縮短 70%」',
+    },
+  ],
+  recommended_next_actions: [
+    '使用 STAR 法則重新撰寫每段工作經歷，確保每項都有量化成果',
+    '將技能專長分類為「核心技能」「後端技能」「工具與平台」三大類，並標註熟練年數',
+    '重寫自傳開頭，以個人價值主張取代平鋪直敘的自我介紹',
+    '在證照區塊補充實際應用場景，展現證照的實戰價值',
+    '針對目標職缺的 JD 關鍵字，在履歷中增加對應描述以提升 ATS 通過率',
+    '考慮增加「技術文章」或「開源貢獻」區塊，強化技術影響力',
+  ],
+  suggestions: [
+    {
+      section: '工作經歷',
+      original: '負責公司官網與產品頁面開發',
+      optimized:
+        '主導 5+ 個企業級 Web 應用開發專案，優化頁面載入速度達 40%，提升使用者留存率 25%',
+    },
+    {
+      section: '技能描述',
+      original: 'React, TypeScript, Node.js',
+      optimized:
+        '精通 React 生態系統 (Redux, React Query, Next.js)，具備 3 年 TypeScript 實戰經驗，熟悉 Node.js 後端開發',
+    },
+    {
+      section: '專業摘要',
+      original: '我是一名前端工程師',
+      optimized:
+        '具備 5 年經驗的全端工程師，專注於打造高效能、可擴展的現代 Web 應用，曾帶領 3 人團隊完成多項關鍵專案',
+    },
+  ],
+};
