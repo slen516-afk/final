@@ -39,3 +39,27 @@ export interface Suggestion {
   original: string;
   optimized: string;
 }
+
+/* ── Resume Diagnostic Result (from backend analysis) ── */
+
+export type ATSRiskLevel = '低' | '中' | '高';
+
+export interface CriticalIssue {
+  section: string;
+  severity: string;
+  original_text: string;
+  issue_reason: string;
+  improvement_direction: string;
+}
+
+export interface ResumeDiagnosticResult {
+  candidate_positioning: string;
+  target_role_gap_summary: string;
+  ats_risk_level: ATSRiskLevel;
+  screening_outcome_prediction: string;
+  overall_strengths: string[];
+  overall_weaknesses: string[];
+  critical_issues: CriticalIssue[];
+  recommended_next_actions: string[];
+  suggestions: Suggestion[];
+}

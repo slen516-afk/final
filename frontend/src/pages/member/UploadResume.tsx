@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, FileText, User, Camera, X, Briefcase, GraduationCap, Award, Languages, Phone, Mail } from 'lucide-react';
+import { Upload, FileText, User, X, Briefcase, GraduationCap, Award, Languages, Phone, Mail, Save, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,7 +62,6 @@ const UploadResume = () => {
   const [validationMessage, setValidationMessage] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [formData, setFormData] = useState<ResumeData>({
@@ -105,7 +104,7 @@ const UploadResume = () => {
     await new Promise(resolve => setTimeout(resolve, 500));
     setIsAnalyzing(false);
     setShowResult(true);
-    setIsResumeUploaded(true);
+    // Don't set isResumeUploaded here — only after explicit save
   };
 
   const handlePdfUpload = async (file: File) => {
@@ -188,17 +187,6 @@ const UploadResume = () => {
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-  };
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, avatar: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const addLanguage = () => {
@@ -345,7 +333,6 @@ const UploadResume = () => {
               <ResultView
                 data={resultData}
                 onReset={handleReset}
-                onNavigate={() => navigate('/member/survey/personality')}
                 onSave={(updated) => {
                   setResultData(updated);
                   setIsResumeUploaded(true);
@@ -406,8 +393,6 @@ const UploadResume = () => {
                   <ResumeForm
                     formData={formData}
                     setFormData={setFormData}
-                    avatarInputRef={avatarInputRef}
-                    handleAvatarChange={handleAvatarChange}
                     languageOptions={languageOptions}
                     proficiencyOptions={proficiencyOptions}
                     addLanguage={addLanguage}
@@ -448,8 +433,6 @@ const UploadResume = () => {
 interface ResumeFormProps {
   formData: ResumeData;
   setFormData: React.Dispatch<React.SetStateAction<ResumeData>>;
-  avatarInputRef: React.RefObject<HTMLInputElement>;
-  handleAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   languageOptions: string[];
   proficiencyOptions: { value: string; label: string }[];
   addLanguage: () => void;
@@ -463,8 +446,6 @@ interface ResumeFormProps {
 const ResumeForm = ({
   formData,
   setFormData,
-  avatarInputRef,
-  handleAvatarChange,
   languageOptions,
   proficiencyOptions,
   addLanguage,
@@ -533,30 +514,6 @@ const ResumeForm = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Avatar Upload */}
-        <div className="flex flex-col items-center">
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleAvatarChange}
-            className="hidden"
-          />
-          <div
-            className="relative h-24 w-24 md:h-32 md:w-32 rounded-full bg-muted border-2 border-dashed border-primary/30 flex items-center justify-center cursor-pointer hover:border-primary/60 transition-colors overflow-hidden group"
-            onClick={() => avatarInputRef.current?.click()}
-          >
-            {formData.avatar ? (
-              <img src={formData.avatar} alt="Avatar" className="h-full w-full object-cover" />
-            ) : (
-              <User className="h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
-            )}
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <Camera className="h-6 w-6 text-white" />
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground mt-2">點擊上傳大頭貼</p>
-        </div>
 
         {/* Basic Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -826,7 +783,6 @@ const ResumeForm = ({
 interface ResultViewProps {
   data: ResumeData;
   onReset: () => void;
-  onNavigate: () => void;
   onSave: (updated: ResumeData) => void;
 }
 
@@ -884,10 +840,15 @@ const EditableField = ({
   </div>
 );
 
-const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
+const ResultView = ({ data, onReset, onSave }: ResultViewProps) => {
+  const navigate = useNavigate();
+  const { isPersonalityTestDone, isPersonalityQuizDone } = useAppState();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [editData, setEditData] = useState<ResumeData>({ ...data });
+  const [resumeTitle, setResumeTitle] = useState('');
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [,] = useState(false); // placeholder to preserve hook order
   const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
   const [showValidationAlert, setShowValidationAlert] = useState(false);
 
@@ -938,14 +899,34 @@ const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
       setShowValidationAlert(true);
       return;
     }
-    setShowSaveConfirm(true);
+    handleConfirmEditSave();
   };
 
-  const handleConfirmSave = () => {
+  /* Edit-mode save: only update page display, NOT database */
+  const handleConfirmEditSave = () => {
+    onSave(editData); // updates parent resultData for display
+    setIsEditing(false);
+    setInvalidFields(new Set());
+  };
+
+  /* Database save (the real save) */
+  const handleDirectSave = () => {
+    // Validate resume title
+    if (!resumeTitle.trim()) {
+      setInvalidFields(new Set(['resumeTitle']));
+      setShowValidationAlert(true);
+      return;
+    }
+    setShowSaveConfirm(true);
+    setEditData({ ...data });
+  };
+
+  const handleConfirmDbSave = () => {
     onSave(editData);
     setIsEditing(false);
     setShowSaveConfirm(false);
     setInvalidFields(new Set());
+    setIsSaved(true);
   };
 
   const languageOptions = ['中文', '英文', '台語', '日文', '韓文', '法文', '德文', '西班牙文', '其他'];
@@ -987,18 +968,48 @@ const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
             <CardTitle className="text-xl">履歷摘要報告</CardTitle>
             <CardDescription>以下是您的履歷資訊摘要</CardDescription>
           </div>
-          {/* Edit / Cancel Toggle */}
-          <div className="absolute right-6 top-6">
-            {isEditing ? (
-              <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-destructive border-destructive/30 hover:bg-destructive/10">
-                <X className="h-4 w-4 mr-1" /> 取消編輯
-              </Button>
+
+          {/* Resume Title — required field */}
+          <div className={`mt-4 max-w-md mx-auto space-y-1.5 p-3 rounded-lg border transition-all ${invalidFields.has('resumeTitle') ? 'border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.25)]' : 'border-transparent'
+            }`}>
+            <Label htmlFor="resumeTitle" className="text-sm font-medium">
+              <span className="text-destructive">*</span> 履歷名稱
+            </Label>
+            {isSaved ? (
+              <p className="text-sm bg-background p-3 rounded-lg border">{resumeTitle}</p>
             ) : (
-              <Button variant="outline" size="sm" onClick={handleEnterEdit} className="border-primary/30 text-primary hover:bg-primary/10">
-                <FileText className="h-4 w-4 mr-1" /> 編輯資訊
-              </Button>
+              <Input
+                id="resumeTitle"
+                placeholder="例如：前端工程師履歷"
+                value={resumeTitle}
+                onChange={(e) => {
+                  setResumeTitle(e.target.value);
+                  setInvalidFields(prev => {
+                    if (!prev.has('resumeTitle')) return prev;
+                    const next = new Set(prev);
+                    next.delete('resumeTitle');
+                    return next;
+                  });
+                }}
+                className="text-sm"
+              />
             )}
           </div>
+
+          {/* Edit / Cancel Toggle — hidden after saved */}
+          {!isSaved && (
+            <div className="absolute right-6 top-6">
+              {isEditing ? (
+                <Button variant="outline" size="sm" onClick={handleCancelEdit} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                  <X className="h-4 w-4 mr-1" /> 取消編輯
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={handleEnterEdit} className="border-primary/30 text-primary hover:bg-primary/10">
+                  <FileText className="h-4 w-4 mr-1" /> 編輯資訊
+                </Button>
+              )}
+            </div>
+          )}
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Avatar and Basic Info */}
@@ -1172,6 +1183,35 @@ const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
         </CardContent>
       </Card>
 
+      {/* Reminder banner — shown before save */}
+      {!isSaved && !isEditing && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 p-4 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700"
+        >
+          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            請確認資料無誤後按下「<strong>儲存至資料庫</strong>」，才算完成履歷上傳流程。
+          </p>
+        </motion.div>
+      )}
+
+      {/* Saved success banner */}
+      {isSaved && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 p-4 rounded-lg border border-green-300 bg-green-50 dark:bg-green-900/20 dark:border-green-700"
+        >
+          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0" />
+          <p className="text-sm text-green-800 dark:text-green-200">
+            履歷已成功儲存！
+          </p>
+        </motion.div>
+      )}
+
+
       {/* Footer Actions */}
       {isEditing ? (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
@@ -1179,13 +1219,33 @@ const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
             確認並儲存
           </Button>
         </motion.div>
+      ) : isSaved ? (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button variant="outline" onClick={onReset} className="flex-1">
+            重新上傳 / 填寫
+          </Button>
+          {!isPersonalityTestDone ? (
+            <Button onClick={() => navigate('/member/survey/personality-test')} className="flex-1 gradient-primary">
+              填寫人格特質問卷
+            </Button>
+          ) : !isPersonalityQuizDone ? (
+            <Button onClick={() => navigate('/member/survey/personality')} className="flex-1 gradient-primary">
+              填寫職涯問卷
+            </Button>
+          ) : (
+            <Button onClick={() => navigate('/resume/optimize')} className="flex-1 gradient-primary">
+              開始履歷優化
+            </Button>
+          )}
+        </div>
       ) : (
         <div className="flex flex-col sm:flex-row gap-3">
           <Button variant="outline" onClick={onReset} className="flex-1">
             重新上傳 / 填寫
           </Button>
-          <Button onClick={onNavigate} className="flex-1 gradient-primary">
-            填寫職涯問卷
+          <Button onClick={handleDirectSave} className="flex-1 gradient-primary">
+            <Save className="h-4 w-4 mr-2" />
+            儲存至資料庫
           </Button>
         </div>
       )}
@@ -1204,11 +1264,11 @@ const ResultView = ({ data, onReset, onNavigate, onSave }: ResultViewProps) => {
         onClose={() => setShowSaveConfirm(false)}
         type="info"
         title="確認儲存資訊？"
-        message="是否確認儲存目前的履歷資訊？這將作為後續職缺推薦的依據。"
+        message="是否確認儲存目前的履歷資訊？儲存後將無法再編輯，資料將作為後續職缺推薦的依據。"
         showCancel
         confirmLabel="確認儲存"
         cancelLabel="取消"
-        onConfirm={handleConfirmSave}
+        onConfirm={handleConfirmDbSave}
       />
     </motion.div>
   );

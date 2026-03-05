@@ -20,7 +20,7 @@ from typing import Literal, List, Optional, Dict, Any
 
 class JobMatchFilters(BaseModel):
     """職缺搜尋過濾條件"""
-    location: Optional[str] = Field(None, description="工作地點 (例如: 台北市)")
+    city: Optional[str] = Field(None, description="工作地點 (例如: 台北市)")
     industry: Optional[str] = Field(None, description="產業類型")
     salary_min: Optional[int] = Field(None, description="最低薪資月薪 (預留欄位)")
 

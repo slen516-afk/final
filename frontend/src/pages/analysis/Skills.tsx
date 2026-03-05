@@ -50,6 +50,7 @@ import { careerTemplates } from "@/data/careerLadderTemplates";
 
 const ANALYSIS_DONE_KEY = "skills-analysis-done";
 const ANALYSIS_RESULT_KEY = "skills-analysis-result";
+// ❌ 剛剛這裡有兩行錯誤的 useState 跑到了外面，我已經幫你移除了！
 
 const loadingMessages = [
   "正在解析履歷關鍵字...",
@@ -90,8 +91,6 @@ const Skills = () => {
   );
   const [subView, setSubView] = useState<SubView>("main");
   const [subViewLoading, setSubViewLoading] = useState(false);
-  // 🌟 裝真實 Side Project 資料的箱子
-
 
   // 🌟 難度轉換器：把後端的 Advanced 轉成 4 顆星 (加入防呆，避免白畫面)
   const mapDifficultyToStars = (diffString: string) => {
@@ -174,34 +173,12 @@ const Skills = () => {
     startAnalysis();
   }, [startAnalysis]);
 
+  // 🌟 已修復的 openSubView 函數
   const openSubView = async (view: SubView) => {
     setSubViewLoading(true);
     setSubView(view);
 
-    if (view === "sideproject") {
-      try {
-        console.log("🚀 準備呼叫 API: /api/projects/suggestions");
-        const res = await getProjectSuggestionsAPI({});
-        console.log("📦 後端回傳的 Side Project 資料:", res);
-
-        if (res.status === "success" && res.projects) {
-          // 這裡就是傳說中的翻譯蒟蒻，絕對不能省略！
-          const mappedProjects = res.projects.map((p: any) => ({
-            name: p.title || "未命名專案",
-            technologies: p.tech_stack || [],
-            highlights: `${p.reason} (預估: ${p.estimated_hours}小時)`,
-            difficulty: mapDifficultyToStars(p.difficulty)
-          }));
-
-
-          setDynamicSideProjects(mappedProjects);
-        }
-      } catch (error) {
-        console.error("❌ 無法載入推薦專案，使用預設資料", error);
-      }
-    }
-    // 🌟 處理「學習資源」的 API 呼叫與翻譯
-    else if (view === "learning") {
+    if (view === "learning") {
       try {
         console.log("🚀 準備呼叫 API: /api/learning/recommendations");
         const res = await getLearningRecommendationsAPI({});
@@ -209,14 +186,13 @@ const Skills = () => {
 
         if (res.status === "success" && res.resources) {
           const mappedResources = res.resources.map((r: any) => ({
-            title: r.title,
-            description: `這是一份來自 ${r.platform} 的 ${r.type} 資源，建議您可以前往參考，以補足當前職能落差。`,
+            title: r.course_name || "未命名推薦課程",
+            description: `這是一份 ${r.course_type || "專業"} 類型的資源，建議您可以前往參考，以補足當前職能落差。`,
             tags: [
-              r.priority === "High" ? "高優先" : r.priority === "Medium" ? "中優先" : "低優先",
-              r.platform,
-              r.type
+              r.course_level ? `難度: ${r.course_level}` : "難度: 適合所有人",
+              r.duration_suggested ? `預計時長: ${r.duration_suggested}` : "彈性時長"
             ],
-            url: r.url
+            url: r.url || r.link || "#"
           }));
 
           setDynamicLearningResources(mappedResources);
@@ -224,8 +200,7 @@ const Skills = () => {
       } catch (error) {
         console.error("❌ 無法載入學習資源，使用預設資料", error);
       }
-    }
-    else {
+    } else {
       await new Promise((resolve) => setTimeout(resolve, 1200));
     }
 
@@ -301,7 +276,14 @@ const Skills = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <Card className="h-full bg-white transition-all duration-300 hover:shadow-medium hover:-translate-y-1 group cursor-pointer">
+                    <Card className="h-full bg-white transition-all duration-300 hover:shadow-medium hover:-translate-y-1 group cursor-pointer"
+                      onClick={() => {
+                        if (resource.url && resource.url !== "#") {
+                          window.open(resource.url, "_blank", "noopener,noreferrer");
+                        } else {
+                          alert("很抱歉，這堂課目前沒有提供網址連結喔！");
+                        }
+                      }}>
                       <CardContent className="pt-6 h-full flex flex-col">
                         <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
                           {resource.title}
@@ -309,7 +291,7 @@ const Skills = () => {
                         <p className="text-sm text-muted-foreground mb-4 flex-grow">{resource.description}</p>
                         <div className="flex items-center justify-between">
                           <div className="flex flex-wrap gap-1">
-                            {resource.tags.map((tag) => (
+                            {resource.tags.map((tag: string) => (
                               <Badge key={tag} variant="secondary" className="text-xs">
                                 {tag}
                               </Badge>
@@ -370,7 +352,7 @@ const Skills = () => {
                       <CardContent className="pt-6 h-full flex flex-col">
                         <h3 className="font-semibold text-lg mb-3">{project.name}</h3>
                         <div className="flex flex-wrap gap-1 mb-4">
-                          {project.technologies.map((tech) => (
+                          {project.technologies.map((tech: string) => (
                             <Badge key={tech} variant="outline" className="text-xs">
                               {tech}
                             </Badge>

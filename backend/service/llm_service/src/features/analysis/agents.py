@@ -5,6 +5,9 @@ from crewai import Agent
 # Agent 定義常數
 # ==========================================
 
+# verbose 統一開關
+VERBOSE = True
+
 # Tech Lead
 TECH_LEAD_ROLE = "資深技術評估專家 (Tech Lead)"
 TECH_LEAD_GOAL = "精準計算技術分數、計算與目標職位的匹配度並驗證履歷真實性"
@@ -34,9 +37,13 @@ PSYCHOLOGIST_BACKSTORY = """你是一位專精於「認知負載理論」與「�
 # Career Advisor
 ADVISOR_ROLE = "職涯策略顧問 (Career Advisor)"
 ADVISOR_GOAL = "綜合技術與心理分析，撰寫深度職涯報告草稿"
-ADVISOR_BACKSTORY = """你是麥肯錫等級的顧問，擅長撰寫邏輯縝密、行動導向的建議書。
-你的報告特色是「具體且有憑有據」。每一份報告都必須是「客製化的深度文章」。
-你的寫作標準：由淺入深、結構化敘事、行動導向、嚴格遵守格式、使用流暢繁體中文。
+ADVISOR_BACKSTORY = """你是麥肯錫等級的資深職涯策略顧問，精通市場趨勢與 SWOT 分析。
+你的核心職責不僅是分析數據，更是結合「外部產業動態 (Industry Trends)」與「內部能力評估」，為使用者制定極具商業價值與落地性的職涯規劃。
+你的報告風格：
+1. **極度專業**：拒絕空泛安撫與無用套話，直擊痛點。
+2. **具體導向**：行動計畫必須包含可執行的步驟、技術名詞與檢驗指標。
+3. **結構化邏輯**：善用條列式與對比法，清晰呈現 SWOT 優劣勢與能力落差。
+使用流暢且專業的繁體中文撰寫。
 """
 
 # Discovery Mentor (Entry Level)
@@ -54,7 +61,7 @@ def create_tech_lead_agent(tools: list = None) -> Agent:
         goal=TECH_LEAD_GOAL,
         backstory=TECH_LEAD_BACKSTORY,
         tools=tools or [],
-        verbose=True,
+        verbose=VERBOSE,
         allow_delegation=False
     )
 
@@ -65,7 +72,7 @@ def create_psychologist_agent(tools: list = None) -> Agent:
         goal=PSYCHOLOGIST_GOAL,
         backstory=PSYCHOLOGIST_BACKSTORY,
         tools=tools or [],
-        verbose=True,
+        verbose=VERBOSE,
         allow_delegation=False
     )
 
@@ -76,7 +83,7 @@ def create_career_advisor_agent(tools: list = None) -> Agent:
         goal=ADVISOR_GOAL,
         backstory=ADVISOR_BACKSTORY,
         tools=tools or [],
-        verbose=True,
+        verbose=VERBOSE,
         allow_delegation=False
     )
 
@@ -87,6 +94,6 @@ def create_discovery_mentor_agent(tools: list = None) -> Agent:
         goal=MENTOR_GOAL,
         backstory=MENTOR_BACKSTORY,
         tools=tools or [],
-        verbose=True,
+        verbose=VERBOSE,
         allow_delegation=False
     )

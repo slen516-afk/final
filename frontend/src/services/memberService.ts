@@ -1,21 +1,39 @@
-import { mockDelay } from './apiClient';
-import { mockUserId, mockProfile } from '@/mocks/member';
+import { apiClient } from './apiClient';
 import type { UserProfile } from '@/types/member';
 
-// TODO: Replace with API call – GET /members/me
+/**
+ * 取得當前使用者的個人資料
+ * 對應後端: GET /api/auth/profile
+ */
 export async function getMyProfile(): Promise<UserProfile> {
-  await mockDelay();
-  return mockProfile;
+  return apiClient.get<UserProfile>('/auth/profile');
 }
 
-// TODO: Replace with API call – GET /members/me/id
+/**
+ * 取得當前使用者的資料庫 ID
+ */
 export async function getMyUserId(): Promise<string> {
-  await mockDelay();
-  return mockUserId;
+  const profile = await getMyProfile();
+  // 優先嘗試取得資料庫 user_id，否則回傳 id
+  const idValue = (profile as any).user_id || (profile as any).id;
+  return idValue ? idValue.toString() : '';
 }
 
-// TODO: Replace with API call – PUT /members/me
+/**
+ * 更新個人資料
+ * 對應後端: PUT /api/auth/profile
+ */
 export async function updateProfile(data: Partial<UserProfile>): Promise<UserProfile> {
-  await mockDelay();
-  return { ...mockProfile, ...data };
+  return apiClient.put<UserProfile>('/auth/profile', data);
 }
+
+/**
+ * 上傳個人大頭貼
+ * 對應後端: POST /api/auth/upload-avatar
+ */
+export async function uploadAvatar(file: File): Promise<{ avatar_url: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return apiClient.post<{ avatar_url: string }>('/auth/upload-avatar', formData);
+}
+

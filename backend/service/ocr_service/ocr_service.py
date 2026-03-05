@@ -207,7 +207,8 @@ class ResumeOCRService:
 
             text = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             
-            image_inputs, video_inputs, _ = process_vision_info(messages)
+            vision_results = process_vision_info(messages)
+            image_inputs, video_inputs = vision_results[:2]
             # Error:Expression with type "Tuple[List[Image] | None, List[Tensor | List[Image]] | None, Dict[str, Any] | None]" cannot be assigned to target tuple   Type "Tuple[List[Image] | None, List[Tensor | List[Image]] | None, Dict[str, Any] | None]" is incompatible with target tuple.  Tuple size mismatch; expected 2 but received 3
             # 增加一個接收變數
             

@@ -3,7 +3,7 @@ import math
 import os
 # from service.llm_service.src.core.database.supabase_client import get_supabase_client
 # from src.core.database.supabase_client import get_supabase_client
-from service.llm_service.src.core.database.supabase_client import get_supabase_client
+from src.core.database.supabase_client import get_supabase_client
 
 # =========================
 # 基礎設定與權重表
@@ -33,7 +33,7 @@ class CourseRecommendationService:
 
     def fetch_user_gap(self, user_id: str) -> Dict:
         """
-        從 Supabase 撈取該使用者的最新技能分析結果。
+        從 Supabase 撈取該使用者的目標職類結果。
         """
         try:
             # 根據 Schema 結構，欄位名稱應為 role 與 match_score
@@ -56,6 +56,7 @@ class CourseRecommendationService:
             
             # 清理資料：移除 AI 產生的前綴與百分比符號
             # 1. 處理 Role (提取關鍵字)
+            # 因 target_position 設定為必填，故沒有幫使用者判斷適合職類，但先保留
             clean_role = raw_role.replace("領航員分析您適合的職類為 - ", "").strip()
             
             # 2. 處理 Match Score (轉為整數)
@@ -86,7 +87,7 @@ class CourseRecommendationService:
         從 Supabase 撈取與職位類別相關的候選課程清單。
         """
         try:
-            # 目前初步以全體課程為準，未來可依 job_category 篩選
+            # 依 job_category 篩選
             resp = (
                 self.supabase
                 .table("course") \
@@ -150,6 +151,9 @@ class CourseRecommendationService:
             distance = abs(level_val - ability_position)
             distance_score = 1 / (1 + distance ** 2)
             policy_weight = USER_TO_COURSE_DISTRIBUTION[user_level].get(level_val, 0)
+            # --- 重點：過濾掉權重為 0 的課程 ---
+            if policy_weight <= 0:
+                continue
             priority_score = distance_score * policy_weight
 
             # 2. Quality Score (基於評價與評論數)

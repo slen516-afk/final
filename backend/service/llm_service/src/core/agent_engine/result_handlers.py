@@ -79,15 +79,15 @@ class GapAnalysisHandler(BaseResultHandler):
             raise
 
 # ======================================================
-# 範例 1：履歷優化處理器 (Resume Optimization) - 新增式存檔(需要撈 resume_id & 算版本)
+# 1. 履歷優化處理器 (Resume Optimization) - 新增式存檔(需要撈 resume_id & 算版本)
 # ======================================================
 class ResumeOptHandler(BaseResultHandler):
     def process(self, pydantic_result: any, **kwargs):
         user_id = kwargs.get("user_id")
 
-        # 1. 從 resume 表撈出該用戶最原始的 resume_id
+        # 1. 從 resume 表撈出該用戶最新的 resume_id 跟 resume_name
         resume_info = self.supabase.table("resume") \
-            .select("resume_id") \
+            .select("resume_id, resume_name") \
             .eq("user_id", user_id) \
             .order("created_at", desc=True) \
             .limit(1) \
@@ -98,6 +98,8 @@ class ResumeOptHandler(BaseResultHandler):
             raise ValueError(f"找不到用戶 {user_id} 的原始履歷，無法存儲優化結果")
 
         target_resume_id = resume_info.data['resume_id']
+        resume_name = resume_info.data['resume_name']
+        target_resume_name = f"{resume_name}_優化"
 
         # 2. 計算版本號 (取目前最大版本 + 1)
         res = self.supabase.table("resume_optimization") \
@@ -116,13 +118,14 @@ class ResumeOptHandler(BaseResultHandler):
             "resume_id": target_resume_id, # 這是額外撈出的值
             "optimization_version": new_version, # 這是計算出的值
             **pydantic_result, # AI 生成的欄位
+            "resume_name": target_resume_name, # 這是額外撈出的值
             # "created_at": "now()"
         }
 
         return self.supabase.table("resume_optimization").insert(payload).execute()
 
 # ======================================================
-# 範例 2：履歷分析處理器 (Resume Analysis) - 新增式存檔
+# 2. 履歷分析處理器 (Resume Analysis) - 新增式存檔
 # ======================================================
 class ResumeAnalysisHandler(BaseResultHandler):
     def process(self, pydantic_result: any, **kwargs):
@@ -151,7 +154,7 @@ class ResumeAnalysisHandler(BaseResultHandler):
         # 使用 upsert，衝突時更新
         return self.supabase.table("resume_analysis").insert(payload).execute()
 
-# ... 你可以依此類推，為其他 5 個功能建立專屬 Handler ...
+# 職缺與課程推薦暫不存檔資料庫，若要存需要調整程式碼
 # ======================================================
 # 3. 職缺推薦處理器 (Job Recommendation) - 新增式存檔
 # ======================================================
@@ -208,8 +211,15 @@ class CoverLetterHandler(BaseResultHandler):
             "user_id": user_id,
             "job_id": job_id,
             **pydantic_result,
-            # "created_at": "now()"
         }
+
+        optimization_id = kwargs.get("optimization_id")
+        resume_id = kwargs.get("resume_id")
+
+        if optimization_id:
+            payload["optimization_id"] = optimization_id
+        elif resume_id:
+            payload["resume_id"] = resume_id
         # 這裡建議用 user_id + job_id 作為 Unique Key，如果不希望同職缺存兩封
         return self.supabase.table("cover_letter").insert(payload).execute()
 

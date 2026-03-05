@@ -27,7 +27,7 @@ export const useAsyncTask = (pollingInterval = 2000) => {
      * @param {object} payload - 任務參數 ( survey_json: '...' )
      */
 
-    const runTask = useCallback(async (content, userId) => {
+    const runTask = useCallback(async (taskType, payload) => {
         // 重置狀態
         setStatus('PENDING');
         setError(null);
@@ -44,7 +44,7 @@ export const useAsyncTask = (pollingInterval = 2000) => {
             timerRef.current = setInterval(async () => {
                 try {
                     const statusRes = await taskService.getStatus(task_id);
-                    const { state, result: taskResult } = statusRes.data;
+                    const { state, result: taskResult, message } = statusRes.data;
 
                     // 更新進度訊息，如果有
                     if (message) setProgressMessage(message);

@@ -1,6 +1,6 @@
 # api/recommendation.py
+from service.llm_service.src.features.course.course_matching import CourseRecommendationService
 from flask import Blueprint, request, jsonify
-from service.llm_service.src.features.course.tools import CourseRecommendationTool
 from crewai import Agent, Task, Crew
 import json
 import re
@@ -21,6 +21,55 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 rec_bp = Blueprint('recommendation', __name__)
 
 
+# =====================================================================
+# 🌟 取得使用者履歷清單 API
+# =====================================================================
+@rec_bp.route('/users/<int:user_id>/resumes', methods=['GET'])
+def get_user_resumes(user_id):
+    """
+    取得使用者的所有履歷 (包含原版 resume 與優化版 optimization)
+    """
+    try:
+        # 🌟 1. 改用 resume_id 去撈 resume 表
+        raw_resp = supabase.table("resume").select("resume_id, resume_name, created_at").eq("user_id", user_id).execute()
+        raw_resumes = raw_resp.data if raw_resp.data else []
+        
+        # 🌟 2. 去 resume_optimization 表撈 (⚠️ 注意：如果這張表的 ID 欄位也不叫 id，請幫我把下面的 id 改成正確的名稱！)
+        opt_resp = supabase.table("resume_optimization").select("resume_id, resume_name, created_at").eq("user_id", user_id).execute()
+        opt_resumes = opt_resp.data if opt_resp.data else []
+        
+        combined_list = []
+        
+        # 🌟 3. 將撈出來的 resume_id 塞給前端要的 id 變數
+        for r in raw_resumes:
+            combined_list.append({
+                "id": r.get("resume_id"),  # 👈 這裡改成抓 resume_id
+                "title": r.get("resume_name") or f"原版履歷 {r.get('resume_id')}",
+                "type": "RESUME",
+                "created_at": r.get("created_at", "")
+            })
+            
+        for r in opt_resumes:
+            combined_list.append({
+                "id": r.get("id"), # 👈 如果 optimization 表的欄位叫別的 (例如 opt_id)，記得這裡也要改！
+                "title": r.get("resume_name") or f"AI 優化版履歷 {r.get('id')}",
+                "type": "OPTIMIZATION",
+                "created_at": r.get("created_at", "")
+            })
+            
+        combined_list.sort(key=lambda x: x["created_at"], reverse=True)
+        
+        return jsonify({
+            "status": "success",
+            "data": combined_list
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ 獲取履歷列表發生錯誤: {e}")
+        return jsonify({
+            "status": "error",
+            "message": f"伺服器錯誤: {str(e)}"
+        }), 500
 # =====================================================================
 # 🌟 V1 舊版引擎 (保留備用)
 # =====================================================================
@@ -109,37 +158,32 @@ def suggest_projects():
 # =====================================================================
 @rec_bp.route('/learning/recommendations', methods=['POST'])
 def recommend_learning():
+    # 1. 取得前端傳來的資料
     data = request.get_json() or {}
     user_id = data.get("user_id", 1)
     
-    print(f"🚀 開始呼叫 CrewAI，幫使用者 {user_id} 尋找課程...")
-    course_tool = CourseRecommendationTool()
-    learning_advisor = Agent(
-        role='資深技術培訓顧問',
-        goal='根據使用者的技能缺口與程度，推薦最適合的線上課程',
-        backstory='你是一位精通各類線上課程平台的專家。',
-        tools=[course_tool],
-        verbose=True,
-        allow_delegation=False
-    )
-    recommend_task = Task(
-        description=f"請使用工具，查詢 user_id 為 '{user_id}' 的推薦課程。",
-        expected_output="必須嚴格輸出合法的 JSON 陣列 (Array)。",
-        agent=learning_advisor
-    )
-    crew = Crew(agents=[learning_advisor], tasks=[recommend_task], verbose=True)
-    raw_result = crew.kickoff()
-
+    print(f"🚀 開始使用精準演算法，幫使用者 {user_id} 尋找課程...")
+    
     try:
-        clean_result = raw_result.raw.replace("```json", "").replace("```", "").strip()
-        parsed_resources = json.loads(clean_result)
+        # 2. 實例化組員寫的推薦服務 (請確認這裡的 Class 名稱正確)
+        course_service = CourseRecommendationService()
+
+        recommended_courses = course_service.get_recommendations(user_id=str(user_id), top_k=5)
+        
+        print(f"✅ 成功取得 {len(recommended_courses)} 堂推薦課程！")
+
+        # 4. 依照原本的格式回傳，讓前端無縫接軌！
         return jsonify({
             "status": "success",
-            "resources": parsed_resources
+            "resources": recommended_courses
         }), 200
-    except json.JSONDecodeError as e:
-        print(f"❌ AI 格式錯亂: {e}")
-        return jsonify({"status": "error", "message": "AI 未回傳正確格式"}), 500
+        
+    except Exception as e:
+        print(f"❌ 課程推薦發生致命錯誤: {e}")
+        return jsonify({
+            "status": "error", 
+            "message": f"伺服器處理失敗: {str(e)}"
+        }), 500
 
 
 # =====================================================================

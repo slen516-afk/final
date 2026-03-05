@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Brain, BarChart3, RefreshCw, ArrowLeft, ArrowRight, Zap, BookOpen } from 'lucide-react';
+import { Brain, BarChart3, RefreshCw, ArrowLeft, ArrowRight, Zap, BookOpen, Sparkles, Upload } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -28,7 +28,7 @@ const loadProgress = (): SurveyProgress => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved);
-  } catch {}
+  } catch { }
   return { hasSkillBase: null, answers: {}, currentStep: 0 };
 };
 
@@ -43,7 +43,7 @@ const clearProgress = () => {
 const RESULT_KEY = 'career-survey-done';
 
 const Personality = () => {
-  const { isPersonalityQuizDone, setIsPersonalityQuizDone } = useAppState();
+  const { isPersonalityQuizDone, setIsPersonalityQuizDonee, isPersonalityTestDone, isResumeUploaded } = useAppState();
   const navigate = useNavigate();
 
   const [progress, setProgress] = useState<SurveyProgress>(loadProgress);
@@ -272,13 +272,31 @@ const Personality = () => {
                 </Card>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Button
-                    onClick={() => navigate('/analysis/skills')}
-                    className="gradient-primary h-12"
-                  >
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    查看職能圖譜
-                  </Button>
+                  {!isPersonalityTestDone ? (
+                    <Button
+                      onClick={() => navigate('/member/survey/personality-test')}
+                      className="gradient-primary h-12"
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      填寫人格特質問卷
+                    </Button>
+                  ) : !isResumeUploaded ? (
+                    <Button
+                      onClick={() => navigate('/member/upload-resume')}
+                      className="gradient-primary h-12"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      前往上傳履歷
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => navigate('/analysis/skills')}
+                      className="gradient-primary h-12"
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      查看職能圖譜
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     onClick={handleReset}
@@ -359,11 +377,10 @@ const Personality = () => {
                   {currentModule?.questions.map((q) => (
                     <Card
                       key={q.id}
-                      className={`transition-all ${
-                        invalidIds.has(q.id)
-                          ? 'border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.25)]'
-                          : ''
-                      }`}
+                      className={`transition-all ${invalidIds.has(q.id)
+                        ? 'border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.25)]'
+                        : ''
+                        }`}
                     >
                       <CardContent className="p-5 md:p-6">
                         {renderQuestion(q)}
