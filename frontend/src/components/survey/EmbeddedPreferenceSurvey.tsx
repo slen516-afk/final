@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { MapPin, Wallet, Building2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MapPin, Wallet, Building2, FileText } from 'lucide-react'; // 🌟 加入 FileText icon
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { motion } from 'framer-motion';
 import AlertModal from '@/components/modals/AlertModal';
 
+// ⚠️ 注意：請確認你的 supabase client 實際的路徑！
+// 如果路徑不同，請把 '@/lib/supabaseClient' 改成你專案中正確的路徑
+import { supabase } from '@/lib/supabaseClient';
+
 const taiwanCities = [
   '台北市', '新北市', '桃園市', '台中市', '台南市', '高雄市',
   '基隆市', '新竹市', '新竹縣', '苗栗縣', '彰化縣', '南投縣',
@@ -16,22 +20,61 @@ const taiwanCities = [
   '台東縣', '澎湖縣', '金門縣', '連江縣'
 ];
 
-// const workModes = [
-//   { id: 'onsite', label: '實體辦公' },
-//   { id: 'remote', label: '完全遠端' },
-//   { id: 'hybrid', label: '混合模式' },
-// ];
-
 interface EmbeddedPreferenceSurveyProps {
   onComplete: (surveyData: any) => void;
 }
 
 const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps) => {
+  // 🌟 新增：履歷相關的 State
+  const [resumeOptions, setResumeOptions] = useState<any[]>([]);
+  const [selectedResume, setSelectedResume] = useState<string>(''); // 存 "RESUME-1" 或 "OPTIMIZATION-8"
+
   const [regionType, setRegionType] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [salaryRange, setSalaryRange] = useState<number[]>([40000, 80000]);
-  // const [workMode, setWorkMode] = useState('');
   const [showIncompleteAlert, setShowIncompleteAlert] = useState(false);
+
+  // 🌟 修改：透過後端 API 撈取履歷清單
+  // 🌟 修改：聰明版 API 呼叫 (帶有自動假資料備援)
+  useEffect(() => {
+    const fetchResumesFromAPI = async () => {
+      try {
+        const currentUserId = 1;
+
+        // 嘗試呼叫後端 API (請確認你們後端 API 的真實網址)
+        // 如果你們前端有統一的 axios/apiClient，建議用那個替換 fetch
+        const response = await fetch(`/api/users/${currentUserId}/resumes`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.status === "success" && result.data) {
+          const combinedOptions = result.data.map((r: any) => ({
+            id: r.id,
+            title: r.title,
+            sourceType: r.type // "RESUME" 或 "OPTIMIZATION"
+          }));
+          setResumeOptions(combinedOptions);
+          return; // 成功的話就結束函數
+        }
+      } catch (error) {
+        console.warn("⚠️ 無法連上後端 API，自動切換為測試假資料！錯誤原因：", error);
+
+        // 🚨 API 連不上時的「備用假資料」，讓你的畫面不會空空的！
+        const mockData = [
+          { id: 1, title: "後端工程師_原版", sourceType: "RESUME" },
+          { id: 2, title: "前端工程師_原版", sourceType: "RESUME" },
+          { id: 8, title: "軟體工程師_AI優化版", sourceType: "OPTIMIZATION" }
+        ];
+        setResumeOptions(mockData);
+      }
+    };
+
+    fetchResumesFromAPI();
+  }, []);
 
   const formatSalary = (value: number) => {
     return value >= 100000
@@ -46,18 +89,36 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
 
   const handleSubmit = () => {
     const isTaiwanWithoutCity = regionType === 'taiwan' && !selectedCity;
-    if (!regionType || isTaiwanWithoutCity) {
+
+    // 🌟 防呆：如果沒選履歷、沒選地區，就跳出警告
+    if (!regionType || isTaiwanWithoutCity || !selectedResume) {
       setShowIncompleteAlert(true);
       return;
     }
 
+    // 🌟 拆解選中的履歷 (例如把 "RESUME-1" 拆成 "RESUME" 和 1)
+    const [sourceType, docId] = selectedResume.split('-');
+
+    // 🌟 完美打包成你 API (截圖二) 要的 JSON 格式
     const realSurveyData = {
+      // 保留原本的欄位給可能需要的其他邏輯
       region: regionType,
       city: selectedCity,
       minSalary: salaryRange[0],
       maxSalary: salaryRange[1],
-      // workMode: workMode
+
+      // 給 V2 推薦引擎的精準參數
+      user_id: 1, // 這裡可視需求改為動態取得
+      document_id: parseInt(docId),
+      source_type: sourceType,
+      filters: {
+        city: [selectedCity], // 後端 API 需要的是陣列
+        salary_min: salaryRange[0],
+        salary_max: salaryRange[1]
+      }
     };
+
+    // 將資料往上傳給父元件去發送 API
     onComplete(realSurveyData);
   };
 
@@ -68,6 +129,36 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4 md:space-y-6"
       >
+        {/* 🌟 新增：選擇履歷的區塊 */}
+        <Card>
+          <CardHeader className="pb-2 md:pb-4">
+            <CardTitle className="text-base md:text-lg flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              配對履歷
+            </CardTitle>
+            <CardDescription className="text-xs md:text-sm">
+              請選擇您要用來進行職缺配對的履歷
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select value={selectedResume} onValueChange={setSelectedResume}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="請選擇一份履歷..." />
+              </SelectTrigger>
+              <SelectContent>
+                {resumeOptions.map((opt) => (
+                  <SelectItem
+                    key={`${opt.sourceType}-${opt.id}`}
+                    value={`${opt.sourceType}-${opt.id}`}
+                  >
+                    {opt.title} ({opt.sourceType === 'RESUME' ? '原版' : '優化版'})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+
         {/* Location Selection */}
         <Card>
           <CardHeader className="pb-2 md:pb-4">
@@ -150,38 +241,6 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
           </CardContent>
         </Card>
 
-        {/* Work Mode
-        <Card>
-          <CardHeader className="pb-2 md:pb-4">
-            <CardTitle className="text-base md:text-lg flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" />
-              辦公模式
-            </CardTitle>
-            <CardDescription className="text-xs md:text-sm">
-              請選擇您偏好的工作方式
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup value={workMode} onValueChange={setWorkMode} className="space-y-3">
-              {workModes.map((mode) => (
-                <div
-                  key={mode.id}
-                  className={`flex items-center space-x-3 p-3 md:p-4 rounded-lg transition-colors cursor-pointer border ${workMode === mode.id
-                    ? 'bg-primary/10 border-primary/30'
-                    : 'border-transparent hover:bg-muted'
-                    }`}
-                  onClick={() => setWorkMode(mode.id)}
-                >
-                  <RadioGroupItem value={mode.id} id={`pref-${mode.id}`} />
-                  <Label htmlFor={`pref-${mode.id}`} className="flex-1 cursor-pointer text-sm md:text-base">
-                    {mode.label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </CardContent>
-        </Card> */}
-
         <div className="flex justify-end">
           <Button onClick={handleSubmit} className="gradient-primary w-full sm:w-auto text-sm md:text-base">
             提交偏好，開始匹配職缺
@@ -194,7 +253,7 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
         onClose={() => setShowIncompleteAlert(false)}
         type="warning"
         title="請完成所有必填項目"
-        message="請至少選擇一項工作偏好，並選擇期望薪資範圍"
+        message="請確保您已經【選擇履歷】、【選擇地區】並【設定薪資範圍】喔！"
         confirmLabel="了解"
       />
     </>

@@ -8,6 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { useAppState } from '@/contexts/AppContext';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 
+import { login } from '@/services/authService';
+
 interface AuthModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -22,23 +24,28 @@ const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate login
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    setIsLoggedIn(true);
-    setIsLoading(false);
-    onOpenChange(false);
-    setEmail('');
-    setPassword('');
+
+    try {
+      await login(email.trim(), password);
+      setIsLoggedIn(true);
+      onOpenChange(false);
+      setEmail('');
+      setPassword('');
+    } catch (error: any) {
+      console.error('Login failed:', error);
+      alert(error.message || '登入失敗，請檢查帳號密碼');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    
+
     // Simulate Google login
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     setIsLoggedIn(true);
     setIsLoading(false);
     onOpenChange(false);
@@ -53,7 +60,7 @@ const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
             登入您的帳號以繼續使用所有功能
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleEmailLogin} className="space-y-4 mt-4">
           <div className="space-y-2">
             <Label htmlFor="email">電子信箱</Label>
@@ -70,7 +77,7 @@ const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="password">密碼</Label>
             <div className="relative">
@@ -86,7 +93,7 @@ const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
               />
             </div>
           </div>
-          
+
           <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
             {isLoading ? (
               <>

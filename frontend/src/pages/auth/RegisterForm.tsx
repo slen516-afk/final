@@ -3,11 +3,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Loader2 } from 'lucide-react';
 import AuthModal from '@/components/auth/AuthModal';
+import { register } from '@/services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const RegisterForm = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const navigate = useNavigate();
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      alert('密碼與確認密碼不符');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await register(formData.email.trim(), formData.password, formData.name);
+      alert('註冊成功！請登入。');
+      setAuthModalOpen(true);
+    } catch (error: any) {
+      console.error('Registration failed:', error);
+      alert(error.message || '註冊失敗，請稍後再試');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
+  };
 
   return (
     <>
@@ -26,25 +60,36 @@ const RegisterForm = () => {
               <CardTitle>建立帳號</CardTitle>
               <CardDescription>填寫以下資料完成註冊</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">姓名</Label>
-                <Input id="name" placeholder="請輸入姓名" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">電子郵件</Label>
-                <Input id="email" type="email" placeholder="請輸入電子郵件" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">密碼</Label>
-                <Input id="password" type="password" placeholder="請輸入密碼" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">確認密碼</Label>
-                <Input id="confirmPassword" type="password" placeholder="請再次輸入密碼" />
-              </div>
-              <Button className="w-full gradient-primary">註冊</Button>
-              <p className="text-center text-sm text-muted-foreground">
+            <CardContent>
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">姓名</Label>
+                  <Input id="name" placeholder="請輸入姓名" value={formData.name} onChange={handleChange} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">電子郵件</Label>
+                  <Input id="email" type="email" placeholder="請輸入電子郵件" value={formData.email} onChange={handleChange} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">密碼</Label>
+                  <Input id="password" type="password" placeholder="請輸入密碼" value={formData.password} onChange={handleChange} required />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">確認密碼</Label>
+                  <Input id="confirmPassword" type="password" placeholder="請再次輸入密碼" value={formData.confirmPassword} onChange={handleChange} required />
+                </div>
+                <Button className="w-full gradient-primary" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      註冊中...
+                    </>
+                  ) : (
+                    '註冊'
+                  )}
+                </Button>
+              </form>
+              <p className="text-center text-sm text-muted-foreground mt-4">
                 已有帳號？{' '}
                 <button
                   type="button"
@@ -62,5 +107,6 @@ const RegisterForm = () => {
     </>
   );
 };
+
 
 export default RegisterForm;

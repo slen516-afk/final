@@ -1,26 +1,103 @@
-import type { ResumeItem, OriginalResumeData, ResumeData, Suggestion, ResumeDiagnosticResult } from '@/types/resume';
+import type { OriginalResumeData, ResumeData, Suggestion } from '@/types/resume';
+import { supabase } from '@/utils/supabaseClient';
 
 // TODO: Replace with API call
+
+
+
+// 1. 介面新增 sourceType，完美對接你後端的路由分流邏輯
+export interface ResumeItem {
+  id: number | string;
+  name: string;
+  updatedAt: string;
+  content: string;
+  sourceType: 'RESUME' | 'OPTIMIZATION'; // 區分資料來源
+}
+
 export const MOCK_RESUMES: ResumeItem[] = [
   {
     id: 1,
     name: '軟體工程師履歷_v2',
     updatedAt: '2026-02-12',
-    content: `王小明\n前端工程師\n\n聯絡方式\nEmail: xiaoming@example.com\n電話: 0912-345-678\n\n工作經歷\n\n科技公司 A | 前端工程師 | 2022 - 現在\n• 開發維護公司核心產品前端\n• 使用 React + TypeScript 建構現代化 UI\n• 優化效能，提升載入速度 40%\n\n新創公司 B | 初階工程師 | 2020 - 2022\n• 參與多個客戶專案開發\n• 學習並應用前端最佳實踐\n\n技能\nReact, TypeScript, JavaScript, CSS, Git, Node.js`,
+    content: `王小明\n前端工程師...`,
+    sourceType: 'RESUME'
   },
   {
     id: 2,
     name: '前端工程師履歷',
     updatedAt: '2026-02-10',
-    content: `王小明 - 前端工程師履歷\n\n專精於 React 生態系統的前端開發者，\n具備 3 年以上實戰經驗。\n\n核心技能：\n- React / Next.js\n- TypeScript\n- Tailwind CSS\n- REST API 整合\n\n期望職位：資深前端工程師\n期望薪資：NT$ 70,000 - 90,000`,
+    content: `王小明 - 前端工程師履歷...`,
+    sourceType: 'RESUME'
   },
   {
     id: 3,
     name: 'AI工程師優化版',
     updatedAt: '2026-02-11',
-    content: `王小明 - AI 工程師\n\n專注於機器學習與深度學習應用開發。\n\n核心技能：\n- Python / PyTorch / TensorFlow\n- LLM 應用開發\n- MLOps\n\n期望職位：AI 工程師\n期望薪資：NT$ 80,000 - 120,000`,
+    content: `王小明 - AI 工程師...`,
+    sourceType: 'OPTIMIZATION'
   },
 ];
+
+export const getResumes = async (): Promise<ResumeItem[]> => {
+  try {
+    // 2. 使用 Promise.all 同時發送兩個請求
+    const [resumeResponse, optimizationResponse] = await Promise.all([
+      supabase
+        .from('resume')
+        .select('resume_id, resume_name, updated_at')
+        .eq('resume_id', 1), // 👉 只抓 resume_id = 1 的資料
+
+      supabase
+        .from('resume_optimization')
+        .select('optimization_id, resume_name, created_at')
+        .eq('resume_id', 1) // 👉 只抓 optimization_id = 1 的資料
+    ]);
+
+    // 檢查是否有報錯
+    if (resumeResponse.error) throw resumeResponse.error;
+    if (optimizationResponse.error) throw optimizationResponse.error;
+
+    // ✨ 順手加的小工具：把 2026-03-03T06:42:10+00:00 變成乾淨的 2026-03-03 06:42
+    const formatDate = (dateString: string) => {
+      if (!dateString) return '';
+      return dateString.replace('T', ' ').substring(0, 16);
+    };
+
+    // 3. 處理「原始履歷」資料，並對應正確的欄位名稱
+    const standardResumes: ResumeItem[] = (resumeResponse.data || []).map((item: any) => ({
+      id: item.resume_id,                 // 對應表裡的 resume_id
+      name: item.resume_name || '未命名履歷', // 對應表裡的 resume_name (加個防呆，如果沒填字就顯示預設)
+      updatedAt: formatDate(item.updated_at), // 使用上面的日期格式化工具
+      content: '',                        // ⚠️ 你這次沒有 select 內容，所以先塞空字串給它
+      sourceType: 'RESUME'
+    }));
+
+    // 4. 處理「優化版履歷」資料，並對應正確的欄位名稱
+    const optimizedResumes: ResumeItem[] = (optimizationResponse.data || []).map((item: any) => ({
+      id: item.optimization_id,           // 對應表裡的 optimization_id
+      name: item.resume_name || '未命名履歷', // 對應表裡的 resume_name
+      updatedAt: formatDate(item.created_at), // 注意：這張表你是用 created_at
+      content: '',                        // ⚠️ 一樣先塞空字串
+      sourceType: 'OPTIMIZATION'
+    }));
+
+    // 5. 將兩個陣列合併在一起
+    const combinedResumes = [...standardResumes, ...optimizedResumes];
+
+    // 6. 在前端進行排序：依照時間由新到舊
+    combinedResumes.sort((a, b) => {
+      const timeA = new Date(a.updatedAt).getTime();
+      const timeB = new Date(b.updatedAt).getTime();
+      return timeB - timeA;
+    });
+
+    return combinedResumes;
+
+  } catch (err) {
+    console.error('❌ Supabase 雙資料表撈取失敗，切換為假資料:', err);
+    return MOCK_RESUMES;
+  }
+};
 
 // TODO: Replace with API call
 export const mockOriginalResumeData: OriginalResumeData = {

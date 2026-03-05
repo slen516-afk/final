@@ -47,8 +47,31 @@ class DatabaseTools:
                 .single() \
                 .execute()
 
-            if not response.data:
+            if not response.data:            
                 return {"error": "找不到該用戶優化後履歷資料"}
+
+            return response.data
+
+        except Exception as e:
+            return {"error": f"資料庫抓取失敗: {str(e)}"}
+        
+    @staticmethod
+    def get_user_designated_resume(resume_id: str):
+        """
+        根據 resume_id 到 Supabase 抓取指定的用戶原始履歷。
+        """
+        supabase = get_supabase_client()
+
+        try:
+            # 執行 SQL 查詢
+            response = supabase.table("resume") \
+                .select("structured_data") \
+                .eq("resume_id", resume_id) \
+                .single() \
+                .execute()
+
+            if not response.data:
+                return {"error": "找不到指定的用戶原始履歷資料"}
 
             return response.data
 
@@ -60,10 +83,16 @@ class RecommendJobSearchTool(BaseTool):
     name: str = "SearchRecommendJob"
     description: str = "搜尋推薦職缺。Input: job_id"
     def _run(self, job_id: str) -> str:
-        return json.dumps(DatabaseTools.get_job_recommendation_profile(job_id), ensure_ascii=False)
+        return DatabaseTools.get_job_recommendation_profile(job_id)
 
 class FetchOptimizeResumeTool(BaseTool):
     name: str = "FetchUserOptimizeResume"
-    description: str = "獲取使用者個人優化後的履歷。Input: optimization_id"
+    description: str = "獲取使用者指定的優化後履歷。Input: optimization_id"
     def _run(self, optimization_id: str) -> str:
-        return json.dumps(DatabaseTools.get_optimize_resume(optimization_id), ensure_ascii=False)
+        return DatabaseTools.get_optimize_resume(optimization_id)
+    
+class FetchDesignatedResumeTool(BaseTool):
+    name: str = "FetchUserDesignatedResume"
+    description: str = "獲取使用者指定的原始履歷。Input: resume_id"
+    def _run(self, resume_id: str) -> str:
+        return DatabaseTools.get_user_designated_resume(resume_id)

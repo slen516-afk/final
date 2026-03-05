@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 from datetime import datetime
 
 
+
+
+
 # ====== 1. 環境初始化 (路徑修正) ======
 # 取得 backend 資料夾的絕對路徑
 backend_dir = Path(__file__).resolve().parent
@@ -16,6 +19,11 @@ if str(backend_dir) not in sys.path:
 # 取得專案根目錄並加入 supabase_control 路徑
 project_root = backend_dir.parent
 sys.path.insert(0, str(project_root / "supabase_control"))
+
+# 🌟 【魔法路徑加入】把 llm_service 加入系統路徑，解決所有 src 找不到的問題！
+llm_service_dir = backend_dir / "service" / "llm_service"
+if str(llm_service_dir) not in sys.path:
+    sys.path.insert(0, str(llm_service_dir))
 
 # 後端環境變數應放置於 backend 資料夾下的 .env 檔案中
 # 載入 .env 變數

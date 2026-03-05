@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from .agents import get_cover_letter_strategist_agent
 from .tasks import get_cover_letter_task
-from .tools import RecommendJobSearchTool, FetchOptimizeResumeTool
+from .tools import RecommendJobSearchTool, FetchOptimizeResumeTool,  FetchDesignatedResumeTool
 from .schemas import CoverLetter
 from src.core.agent_engine.task_types import TaskType
 
@@ -20,9 +20,10 @@ def get_cover_letter_config(task_type: TaskType, inputs: Dict[str, Any]) -> Dict
     # 1. 初始化工具
     job_search_tool = RecommendJobSearchTool()
     resume_fetch_tool = FetchOptimizeResumeTool()
+    designated_resume_tool = FetchDesignatedResumeTool()
     
     # 工具列表
-    cover_letter_tools = [job_search_tool, resume_fetch_tool]
+    cover_letter_tools = [job_search_tool, resume_fetch_tool, designated_resume_tool]
     
     # 2. 初始化 Agent
     strategist = get_cover_letter_strategist_agent()

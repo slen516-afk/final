@@ -4,10 +4,11 @@ from .schemas import CoverLetter
 def get_cover_letter_task(agent, tools) -> Task:
     return Task(
         description="""
-        1.使用'SearchRecommendJob' 工具，傳入 job_id='{job_id}' 以獲取推薦職缺資訊。
-        2.使用'FetchUserOptimizeResume' 工具，傳入 optimization_id='{optimization_id}' 以獲取優化後履歷資訊。
-        
-        你是一位深諳招募心理的高階獵頭。請根據 [優化後的履歷資訊] 與 [推薦職缺資訊]，撰寫一封精確命中 HR 痛點的 Cover Letter。
+        必需先使用下列的工具進行資料的獲取，若未傳入參數的工具則不需要使用:
+          1.使用'SearchRecommendJob' 工具，傳入參數 job_id='{job_id}' 以獲取推薦職缺資訊。
+          2.使用'FetchUserOptimizeResume' 工具，傳入參數 optimization_id='{optimization_id}' 以獲取優化後履歷資訊。
+          3.使用'FetchUserDesignatedResume' 工具，傳入參數 resume_id='{resume_id}' 以獲取原始履歷資訊。
+          你是一位深諳招募心理的高階獵頭。請根據 [使用者優化後的履歷資訊] 或 [使用者原始的履歷資訊] 與 [推薦職缺資訊]，撰寫一封精確命中 HR 痛點的 Cover Letter。
 
         你的撰寫邏輯必須圍繞招募方的三大核心考量：
         1.職位理解：證明你對這家公司當前的技術挑戰或商業痛點有深入思考。

@@ -163,6 +163,7 @@ const Recommendations = () => {
       setStage("results");
     }
   }, [isJobPreferenceQuizDone, stage]);
+
   useEffect(() => {
     const urlPageParam = parseInt(searchParams.get("page") || "1", 10);
     const validPage = isNaN(urlPageParam) || urlPageParam < 1 ? 1 : Math.min(urlPageParam, calculatedTotalPages);
@@ -309,19 +310,7 @@ const Recommendations = () => {
                       ))}
                     </motion.div>
                   ) : allJobs.length === 0 ? (
-                    <motion.div
-                      key="empty"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-center py-16 mt-4 bg-muted/20 rounded-xl border border-dashed border-muted-foreground/30"
-                    >
-                      <div className="text-4xl mb-4">🤷‍♂️</div>
-                      <h3 className="text-xl font-semibold mb-2">哎呀，目前沒有符合條件的職缺</h3>
-                      <p className="text-muted-foreground">
-                        這個薪資區間在該地區可能比較稀有，試著稍微放寬條件，或是更改地區看看吧！
-                      </p>
-                    </motion.div>
+                    null
                   ) : (
                     <motion.div
                       key="content"

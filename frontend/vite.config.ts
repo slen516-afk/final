@@ -13,8 +13,10 @@ export default defineConfig(({ mode }) => ({
     },
     proxy: {
       "/api": {
-        // 這裡的 "backend" 要換成你在 docker-compose.yml 裡面的後端服務名稱喔！
-        target: "http://backend:8000",
+        // 容器內網址
+        // target: "http://backend:8000",
+        // 在本機運行 npm run dev，用 127.0.0.1 或 localhost
+        target: 'http://backend:8000',
         changeOrigin: true,
       },
     },
