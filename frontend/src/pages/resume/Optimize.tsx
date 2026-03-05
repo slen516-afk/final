@@ -19,6 +19,7 @@ import RightDrawer from '@/components/panels/RightDrawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { OriginalResumeData, ResumeData, Suggestion } from '@/types/resume';
 import { mockOriginalResumeData, mockResumeData, mockSuggestions } from '@/mocks/resumes';
+import logoCat from '@/assets/logocat.png';
 
 type Phase = 'initial' | 'analyzing' | 'suggestions' | 'templates' | 'generating' | 'result';
 
@@ -138,7 +139,7 @@ const clearOptimizeState = () => {
 
 const Optimize = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, isResumeUploaded, isPersonalityQuizDone } = useAppState();
+  const { isLoggedIn, isResumeUploaded, isPersonalityQuizDone, avatarUrl } = useAppState();
   const { resumes } = useResumes();
 
   // Auto-select the latest resume
@@ -492,6 +493,7 @@ const Optimize = () => {
                   onThemeChange={setSelectedThemeIndex}
                   isTemplateSaved={isTemplateSaved}
                   onSaveTemplate={() => setShowTemplateSaveConfirm(true)}
+                  avatarUrl={avatarUrl}
                 />
               )}
             </AnimatePresence>
@@ -979,6 +981,7 @@ const ResultPhase = ({
   onThemeChange,
   isTemplateSaved,
   onSaveTemplate,
+  avatarUrl,
 }: {
   resumeData: ResumeData;
   selectedTemplate: string;
@@ -996,6 +999,7 @@ const ResultPhase = ({
   onThemeChange: (index: number) => void;
   isTemplateSaved: boolean;
   onSaveTemplate: () => void;
+  avatarUrl: string | null;
 }) => {
   const template = templates.find(t => t.id === selectedTemplate);
   const themes = TEMPLATE_THEMES[selectedTemplate] || TEMPLATE_THEMES.corporate;
@@ -1055,9 +1059,8 @@ const ResultPhase = ({
             {selectedTemplate === 'modern' && (
               <ModernTemplate
                 data={resumeData}
-                isEditing={isEditing}
-                onChange={handleFieldChange}
                 theme={theme}
+                avatarUrl={avatarUrl}
               />
             )}
             {selectedTemplate === 'creative' && (
@@ -1066,49 +1069,48 @@ const ResultPhase = ({
                 isEditing={isEditing}
                 onChange={handleFieldChange}
                 theme={theme}
+                avatarUrl={avatarUrl}
               />
             )}
           </div>
         </CardContent>
       </Card>
 
-      {isEditing ? (
-        <div className="flex gap-4">
-          <Button variant="outline" className="flex-1" onClick={onCancelEdit}>取消</Button>
-          <Button className="flex-1 gradient-primary gap-2" onClick={onSave}>
-            <Save className="h-4 w-4" />儲存
-          </Button>
-        </div>
-      ) : (
-        <div className="flex flex-wrap gap-4">
-          {!isTemplateSaved && (
-            <Button variant="outline" className="gap-2" onClick={onBackToTemplates}>
-              <Palette className="h-4 w-4" />重新選擇樣板
-            </Button>
-          )}
-          <Button variant="outline" className="gap-2" onClick={onReset}>
-            <RotateCcw className="h-4 w-4" />重新填寫
-          </Button>
-          {!isTemplateSaved && (
-            <Button
-              className="gap-2"
-              style={{ backgroundColor: theme.main, color: 'white' }}
-              onClick={onSaveTemplate}
-            >
-              <Save className="h-4 w-4" />儲存履歷
-            </Button>
-          )}
-          <Button
-            className="flex-1 gap-2 text-white"
-            style={{ backgroundColor: theme.main }}
-            onClick={onDownload}
-            disabled={isDownloading}
-          >
-            <Download className="h-4 w-4" />
-            {isDownloading ? '生成中...' : '下載履歷'}
-          </Button>
+      {!isTemplateSaved && (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+          <Save className="h-5 w-5 text-amber-600 shrink-0" />
+          <p className="text-sm text-amber-700 dark:text-amber-400">請先儲存履歷後才可下載 PDF 檔案</p>
         </div>
       )}
+
+      <div className="flex flex-wrap gap-4">
+        {!isTemplateSaved && (
+          <Button variant="outline" className="gap-2" onClick={onBackToTemplates}>
+            <Palette className="h-4 w-4" />重新選擇樣板
+          </Button>
+        )}
+        <Button variant="outline" className="gap-2" onClick={onReset}>
+          <RotateCcw className="h-4 w-4" />重新填寫
+        </Button>
+        {!isTemplateSaved && (
+          <Button
+            className="gap-2"
+            style={{ backgroundColor: theme.main, color: 'white' }}
+            onClick={onSaveTemplate}
+          >
+            <Save className="h-4 w-4" />儲存履歷
+          </Button>
+        )}
+        <Button
+          className="flex-1 gap-2 text-white"
+          style={{ backgroundColor: theme.main }}
+          onClick={onDownload}
+          disabled={isDownloading || !isTemplateSaved}
+        >
+          <Download className="h-4 w-4" />
+          {isDownloading ? '生成中...' : '下載履歷'}
+        </Button>
+      </div>
     </motion.div>
   );
 };
@@ -1234,13 +1236,16 @@ const ModernTemplate = ({
   isEditing,
   onChange,
   theme,
+  avatarUrl,
 }: {
   data: ResumeData;
   isEditing: boolean;
   onChange: (field: keyof ResumeData, value: string) => void;
   theme: ThemeColors;
+  avatarUrl: string | null;
 }) => {
   const skills = data.core_skills.split(',').map(s => s.trim());
+  const avatarSrc = avatarUrl || logoCat;
 
   return (
     <div className="grid md:grid-cols-[1fr_2.5fr] gap-6">
@@ -1251,10 +1256,10 @@ const ModernTemplate = ({
         style={{ backgroundColor: `${theme.main}10` }}
       >
         <div
-          className="h-32 w-32 mx-auto rounded-full flex items-center justify-center"
-          style={{ backgroundColor: theme.main }}
+          className="h-32 w-32 mx-auto rounded-full flex items-center justify-centerr overflow-hidden border-2"
+          style={{ borderColor: theme.main }}
         >
-          <span className="text-4xl font-bold text-white">{data.name.charAt(0)}</span>
+          <img src={avatarSrc} alt={data.name} className="h-full w-full object-cover" />
         </div>
 
         <div className="space-y-2 text-sm">
@@ -1385,133 +1390,134 @@ const CreativeTemplate = ({
   isEditing,
   onChange,
   theme,
+  avatarUrl,
 }: {
   data: ResumeData;
   isEditing: boolean;
   onChange: (field: keyof ResumeData, value: string) => void;
   theme: ThemeColors;
-}) => (
-  <div className="relative">
-    <div
-      className="absolute inset-0 rounded-lg opacity-10"
-      style={{ backgroundColor: theme.main }}
-    />
+  avatarUrl: string | null;
+}) => {
+  const avatarSrc = avatarUrl || logoCat;
 
-    <div className="relative p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row items-center gap-6 avoid-break" data-pdf-section>
-        <div className="relative">
-          <div
-            className="h-36 w-36 rounded-full p-1"
-            style={{ backgroundColor: theme.main }}
-          >
-            <div className="h-full w-full rounded-full bg-white flex items-center justify-center">
-              <span
-                className="text-5xl font-bold"
-                style={{ color: theme.main }}
-              >
-                {data.name.charAt(0)}
-              </span>
+  return (
+    <div className="relative">
+      <div
+        className="absolute inset-0 rounded-lg opacity-10"
+        style={{ backgroundColor: theme.main }}
+      />
+
+      <div className="relative p-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row items-center gap-6 avoid-break" data-pdf-section>
+          <div className="relative">
+            <div
+              className="h-36 w-36 rounded-full p-1"
+              style={{ backgroundColor: theme.main }}
+            >
+              <div className="h-full w-full rounded-full overflow-hidden">
+                <img src={avatarSrc} alt={data.name} className="h-full w-full object-cover" />
+              </div>
+            </div>
+            <div
+              className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: theme.accent }}
+            >
+              <Sparkles className="h-4 w-4 text-white" />
             </div>
           </div>
-          <div
-            className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full flex items-center justify-center"
-            style={{ backgroundColor: theme.accent }}
-          >
-            <Sparkles className="h-4 w-4 text-white" />
-          </div>
-        </div>
 
-        <div className="text-center md:text-left flex-1">
-          <h1
-            className="text-4xl font-bold"
-            style={{ color: theme.main }}
-          >
-            <EditableField value={data.name} onChange={(v) => onChange('name', v)} isEditing={isEditing} />
-          </h1>
-          {data.professional_summary && (
-            <p className="mt-2" style={{ color: theme.text }}>
-              <EditableField value={data.professional_summary} onChange={(v) => onChange('professional_summary', v)} isEditing={isEditing} multiline />
-            </p>
-          )}
-          <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-3 text-sm">
-            <span className="flex items-center gap-1" style={{ color: theme.main }}>
-              <Mail className="h-4 w-4" />
-              <EditableField value={data.email} onChange={(v) => onChange('email', v)} isEditing={isEditing} />
-            </span>
-            <span className="flex items-center gap-1" style={{ color: theme.secondary }}>
-              <Phone className="h-4 w-4" />
-              <EditableField value={data.phone} onChange={(v) => onChange('phone', v)} isEditing={isEditing} />
-            </span>
-            {data.linkedin && (
-              <span className="flex items-center gap-1" style={{ color: theme.main }}>
-                <Linkedin className="h-4 w-4" />
-                <EditableField value={data.linkedin} onChange={(v) => onChange('linkedin', v)} isEditing={isEditing} />
-              </span>
+          <div className="text-center md:text-left flex-1">
+            <h1
+              className="text-4xl font-bold"
+              style={{ color: theme.main }}
+            >
+              <EditableField value={data.name} onChange={(v) => onChange('name', v)} isEditing={isEditing} />
+            </h1>
+            {data.professional_summary && (
+              <p className="mt-2" style={{ color: theme.text }}>
+                <EditableField value={data.professional_summary} onChange={(v) => onChange('professional_summary', v)} isEditing={isEditing} multiline />
+              </p>
             )}
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-3 text-sm">
+              <span className="flex items-center gap-1" style={{ color: theme.main }}>
+                <Mail className="h-4 w-4" />
+                <EditableField value={data.email} onChange={(v) => onChange('email', v)} isEditing={isEditing} />
+              </span>
+              <span className="flex items-center gap-1" style={{ color: theme.secondary }}>
+                <Phone className="h-4 w-4" />
+                <EditableField value={data.phone} onChange={(v) => onChange('phone', v)} isEditing={isEditing} />
+              </span>
+              {data.linkedin && (
+                <span className="flex items-center gap-1" style={{ color: theme.main }}>
+                  <Linkedin className="h-4 w-4" />
+                  <EditableField value={data.linkedin} onChange={(v) => onChange('linkedin', v)} isEditing={isEditing} />
+                </span>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Content Grid */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div data-pdf-section className="avoid-break">
+            <CreativeSectionWithColor title="工作經驗" theme={theme}>
+              <EditableField value={data.professional_experience} onChange={(v) => onChange('professional_experience', v)} isEditing={isEditing} multiline />
+            </CreativeSectionWithColor>
+          </div>
+
+          <div data-pdf-section className="avoid-break">
+            <CreativeSectionWithColor title="學歷" theme={theme} useSecondary>
+              <EditableField value={data.education} onChange={(v) => onChange('education', v)} isEditing={isEditing} multiline />
+            </CreativeSectionWithColor>
+          </div>
+        </div>
+
+        {/* Skills as Pills */}
+        <div data-pdf-section className="avoid-break">
+          <CreativeSectionWithColor title="技能專長" theme={theme} fullWidth>
+            {isEditing ? (
+              <EditableField value={data.core_skills} onChange={(v) => onChange('core_skills', v)} isEditing={isEditing} />
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {data.core_skills.split(',').map((skill, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 rounded-full text-sm"
+                    style={{
+                      backgroundColor: `${theme.accent}20`,
+                      color: theme.main,
+                    }}
+                  >
+                    {skill.trim()}
+                  </span>
+                ))}
+              </div>
+            )}
+          </CreativeSectionWithColor>
+        </div>
+
+        {/* Projects */}
+        {data.projects && (
+          <div data-pdf-section className="avoid-break">
+            <CreativeSectionWithColor title="專案作品集" theme={theme} fullWidth useSecondary>
+              <EditableField value={data.projects} onChange={(v) => onChange('projects', v)} isEditing={isEditing} multiline />
+            </CreativeSectionWithColor>
+          </div>
+        )}
+
+        {/* Autobiography */}
+        {data.autobiography && (
+          <div data-pdf-section className="avoid-break">
+            <CreativeSectionWithColor title="自傳" theme={theme} fullWidth>
+              <EditableField value={data.autobiography} onChange={(v) => onChange('autobiography', v)} isEditing={isEditing} multiline />
+            </CreativeSectionWithColor>
+          </div>
+        )}
       </div>
-
-      {/* Content Grid */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div data-pdf-section className="avoid-break">
-          <CreativeSectionWithColor title="工作經驗" theme={theme}>
-            <EditableField value={data.professional_experience} onChange={(v) => onChange('professional_experience', v)} isEditing={isEditing} multiline />
-          </CreativeSectionWithColor>
-        </div>
-
-        <div data-pdf-section className="avoid-break">
-          <CreativeSectionWithColor title="學歷" theme={theme} useSecondary>
-            <EditableField value={data.education} onChange={(v) => onChange('education', v)} isEditing={isEditing} multiline />
-          </CreativeSectionWithColor>
-        </div>
-      </div>
-
-      {/* Skills as Pills */}
-      <div data-pdf-section className="avoid-break">
-        <CreativeSectionWithColor title="技能專長" theme={theme} fullWidth>
-          {isEditing ? (
-            <EditableField value={data.core_skills} onChange={(v) => onChange('core_skills', v)} isEditing={isEditing} />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {data.core_skills.split(',').map((skill, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 rounded-full text-sm"
-                  style={{
-                    backgroundColor: `${theme.accent}20`,
-                    color: theme.main,
-                  }}
-                >
-                  {skill.trim()}
-                </span>
-              ))}
-            </div>
-          )}
-        </CreativeSectionWithColor>
-      </div>
-
-      {/* Projects */}
-      {data.projects && (
-        <div data-pdf-section className="avoid-break">
-          <CreativeSectionWithColor title="專案作品集" theme={theme} fullWidth useSecondary>
-            <EditableField value={data.projects} onChange={(v) => onChange('projects', v)} isEditing={isEditing} multiline />
-          </CreativeSectionWithColor>
-        </div>
-      )}
-
-      {/* Autobiography */}
-      {data.autobiography && (
-        <div data-pdf-section className="avoid-break">
-          <CreativeSectionWithColor title="自傳" theme={theme} fullWidth>
-            <EditableField value={data.autobiography} onChange={(v) => onChange('autobiography', v)} isEditing={isEditing} multiline />
-          </CreativeSectionWithColor>
-        </div>
-      )}
     </div>
-  </div>
-);
+  );
+};
 
 // Template Section Helper with Color
 const TemplateSectionWithColor = ({
