@@ -111,11 +111,22 @@ def login():
 
         # 更新最後登入時間 (使用 USER 表與 auth_uid)
         try:
-            supabase.table("USER").update(
-                {"last_login": datetime.utcnow().isoformat()}
-            ).eq("auth_uid", user.id).execute()
+            # 使用更精確且相容的 timestamp 格式 (ISO with UTC indicator)
+            current_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S+00')
+            
+            # 優先使用 auth_uid 更新
+            update_res = supabase.table("USER").update(
+                {"last_login": current_time}
+            ).eq("auth_uid", str(user.id)).execute()
+            
+            # 備案：如果 auth_uid 無法更新（可能同步尚未完成），嘗試以 email 更新
+            if not update_res.data:
+                print(f"[Auth] last_login update by auth_uid failed, trying email fallback for {email}")
+                supabase.table("USER").update(
+                    {"last_login": current_time}
+                ).eq("email", email).execute()
         except Exception as e:
-            print(f"[Debug] Failed to update last_login: {e}")
+            print(f"[Auth] Failed to update last_login for {email}: {e}")
             pass
 
         # 回傳指定格式
