@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { motion } from 'framer-motion';
 import AlertModal from '@/components/modals/AlertModal';
+import { getResumes } from '@/mocks/resumes';
 
 // ⚠️ 注意：請確認你的 supabase client 實際的路徑！
 // 如果路徑不同，請把 '@/lib/supabaseClient' 改成你專案中正確的路徑
@@ -37,43 +38,25 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
   // 🌟 修改：透過後端 API 撈取履歷清單
   // 🌟 修改：聰明版 API 呼叫 (帶有自動假資料備援)
   useEffect(() => {
-    const fetchResumesFromAPI = async () => {
+    const fetchResumesForDropdown = async () => {
       try {
-        const currentUserId = 1;
+        // 2. 直接呼叫前端的 Supabase 完美版 API
+        const data = await getResumes();
 
-        // 嘗試呼叫後端 API (請確認你們後端 API 的真實網址)
-        // 如果你們前端有統一的 axios/apiClient，建議用那個替換 fetch
-        const response = await fetch(`/api/users/${currentUserId}/resumes`);
+        // 3. 轉換成下拉選單要的格式
+        const combinedOptions = data.map((r: any) => ({
+          id: r.id,          // 這裡就會是正確的 3, 4, 5 了！
+          title: r.name,
+          sourceType: r.sourceType
+        }));
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        if (result.status === "success" && result.data) {
-          const combinedOptions = result.data.map((r: any) => ({
-            id: r.id,
-            title: r.title,
-            sourceType: r.type // "RESUME" 或 "OPTIMIZATION"
-          }));
-          setResumeOptions(combinedOptions);
-          return; // 成功的話就結束函數
-        }
+        setResumeOptions(combinedOptions);
       } catch (error) {
-        console.warn("⚠️ 無法連上後端 API，自動切換為測試假資料！錯誤原因：", error);
-
-        // 🚨 API 連不上時的「備用假資料」，讓你的畫面不會空空的！
-        const mockData = [
-          { id: 1, title: "後端工程師_原版", sourceType: "RESUME" },
-          { id: 2, title: "前端工程師_原版", sourceType: "RESUME" },
-          { id: 8, title: "軟體工程師_AI優化版", sourceType: "OPTIMIZATION" }
-        ];
-        setResumeOptions(mockData);
+        console.error("載入履歷失敗", error);
       }
     };
 
-    fetchResumesFromAPI();
+    fetchResumesForDropdown();
   }, []);
 
   const formatSalary = (value: number) => {
