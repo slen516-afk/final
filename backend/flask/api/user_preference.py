@@ -8,6 +8,8 @@ from core.redis_client import (
     redis_client,
     STREAM_NAME,
 )
+from core.supabase_client import supabase
+
 
 user_preference_bp = Blueprint('user_preference', __name__)
 
@@ -49,15 +51,36 @@ def _get_job(job_id: str) -> dict | None:
 def create_career_survey():
     try:
         user_id = g.user_id
-        data = request.json
+        db_user_id = g.db_user_id
+
+        if db_user_id is None:
+            return jsonify({'error': 'User not found in DB'}), 403
+
+        # 從 career_survey 找出該使用者最新的 questionnaire_response
+        result = (
+            supabase.table("career_survey")
+            .select("questionnaire_response")
+            .eq("user_id", db_user_id)
+            .order("completed_at", desc=True)
+            .execute()
+        )
+
+        data = None
+        for row in result.data:
+            if row.get("questionnaire_response"):
+                data = row["questionnaire_response"]
+                break
+
+        if not data:
+            return jsonify({'error': 'No career survey response found for this user.'}), 404
 
         required_modules = ['module_a', 'module_b', 'module_c', 'module_d']
         for module in required_modules:
             if module not in data:
-                return jsonify({'error': f'Missing module: {module}'}), 400
+                return jsonify({'error': f'Missing module in DB: {module}'}), 400
 
-        # 前端照 manager.py 要求的格式傳入，直接存整個 request body，不做額外包裝
-        job_id = _create_survey_job(user_id, data)
+        # 將 DB 取得的 data 放進 job
+        job_id = _create_survey_job(db_user_id, data)
 
         return jsonify({
             'job_id': job_id,

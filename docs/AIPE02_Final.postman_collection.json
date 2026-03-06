@@ -7,7 +7,7 @@
   },
   "item": [
     {
-      "name": "2 Create_Survey",
+      "name": "Questionnaire_for_Career",
       "request": {
         "auth": {
           "type": "bearer",
@@ -23,13 +23,76 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n    \"module_a\": {\r\n        \"q1_languages\": [\r\n            {\r\n                \"name\": \"Python\",\r\n                \"score\": 5\r\n            },\r\n            {\r\n                \"name\": \"SQL\",\r\n                \"score\": 4\r\n            },\r\n            {\r\n                \"name\": \"Git\",\r\n                \"score\": 4\r\n            }\r\n        ],\r\n        \"q2_frontend\": \"unfamiliar\",\r\n        \"q3_backend\": \"distributed_system\",\r\n        \"q4_database\": [\r\n            \"rdbms_sql\",\r\n            \"key_value_cache\"\r\n        ],\r\n        \"q5_devops\": \"k8s_cicd\",\r\n        \"q6_ai_data\": \"api_consumer\",\r\n        \"q7_security\": \"framework_default\",\r\n        \"q8_domain\": \"電子商務\"\r\n    },\r\n    \"module_b\": {\r\n        \"q9_troubleshoot\": \"incident_analysis\",\r\n        \"q10_tech_choice\": \"tradeoff_analysis\",\r\n        \"q11_communication\": \"alternative_solution\",\r\n        \"q12_code_review\": \"architecture_solid\",\r\n        \"q13_learning\": \"deep_dive_sharing\",\r\n        \"q14_process\": \"process_optimization\",\r\n        \"q15_english\": \"global_comm\"\r\n    },\r\n    \"module_c\": {\r\n        \"q16_current_level\": \"senior\",\r\n        \"q17_target_role\": \"backend\",\r\n        \"q18_industry\": \"product_company\",\r\n        \"q19_search_status\": \"passive_open\"\r\n    },\r\n    \"module_d\": {\r\n        \"q20_values_top3\": [\r\n            \"technical_growth\",\r\n            \"social_impact\",\r\n            \"financial_reward\"\r\n        ],\r\n        \"q21_pressure\": \"consider_short_term\",\r\n        \"q22_career_type\": \"specialist\",\r\n        \"q23_learning_style\": [\r\n            \"official_docs\",\r\n            \"hands_on_projects\"\r\n        ]\r\n    },\r\n    \"trait_data\": {\r\n        \"trait_raw_responses\": {\r\n            \"Q1\": \"C\",\r\n            \"Q2\": \"A\",\r\n            \"Q3\": \"B\",\r\n            \"Q4\": \"C\",\r\n            \"Q5\": \"A\",\r\n            \"Q6\": \"B\",\r\n            \"Q7\": \"B\",\r\n            \"Q8\": \"A\",\r\n            \"Q9\": \"A\",\r\n            \"Q10\": \"A\"\r\n        },\r\n        \"trait_calculation_debug\": {\r\n            \"structure_raw\": 10,\r\n            \"ambiguity_raw\": 0,\r\n            \"decision_raw\": 2,\r\n            \"learning_raw\": 4,\r\n            \"transfer_raw\": 5\r\n        },\r\n        \"trait_normalized_scores\": {\r\n            \"structure\": 95,\r\n            \"ambiguity\": 35,\r\n            \"decision\": 50,\r\n            \"learning\": 60,\r\n            \"transfer\": 85\r\n        },\r\n        \"primary_archetype\": \"STRUCTURE_ARCHITECT\",\r\n        \"secondary_archetypes\": [\r\n            \"CROSS_DOMAIN_INTEGRATOR\"\r\n        ],\r\n        \"trait_created_at\": \"2026-02-15T10:00:00Z\"\r\n    }\r\n}",
+          "raw": "{\r\n  \"module_a\": {\r\n    \"q1_languages\": [\r\n      { \"name\": \"Python\", \"score\": 5 },\r\n      { \"name\": \"SQL\", \"score\": 4 },\r\n      { \"name\": \"Git\", \"score\": 4 }\r\n    ],\r\n    \"q2_frontend\": \"unfamiliar\",\r\n    \"q3_backend\": \"distributed_system\",\r\n    \"q4_database\": [\"rdbms_sql\", \"key_value_cache\"],\r\n    \"q5_devops\": \"k8s_cicd\",\r\n    \"q6_ai_data\": \"api_consumer\",\r\n    \"q7_security\": \"framework_default\",\r\n    \"q8_domain\": \"電子商務\"\r\n  },\r\n  \"module_b\": {\r\n    \"q9_troubleshoot\": \"incident_analysis\",\r\n    \"q10_tech_choice\": \"tradeoff_analysis\",\r\n    \"q11_communication\": \"alternative_solution\",\r\n    \"q12_code_review\": \"architecture_solid\",\r\n    \"q13_learning\": \"deep_dive_sharing\",\r\n    \"q14_process\": \"process_optimization\",\r\n    \"q15_english\": \"global_comm\"\r\n  },\r\n  \"module_c\": {\r\n    \"q16_current_level\": \"senior\",\r\n    \"q17_target_role\": \"backend\",\r\n    \"q18_industry\": \"product_company\",\r\n    \"q19_search_status\": \"passive_open\"\r\n  },\r\n  \"module_d\": {\r\n    \"q20_values_top3\": [\r\n      \"technical_growth\",\r\n      \"social_impact\",\r\n      \"financial_reward\"\r\n    ],\r\n    \"q21_pressure\": \"consider_short_term\",\r\n    \"q22_career_type\": \"specialist\",\r\n    \"q23_learning_style\": [\"official_docs\", \"hands_on_projects\"]\r\n  }\r\n}\r\n",
           "options": {
             "raw": {
               "language": "json"
             }
           }
         },
+        "url": {
+          "raw": "{{base_url}}/questionnaire-response",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "questionnaire-response"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Questionnaire_for_personality",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"trait_raw_responses\": {\r\n    \"Q1\": \"C\",\r\n    \"Q2\": \"A\",\r\n    \"Q3\": \"B\",\r\n    \"Q4\": \"C\",\r\n    \"Q5\": \"A\",\r\n    \"Q6\": \"B\",\r\n    \"Q7\": \"B\",\r\n    \"Q8\": \"A\",\r\n    \"Q9\": \"A\",\r\n    \"Q10\": \"A\"\r\n  },\r\n  \"trait_calculation_debug\": {\r\n    \"structure_raw\": 10,\r\n    \"ambiguity_raw\": 0,\r\n    \"decision_raw\": 2,\r\n    \"learning_raw\": 4,\r\n    \"transfer_raw\": 5\r\n  },\r\n  \"trait_normalized_scores\": {\r\n    \"structure\": 95,\r\n    \"ambiguity\": 35,\r\n    \"decision\": 50,\r\n    \"learning\": 60,\r\n    \"transfer\": 85\r\n  },\r\n  \"primary_archetype\": \"STRUCTURE_ARCHITECT\",\r\n  \"secondary_archetypes\": [\"CROSS_DOMAIN_INTEGRATOR\"],\r\n  \"trait_created_at\": \"2026-02-15T10:00:00Z\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/personality",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "personality"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Gap_Analysis",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
         "url": {
           "raw": "{{base_url}}/dream-jobs",
           "host": [
@@ -43,7 +106,7 @@
       "response": []
     },
     {
-      "name": "2 Survey_qry",
+      "name": "Gap_Analysis_Polling",
       "request": {
         "auth": {
           "type": "bearer",
@@ -56,22 +119,28 @@
           ]
         },
         "method": "GET",
-        "header": [],
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer{{token}}",
+            "type": "text"
+          }
+        ],
         "url": {
-          "raw": "{{base_url}}/dream-jobs/job_2b95a888d647",
+          "raw": "{{base_url}}/dream-jobs/job_a5c05f8a105f",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "dream-jobs",
-            "job_2b95a888d647"
+            "job_a5c05f8a105f"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "3 Resume_Form",
+      "name": "Create_Origin_Resume",
       "request": {
         "auth": {
           "type": "bearer",
@@ -93,7 +162,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"structured_data\": {\r\n    \"basics\": {\r\n      \"name\": \"測試人員\",\r\n      \"email\": \"test@example.com\",\r\n      \"phone\": \"0912345678\",\r\n      \"location\": \"Taipei, Taiwan\",\r\n      \"summary\": \"全端工程師，3 年 Python/Flask 開發經驗\"\r\n    },\r\n    \"education\": [\r\n      {\r\n        \"school\": \"台灣大學\",\r\n        \"degree\": \"資訊工程學士\",\r\n        \"start_date\": \"2018-09\",\r\n        \"end_date\": \"2022-06\"\r\n      }\r\n    ],\r\n    \"work_experience\": [\r\n      {\r\n        \"company\": \"Tech Corp\",\r\n        \"position\": \"Backend Developer\",\r\n        \"start_date\": \"2022-07\",\r\n        \"end_date\": \"Present\",\r\n        \"description\": \"負責 API 開發與系統維護\"\r\n      }\r\n    ],\r\n    \"skills\": [\"Python\", \"Flask\", \"Docker\", \"PostgreSQL\"],\r\n    \"languages\": [\"Chinese (Native)\", \"English (Professional)\"]\r\n  }\r\n}",
+          "raw": "{\r\n    \"resume_name\": \"我的履歷1\",\r\n    \"resume_type\": \"generic\",\r\n    \"structured_data\": {\r\n        \"basics\": {\r\n            \"name\": \"測試人員\",\r\n            \"email\": \"test@example.com\",\r\n            \"phone\": \"0912345678\",\r\n            \"location\": \"Taipei, Taiwan, K Street.\"\r\n        },\r\n        \"education\": \"國立臺灣大學, 資訊管理系, 學士, 2024 畢業\",\r\n        \"work_experience\": \"任職AA公司，擔任全端工程師。\",\r\n        \"skills\": \"python和html\",\r\n        \"languages\": [\r\n            {\r\n                \"language\": \"Chinese\",\r\n                \"level\": \"Advanced\"\r\n            },\r\n            {\r\n                \"language\": \"English\",\r\n                \"level\": \"Intermediate\"\r\n            }\r\n        ],\r\n        \"certificate_projects\": \"通知機器人:開發具備動態網頁資料抓取 (Web Scraping) 與自動化通知功能的 Discord 機器人，支援多頻道即時訊息同步。\",\r\n        \"portfolio\": \"作品集\",\r\n        \"autobiography\": \"全端工程師，3 年 Python/Flask 開發經驗\",\r\n        \"others\": \"Github: https://github.com/dlin-backend-demo\"\r\n    }\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -114,7 +183,7 @@
       "response": []
     },
     {
-      "name": "3 Get_Resume",
+      "name": "Get_Origin_Resume",
       "request": {
         "auth": {
           "type": "bearer",
@@ -135,91 +204,20 @@
           }
         ],
         "url": {
-          "raw": "{{base_url}}/resumes/25",
+          "raw": "{{base_url}}/resumes/40",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "resumes",
-            "25"
+            "40"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "3 Get_Resumes_All",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer{{token}}",
-            "type": "text"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/resumes/25/versions",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "resumes",
-            "25",
-            "versions"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "3 Get_Resumes_Version",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [
-          {
-            "key": "Authorization",
-            "value": "Bearer{{token}}",
-            "type": "text"
-          }
-        ],
-        "url": {
-          "raw": "{{base_url}}/resumes/25/versions/1",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "resumes",
-            "25",
-            "versions",
-            "1"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "3 Update_Resume",
+      "name": "Create_Opt_Resume",
       "request": {
         "auth": {
           "type": "bearer",
@@ -241,7 +239,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"professional_summary\": \"全端工程師，擁有 3 年 Python/Flask 與 React 開發經驗，主導日處理 50 萬請求後端系統重構，熟悉 CI/CD、容器化部署與雲端服務。\",\r\n  \"professional_experience\": [\r\n    \"Tech Corp | Senior Backend Developer | 2022-07 ~ Present | 主導 RESTful API 重構，回應時間從 800ms 降至 120ms；設計 Redis 快取層降低資料庫負載 60%\",\r\n    \"Startup Inc. | Junior Developer | 2021-01 ~ 2022-06 | 開發內部管理後台（React + Flask），支援 50+ 使用者同時操作\"\r\n  ],\r\n  \"core_skills\": [\r\n    \"Python\", \"Flask\", \"FastAPI\", \"React\", \"TypeScript\",\r\n    \"PostgreSQL\", \"Redis\", \"Docker\", \"Kubernetes\", \"CI/CD\", \"REST API\", \"AWS\"\r\n  ],\r\n  \"projects\": [\r\n    \"Career Pilot — AI 職涯規劃平台，整合 LLM 進行履歷分析，使用 Redis Stream 實作非同步任務佇列\",\r\n    \"Smart Inventory System — 智慧庫存管理系統，FastAPI + Celery 處理批次匯入任務\"\r\n  ],\r\n  \"education\": [\r\n    \"國立台灣大學 | 資訊工程學系 | 學士 | 2022-06\"\r\n  ],\r\n  \"autobiography\": \"熱衷於解決複雜工程問題的全端工程師，主導核心系統微服務化重構，系統承載能力提升 4 倍。\",\r\n  \"style_settings\": {\r\n    \"color\": \"#1A73E9\"\r\n  }\r\n}\r\n",
+          "raw": "{\r\n    \"professional_summary\": \"全端工程師，擁有 3 年 Python/Flask 與 React 開發經驗，主導日處理 50 萬請求後端系統重構，熟悉 CI/CD、容器化部署與雲端服務。\",\r\n    \"professional_experience\": [\r\n        \"Tech Corp | Senior Backend Developer | 2022-07 ~ Present | 主導 RESTful API 重構，回應時間從 800ms 降至 120ms；設計 Redis 快取層降低資料庫負載 60%\",\r\n        \"Startup Inc. | Junior Developer | 2021-01 ~ 2022-06 | 開發內部管理後台（React + Flask），支援 50+ 使用者同時操作\"\r\n    ],\r\n    \"core_skills\": [\r\n        \"Python\",\r\n        \"Flask\",\r\n        \"FastAPI\",\r\n        \"React\",\r\n        \"TypeScript\",\r\n        \"PostgreSQL\",\r\n        \"Redis\",\r\n        \"Docker\",\r\n        \"Kubernetes\",\r\n        \"CI/CD\",\r\n        \"REST API\",\r\n        \"AWS\"\r\n    ],\r\n    \"projects\": [\r\n        \"Career Pilot — AI 職涯規劃平台，整合 LLM 進行履歷分析，使用 Redis Stream 實作非同步任務佇列\",\r\n        \"Smart Inventory System — 智慧庫存管理系統，FastAPI + Celery 處理批次匯入任務\"\r\n    ],\r\n    \"education\": [\r\n        \"國立台灣大學 | 資訊工程學系 | 學士 | 2022-06\"\r\n    ],\r\n    \"autobiography\": \"熱衷於解決複雜工程問題的全端工程師，主導核心系統微服務化重構，系統承載能力提升 4 倍。\",\r\n    \"style_settings\": {\r\n        \"template_id\": 2,\r\n        \"style_color\": \"#1A73E8\"\r\n    }\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -249,20 +247,20 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/resumes/25",
+          "raw": "{{base_url}}/resumes/40",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "resumes",
-            "25"
+            "40"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "4 Resume_analysis",
+      "name": "Resume_analysis",
       "request": {
         "auth": {
           "type": "bearer",
@@ -305,7 +303,7 @@
       "response": []
     },
     {
-      "name": "4 Resume_opt",
+      "name": "Resume_opt",
       "request": {
         "auth": {
           "type": "bearer",
@@ -348,7 +346,7 @@
       "response": []
     },
     {
-      "name": "4 Get_Analysis_Results",
+      "name": "Get_Resume_Analysis",
       "protocolProfileBehavior": {
         "disableBodyPruning": true
       },
@@ -381,53 +379,14 @@
           }
         },
         "url": {
-          "raw": "{{base_url}}/analysis/jobs/job_4a5ee34f1753",
+          "raw": "{{base_url}}/analysis/jobs/job_2d05394b4cf8",
           "host": [
             "{{base_url}}"
           ],
           "path": [
             "analysis",
             "jobs",
-            "job_4a5ee34f1753"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "5 export_pdf",
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/resumes/25/export?format=pdf&version=2",
-          "host": [
-            "{{base_url}}"
-          ],
-          "path": [
-            "resumes",
-            "25",
-            "export"
-          ],
-          "query": [
-            {
-              "key": "format",
-              "value": "pdf"
-            },
-            {
-              "key": "version",
-              "value": "2"
-            }
+            "job_2d05394b4cf8"
           ]
         }
       },

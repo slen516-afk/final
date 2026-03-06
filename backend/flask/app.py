@@ -9,11 +9,11 @@ from flask_cors import CORS
 from api.auth import auth_bp
 from api.user_preference import user_preference_bp
 from api.resume import resume_bp
-from api.export import export_bp
 from api.analysis import analysis_bp
 from api.resume_processing import resume_proc_bp
 from api.recommendation import rec_bp
 from api.ocr import ocr_bp
+from api.questionnaire import questionnaire_bp
 from api.cover_letter import cover_letter_bp
 
 try:
@@ -94,7 +94,6 @@ def create_app():
 
 # 2. 履歷核心
     app.register_blueprint(resume_bp, url_prefix='/api/resumes')
-    app.register_blueprint(export_bp, url_prefix='/api/resumes')
 
 # 3. 履歷處理
     app.register_blueprint(resume_proc_bp, url_prefix='/api/resume_process')
@@ -108,7 +107,10 @@ def create_app():
     app.register_blueprint(user_preference_bp, url_prefix='/api')
     app.register_blueprint(rec_bp, url_prefix='/api')
 
-# 6. 非同步任務 (選用)
+# 6. 問卷作答
+    app.register_blueprint(questionnaire_bp, url_prefix='/api')
+
+# 7. 非同步任務 (選用)
     if _has_async_tasks:
         app.register_blueprint(async_tasks_bp, url_prefix='/api/tasks')
 

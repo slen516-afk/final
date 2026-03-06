@@ -84,17 +84,32 @@ def process_job(job_id: str, task_type: str) -> dict:
 
     # ===== survey_analysis: 呼叫 CareerAgentManager =====
     if task_type == "survey_analysis":
-        payload = json.loads(job_data.get("survey_data", "{}"))
         user_id = job_data.get("user_id", "")
 
-        # 前端直傳 module_a~d，直接組成 survey_json（不做額外拆解）
-        survey_dict = {
-            k: payload[k]
-            for k in ("module_a", "module_b", "module_c", "module_d")
-            if k in payload
-        }
+        # 從 career_survey 表取最新的 questionnaire_response 和 personality
+        from core.supabase_client import supabase
+
+        survey_row = (
+            supabase.table("career_survey")
+            .select("questionnaire_response, personality")
+            .eq("user_id", user_id)
+            .order("survey_id", desc=True)
+            .limit(1)
+            .execute()
+        )
+
+        if not survey_row.data:
+            raise ValueError(f"career_survey 中找不到 user_id={user_id} 的問卷資料")
+
+        row = survey_row.data[0]
+        survey_dict = row.get("questionnaire_response") or {}
+        trait_dict = row.get("personality") or {}
+
+        # 移除 trait_raw_responses（不送給 model）
+        trait_dict.pop("trait_raw_responses", None)
+
         survey_json_str = json.dumps(survey_dict, ensure_ascii=False)
-        trait_json_str = json.dumps(payload.get("trait_data", {}), ensure_ascii=False)
+        trait_json_str = json.dumps(trait_dict, ensure_ascii=False)
 
         user_input = {
             "user_id": user_id,

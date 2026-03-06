@@ -55,14 +55,17 @@ def _get_job(job_id: str) -> dict | None:
 @login_required
 def start_analysis_task():
     try:
-        user_id = g.user_id
+        db_user_id = g.db_user_id
+        if db_user_id is None:
+            return jsonify({'error': 'User not found in DB'}), 403
+
         data = request.json
 
         task_type = data.get("task_type", "resume_analysis")
         if task_type not in VALID_TASK_TYPES:
             return jsonify({"error": f"Unsupported task_type: {task_type}. 支援: {', '.join(VALID_TASK_TYPES)}"}), 400
 
-        job_id = _create_job(user_id, task_type)
+        job_id = _create_job(db_user_id, task_type)
 
         return jsonify({
             "job_id": job_id,

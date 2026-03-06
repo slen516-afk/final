@@ -8,30 +8,32 @@ resume_bp = Blueprint('resume', __name__)
 
 @resume_bp.route('/form', methods=['POST'])
 @login_required
-def create_resume_form():
+def create_resume():
     """
-    C-02 建立履歷 (表單填寫)
+    C-02 建立原始履歷
     DB: RESUME — 存原始履歷
     """
     try:
         user_id = g.db_user_id
         if user_id is None:
             return jsonify({'error': 'User not found in DB'}), 403
-        data = request.json
+        data = request.get_json(silent=True) or {}
+        if not data.get('resume_name'):
+            return jsonify({'error': 'Missing resume_name'}), 400
         if 'structured_data' not in data:
             return jsonify({'error': 'Missing structured_data'}), 400
 
-        template_id = data.get('template_id', 1)
-        resume_type = data.get('resume_type', 'generic')
+        resume_type = data.get('resume_type')
+        if resume_type not in ('uploaded', 'generic'):
+            return jsonify({'error': "resume_type must be 'uploaded' or 'generic'"}), 400
 
         now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S+00')
 
         insert_payload = {
             "user_id": int(user_id),
-            "template_id": int(template_id),
+            "resume_name": data['resume_name'],
             "resume_type": resume_type,
             "structured_data": data['structured_data'],
-            "normalized_data": data.get('normalized_data', {}),
             "vector_id": None,
             "is_embedded": False,
             "is_primary": True,
@@ -87,9 +89,9 @@ def get_resume(id):
 
 @resume_bp.route('/<int:id>', methods=['PUT'])
 @login_required
-def update_resume(id):
+def create_opt_resume(id):
     """
-    C-05 用戶更新/確認履歷內容 → 寫入 resume_optimization
+    C-05 建立優化履歷
     每次 PUT 自動產生新版本 (optimization_version 遞增)
     DB: RESUME_OPTIMIZATION
     """
@@ -100,15 +102,17 @@ def update_resume(id):
 
         owner_check = (
             supabase.table("resume")
-            .select("resume_id")
+            .select("resume_id, resume_name")
             .eq("resume_id", id)
             .eq("user_id", user_id)
             .execute()
         )
         if not owner_check.data:
             return jsonify({'error': 'Resume not found or not owned by user'}), 404
+        base_resume_name = owner_check.data[0].get('resume_name') or str(id)
+        opt_resume_name = f"{base_resume_name}_優化"
 
-        data = request.json
+        data = request.get_json(silent=True) or {}
         if not data:
             return jsonify({'error': 'Missing request body'}), 400
 
@@ -135,32 +139,26 @@ def update_resume(id):
         insert_payload = {
             "resume_id": id,
             "user_id": int(user_id),
+            "resume_name": opt_resume_name,
             "optimization_version": next_ver,
-            "professional_summary": sd.get('professional_summary')
-                or data.get('professional_summary'),
-            "professional_experience": sd.get('professional_experience')
-                or sd.get('work_experience')
-                or data.get('professional_experience'),
-            "core_skills": sd.get('core_skills')
-                or sd.get('skills')
-                or data.get('core_skills'),
-            "projects": sd.get('projects')
-                or data.get('projects'),
-            "education": sd.get('education')
-                or data.get('education'),
-            "autobiography": sd.get('autobiography')
-                or data.get('autobiography'),
+            "professional_summary": data.get('professional_summary'), # 假設保留給自備
+            "professional_experience": sd.get('work_experience') or data.get('professional_experience'),
+            "core_skills": sd.get('skills') or data.get('core_skills'),
+            "projects": sd.get('certificate_projects') or data.get('projects'),
+            "education": sd.get('education') or data.get('education'),
+            "autobiography": sd.get('autobiography') or data.get('autobiography'),
         }
 
-        # template_color (style_settings.color → varchar)
+        # template_color: JSON { template_id, style_color } 存入 DB
         style = data.get('style_settings', {})
-        if isinstance(style, dict) and style.get('color'):
-            insert_payload["template_color"] = style['color']
-        elif isinstance(style, str):
-            insert_payload["template_color"] = style
-
-        if data.get('version_id'):
-            insert_payload["version_id"] = int(data['version_id'])
+        if isinstance(style, dict):
+            template_color = {}
+            if style.get('template_id') is not None:
+                template_color['template_id'] = style['template_id']
+            if style.get('style_color'):
+                template_color['style_color'] = style['style_color']
+            if template_color:
+                insert_payload['template_color'] = template_color
 
         insert_payload = {k: v for k, v in insert_payload.items() if v is not None}
 
@@ -175,6 +173,7 @@ def update_resume(id):
         return jsonify({
             'optimization_id': inserted['optimization_id'],
             'resume_id': inserted['resume_id'],
+            'resume_name': inserted.get('resume_name'),
             'optimization_version': inserted['optimization_version'],
             'template_color': inserted.get('template_color'),
             'created_at': inserted.get('created_at'),
@@ -183,62 +182,3 @@ def update_resume(id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-
-# 履歷版本管理
-
-# 所有優化版本列表
-@resume_bp.route('/<int:id>/versions', methods=['GET'])
-@login_required
-def list_resume_versions(id):
-    try:
-        user_id = g.db_user_id
-        if user_id is None:
-            return jsonify({'error': 'User not found in DB'}), 403
-
-        response = (
-            supabase.table("resume_optimization")
-            .select("optimization_id, optimization_version, template_color, created_at")
-            .eq("resume_id", id)
-            .eq("user_id", user_id)
-            .order("optimization_version", desc=True)
-            .execute()
-        )
-
-        return jsonify({
-            'resume_id': id,
-            'versions': response.data or []
-        }), 200
-
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
-
-# 特定版本的優化履歷內容
-@resume_bp.route('/<int:id>/versions/<version>', methods=['GET'])
-@login_required
-def get_resume_version(id, version):
-    try:
-        user_id = g.db_user_id
-        if user_id is None:
-            return jsonify({'error': 'User not found in DB'}), 403
-
-        response = (
-            supabase.table("resume_optimization")
-            .select("*")
-            .eq("resume_id", id)
-            .eq("user_id", user_id)
-            .eq("optimization_version", version)
-            .single()
-            .execute()
-        )
-
-        opt_data = response.data
-        if not opt_data:
-            return jsonify({'error': 'Version not found'}), 404
-
-        return jsonify(opt_data), 200
-
-    except Exception as e:
-        if 'Row not found' in str(e) or '0 rows' in str(e):
-            return jsonify({'error': 'Version not found'}), 404
-        return jsonify({'error': str(e)}), 500
