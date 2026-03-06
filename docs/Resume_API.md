@@ -389,14 +389,14 @@ Authorization: Bearer {{token}}
 - **權限**: Protected
 - **Method**: `POST`
 - **Path**: `/resumes/form`
-- **用途**: 建立原始履歷並存入 `resume` table，表單填寫（`generic`）與 OCR 上傳（`uploaded`）均呼叫此 API。
+- **用途**: 建立原始履歷並存入 `resume` table，表單填寫（`generated`）與 OCR 上傳（`uploaded`）均呼叫此 API。
 
 #### 欄位說明
 
 | 參數                                     | 類型       | 必填 | 說明                                                         |
 | ---------------------------------------- | ---------- | ---- | ------------------------------------------------------------ |
 | `resume_name`                          | String     | Yes  | 履歷名稱（顯示用）                                           |
-| `resume_type`                          | String     | Yes  | 來源類型：`uploaded`（OCR 上傳）或 `generic`（表單填寫） |
+| `resume_type`                          | String     | Yes  | 來源類型：`uploaded`（OCR 上傳）或 `generated`（表單填寫） |
 | `structured_data`                      | JSON       | Yes  | 完整履歷結構物件                                             |
 | `structured_data.basics`               | JSON       | Yes  | 基本資料（姓名、Email、電話、地址）                          |
 | `structured_data.education`            | String     | No   | 學歷                                                         |
@@ -413,7 +413,7 @@ Authorization: Bearer {{token}}
 ```json
 {
   "resume_name": "我的履歷1",
-  "resume_type": "generic",
+  "resume_type": "generated",
   "structured_data": {
     "basics": {
       "name": "測試人員",
@@ -462,7 +462,7 @@ Authorization: Bearer {{token}}
     "normalized_data": null,
     "resume_id": 203,
     "resume_name": "我的履歷1",
-    "resume_type": "generic",
+    "resume_type": "generated",
     "structured_data": {
         "autobiography": "全端工程師，3 年 Python/Flask 開發經驗",
         "basics": {
