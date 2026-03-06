@@ -52,7 +52,8 @@
 | location_preference | 工作地點偏好 | Location Preference | VARCHAR(100) | 工作地點偏好 | - |
 | remote_preference | 遠端工作偏好 | Remote Work Preference | VARCHAR(50) | 遠端工作偏好 | - |
 | career_motivation | 職涯轉換動機 | Career Motivation | JSONB | 職涯轉換動機 | - |
-   | questionnaire_response | 問卷填答結果 | Questionnaire Response | JSONB | 完整問卷填答（module_a/b/c/d 所有題目與答案）；產分析報告時可依需求用 GIN 索引取值 | GIN 索引 idx_survey_response_gin |
+| personality | 人格特質結果 | Personality Result | JSONB | 人格特質問卷完整結果（例如 Big Five／16 型人格等），原始輸出結構整包存放 | - |
+| questionnaire_response | 問卷填答結果 | Questionnaire Response | JSONB | 完整問卷填答（module_a/b/c/d 所有題目與答案）；產分析報告時可依需求用 GIN 索引取值 | GIN 索引 idx_survey_response_gin |
 | completed_at | 完成時間 | Completed At | DATETIME | 完成時間 | - |
 | updated_at | 更新時間 | Updated At | DATETIME | 更新時間 | - |
 
@@ -66,6 +67,7 @@
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
 | template_id | 模板識別碼 | Template ID | INT | 使用的模板 | FOREIGN KEY |
 | resume_type | 履歷類型 | Resume Type | VARCHAR(50) | 履歷類型 (uploaded/generated) | NOT NULL |
+| resume_name | 履歷名稱 | Resume Name | VARCHAR(100) | 使用者為履歷自訂的名稱，供前端列表顯示與選取 | NOT NULL |
 | structured_data | 結構化資料 | Structured Data | JSONB | 結構化履歷資料 | - |
 | normalized_data | 標準化資料 | Normalized Data | JSONB | 標準化後資料 | - |
 | vector_id | 向量識別碼 | Vector ID | UUID | 對應 Qdrant 中的 Point ID | - |
@@ -360,6 +362,7 @@
 | resume_id | 履歷識別碼 | Resume ID | INT | 關聯原始履歷 | FK → RESUME, NOT NULL |
 | version_id | 版本識別碼 | Version ID | INT | 關聯履歷版本（可選） | FK → RESUME_VERSION |
 | user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FK → USER, NOT NULL |
+| resume_name | 履歷名稱 | Resume Name | VARCHAR(100) | 此次優化對應的履歷名稱，供前端列表顯示與選取 | NOT NULL |
 | professional_summary | 專業摘要 | Professional Summary | TEXT | 優化後的專業摘要 | - |
 | professional_experience | 工作經歷 | Professional Experience | JSONB | List[dict] 優化後的工作經歷（含 STAR 原則） | - |
 | core_skills | 核心技能 | Core Skills | JSONB | List[str] 萃取的核心技能關鍵字 | - |
