@@ -18,7 +18,6 @@ erDiagram
     CAREER_SURVEY ||--o{ CAREER_ANALYSIS_REPORT : generates
 
     RESUME ||--o{ RESUME_VERSION : has
-    RESUME }|--|| RESUME_TEMPLATE : uses
     RESUME ||--o{ JOB_MATCHING : participates_in
     RESUME ||--o{ CAREER_ANALYSIS_REPORT : analyzes
     RESUME ||--o| OCR_RESULT : parsed_by
@@ -75,6 +74,7 @@ erDiagram
         int user_id FK "UNIQUE"
         string github_repo "VARCHAR(100)"
         string full_name "VARCHAR(100)"
+        string avatar_url "VARCHAR(500)"
         string location "VARCHAR(100)"
         int years_of_experience
         string current_position "VARCHAR(100)"
@@ -102,7 +102,6 @@ erDiagram
     RESUME {
         int resume_id PK "🔵 履歷生成"
         int user_id FK
-        int template_id FK
         string resume_type "VARCHAR(50)"
         string resume_name "VARCHAR(100) NOT NULL 履歷名稱，供前端列表顯示與選取（必填，允許重複）"
         jsonb structured_data "⚡ 需向量化"
@@ -121,14 +120,6 @@ erDiagram
         string file_path "VARCHAR(255)"
         jsonb content
         string optimization_target "VARCHAR(100)"
-        datetime created_at
-    }
-
-    RESUME_TEMPLATE {
-        int template_id PK "🔵 履歷生成"
-        string template_name "VARCHAR(100)"
-        string template_type "VARCHAR(50)"
-        jsonb template_structure
         datetime created_at
     }
 
@@ -340,7 +331,7 @@ erDiagram
         text autobiography "保留原風格的優化後完整自傳"
         string llm_model_used "VARCHAR(100)"
         string optimization_version "VARCHAR(10) DEFAULT '1.0'"
-        string template_color "VARCHAR(50) 顏色模板名稱"
+        jsonb template_color "履歷樣板與配色；含 template_key/name、color_scheme，見說明文件"
         uuid vector_id "Qdrant Point ID，optimized_resume_vectors 回填用"
         boolean is_embedded "DEFAULT FALSE，是否已寫入 Qdrant"
         timestamptz created_at "NOT NULL, DEFAULT NOW()"
