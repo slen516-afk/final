@@ -87,7 +87,6 @@ def register():
         return jsonify({"message": str(e)}), 400
 
 
-# 用戶登入
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.json
@@ -99,7 +98,6 @@ def login():
         return jsonify({"message": "Missing credentials"}), 400
 
     try:
-        # 使用獨立的 client 進行登入，避免影響全域 Service Role Client 的狀態
         auth_client = get_supabase_client()
         res = auth_client.auth.sign_in_with_password({"email": email, "password": password})
         user = res.user
@@ -109,20 +107,30 @@ def login():
             print("[Debug] Login failed: User is None")
             return jsonify({"message": "Invalid credentials"}), 401
 
-        # 更新最後登入時間 (使用 USER 表與 auth_uid)
+        # 🌟 核心修改：從 USER 資料表撈取包含「整數 user_id」的完整資料
+        # 我們利用 auth_uid (UUID) 來對應
         try:
+            user_record = supabase.table("USER").select("*").eq("auth_uid", user.id).single().execute()
+            db_user_data = user_record.data
+            
+            # 順便更新最後登入時間
             supabase.table("USER").update(
                 {"last_login": datetime.utcnow().isoformat()}
             ).eq("auth_uid", user.id).execute()
         except Exception as e:
-            print(f"[Debug] Failed to update last_login: {e}")
-            pass
+            print(f"[Debug] Failed to fetch user record or update last_login: {e}")
+            db_user_data = {}
 
-        # 回傳指定格式
+        # 🌟 修改回傳格式：把 db_user_data 裡面的整數 user_id 塞進去
         return (
             jsonify(
                 {
-                    "user": {"id": user.id, "role": user.role or "user"},
+                    "user": {
+                        "id": user.id,              # UUID (字串)
+                        "user_id": db_user_data.get("user_id"), # 🌟 真實的整數 ID
+                        "email": user.email,
+                        "role": user.role or "user"
+                    },
                     "auth": {
                         "accessToken": session.access_token,
                         "refreshToken": session.refresh_token,
@@ -141,8 +149,6 @@ def login():
             return jsonify({"message": "帳號或密碼錯誤"}), 401
         print(f"[Auth] Login Error: {e}")
         return jsonify({"message": str(e)}), 500
-
-
 # 權限驗證
 def login_required(f):
     @wraps(f)

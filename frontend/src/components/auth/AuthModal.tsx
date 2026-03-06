@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAppState } from '@/contexts/AppContext';
 import { Mail, Lock, Loader2 } from 'lucide-react';
+// 補上這一行，我們要用它來查資料庫
 
 import { login } from '@/services/authService';
 
@@ -16,7 +17,8 @@ interface AuthModalProps {
 }
 
 const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
-  const { setIsLoggedIn } = useAppState();
+  // 🌟 1. 關鍵修改：把 setUser 呼叫出來！
+  const { setIsLoggedIn, setUser } = useAppState();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -26,8 +28,21 @@ const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
     setIsLoading(true);
 
     try {
-      await login(email.trim(), password);
+      // 1. 呼叫我們剛剛更新過的 login 服務
+      const response = await login(email.trim(), password);
+
       setIsLoggedIn(true);
+
+      // 🌟 2. 關鍵修改：從 response.user 裡直接拿資料
+      // 這裡使用了可選鏈語法，並加上 11 作為最後的開發防呆
+      if (response && response.user) {
+        setUser({
+          user_id: response.user.user_id || 11, // 優先拿後端回傳的整數 ID
+          email: response.user.email || email.trim(),
+          ...response.user
+        });
+      }
+
       onOpenChange(false);
       setEmail('');
       setPassword('');
@@ -47,6 +62,13 @@ const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     setIsLoggedIn(true);
+
+    // 🌟 4. Google 模擬登入也要存 user！
+    setUser({
+      user_id: 11, // 模擬登入一律先給 11 號測試
+      email: "google_test@gmail.com"
+    });
+
     setIsLoading(false);
     onOpenChange(false);
   };

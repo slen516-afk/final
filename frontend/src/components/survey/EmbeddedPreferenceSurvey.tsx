@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Wallet, Building2, FileText } from 'lucide-react'; // 🌟 加入 FileText icon
+import { MapPin, Wallet, Building2, FileText, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { motion } from 'framer-motion';
 import AlertModal from '@/components/modals/AlertModal';
-import { getResumes } from '@/mocks/resumes';
+import apiClient from '@/services/api'; // 🌟 補上這行
 
-// ⚠️ 注意：請確認你的 supabase client 實際的路徑！
-// 如果路徑不同，請把 '@/lib/supabaseClient' 改成你專案中正確的路徑
+// 🌟 1. 引入必要工具：換成真實 API 與全域狀態
+import { useAppState } from '@/contexts/AppContext';
+import { fetchUserResumesAPI } from '@/services/api';
+// 如果你還有用到 supabase 也可以留著
 import { supabase } from '@/lib/supabaseClient';
 
 const taiwanCities = [
@@ -26,38 +27,62 @@ interface EmbeddedPreferenceSurveyProps {
 }
 
 const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps) => {
-  // 🌟 新增：履歷相關的 State
+  // 🌟 2. 拿到目前的真實 user_id
+  const { user, isLoggedIn } = useAppState();
+  const realUserId = user?.user_id;
+
   const [resumeOptions, setResumeOptions] = useState<any[]>([]);
-  const [selectedResume, setSelectedResume] = useState<string>(''); // 存 "RESUME-1" 或 "OPTIMIZATION-8"
+  const [selectedResume, setSelectedResume] = useState<string>('');
+  const [isLoadingResumes, setIsLoadingResumes] = useState(false);
 
   const [regionType, setRegionType] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
   const [salaryRange, setSalaryRange] = useState<number[]>([40000, 80000]);
   const [showIncompleteAlert, setShowIncompleteAlert] = useState(false);
 
-  // 🌟 修改：透過後端 API 撈取履歷清單
-  // 🌟 修改：聰明版 API 呼叫 (帶有自動假資料備援)
+  // 🌟 3. 修改：使用與「我的履歷」相同的暴力拆包法！
   useEffect(() => {
-    const fetchResumesForDropdown = async () => {
-      try {
-        // 2. 直接呼叫前端的 Supabase 完美版 API
-        const data = await getResumes();
+    const fetchMyResumes = async () => {
+      if (isLoggedIn && realUserId) {
+        setIsLoadingResumes(true);
+        try {
+          console.log("🚀 [偏好設定] 開始向後端請求 ID:", realUserId);
+          // 💡 直接用 apiClient 呼叫，繞過舊的死板檢查
+          const response = await apiClient.get(`/resume_process/list/${realUserId}`);
 
-        // 3. 轉換成下拉選單要的格式
-        const combinedOptions = data.map((r: any) => ({
-          id: r.id,          // 這裡就會是正確的 3, 4, 5 了！
-          title: r.name,
-          sourceType: r.sourceType
-        }));
+          let finalData: any[] = [];
+          const rawData = response.data;
 
-        setResumeOptions(combinedOptions);
-      } catch (error) {
-        console.error("載入履歷失敗", error);
+          // 💡 智慧拆包：不管後端怎麼包，我們都挖出來
+          if (Array.isArray(rawData)) {
+            finalData = rawData;
+          } else if (rawData?.data && Array.isArray(rawData.data)) {
+            finalData = rawData.data;
+          } else if (rawData?.resumes && Array.isArray(rawData.resumes)) {
+            finalData = rawData.resumes;
+          }
+
+          console.log("✅ [偏好設定] 挖出的履歷陣列:", finalData);
+
+          // 💡 轉換格式給下拉選單使用 (加入同款防呆機制)
+          const formatted = finalData.map((r: any) => ({
+            id: r.resume_id || r.id,
+            // 確保一定抓得到名字，否則顯示未命名
+            title: r.resume_name || r.name || '未命名履歷',
+            sourceType: r.resume_type || 'RESUME'
+          }));
+
+          setResumeOptions(formatted);
+        } catch (error) {
+          console.error("❌ 載入履歷失敗", error);
+        } finally {
+          setIsLoadingResumes(false);
+        }
       }
     };
 
-    fetchResumesForDropdown();
-  }, []);
+    fetchMyResumes();
+  }, [isLoggedIn, realUserId]);
 
   const formatSalary = (value: number) => {
     return value >= 100000
@@ -73,35 +98,29 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
   const handleSubmit = () => {
     const isTaiwanWithoutCity = regionType === 'taiwan' && !selectedCity;
 
-    // 🌟 防呆：如果沒選履歷、沒選地區，就跳出警告
     if (!regionType || isTaiwanWithoutCity || !selectedResume) {
       setShowIncompleteAlert(true);
       return;
     }
 
-    // 🌟 拆解選中的履歷 (例如把 "RESUME-1" 拆成 "RESUME" 和 1)
     const [sourceType, docId] = selectedResume.split('-');
 
-    // 🌟 完美打包成你 API (截圖二) 要的 JSON 格式
+    // 🌟 4. 修改：將 user_id 換成你的真實 ID
     const realSurveyData = {
-      // 保留原本的欄位給可能需要的其他邏輯
       region: regionType,
       city: selectedCity,
       minSalary: salaryRange[0],
       maxSalary: salaryRange[1],
-
-      // 給 V2 推薦引擎的精準參數
-      user_id: 1, // 這裡可視需求改為動態取得
+      user_id: realUserId, // 動態抓取 ID
       document_id: parseInt(docId),
       source_type: sourceType,
       filters: {
-        city: [selectedCity], // 後端 API 需要的是陣列
+        city: [selectedCity],
         salary_min: salaryRange[0],
         salary_max: salaryRange[1]
       }
     };
 
-    // 將資料往上傳給父元件去發送 API
     onComplete(realSurveyData);
   };
 
@@ -112,7 +131,7 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4 md:space-y-6"
       >
-        {/* 🌟 新增：選擇履歷的區塊 */}
+        {/* 🌟 選擇履歷的區塊 */}
         <Card>
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
@@ -120,29 +139,34 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
               配對履歷
             </CardTitle>
             <CardDescription className="text-xs md:text-sm">
-              請選擇您要用來進行職缺配對的履歷
+              請選擇您要用來進行職缺配對的履歷 (目前 ID: {realUserId || '載入中'})
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Select value={selectedResume} onValueChange={setSelectedResume}>
+            <Select value={selectedResume} onValueChange={setSelectedResume} disabled={isLoadingResumes}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="請選擇一份履歷..." />
+                {isLoadingResumes ? (
+                  <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> 載入中...</div>
+                ) : (
+                  <SelectValue placeholder="請選擇一份履歷..." />
+                )}
               </SelectTrigger>
               <SelectContent>
-                {resumeOptions.map((opt) => (
-                  <SelectItem
-                    key={`${opt.sourceType}-${opt.id}`}
-                    value={`${opt.sourceType}-${opt.id}`}
-                  >
-                    {opt.title} ({opt.sourceType === 'RESUME' ? '原版' : '優化版'})
-                  </SelectItem>
-                ))}
+                {resumeOptions.length > 0 ? (
+                  resumeOptions.map((opt) => (
+                    <SelectItem key={`${opt.sourceType}-${opt.id}`} value={`${opt.sourceType}-${opt.id}`}>
+                      {opt.title} ({opt.sourceType === 'OPTIMIZATION' ? '優化版' : '原版'})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="none" disabled>目前沒有可用履歷</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </CardContent>
         </Card>
 
-        {/* Location Selection */}
+        {/* Location Selection (你原本的，完整保留！) */}
         <Card>
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
@@ -189,7 +213,7 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
           </CardContent>
         </Card>
 
-        {/* Salary Range */}
+        {/* Salary Range (你原本的，完整保留！) */}
         <Card>
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="text-base md:text-lg flex items-center gap-2">

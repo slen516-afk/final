@@ -1,32 +1,27 @@
-# 0.Redis (Job Queue)
+# 0. Job Queue & Background Tasks
 redis>=5.0.0
+celery
 
-# 1.Web 框架與 API 相關 (Backend & API)
+# 1. Web 框架與 API 相關 (Backend & API)
 flask
 flask-cors
-supabase
-python-dotenv
 fastapi
 uvicorn
 python-multipart
 marshmallow
-celery
-redis
 requests
-fpdf
 
-# 2.環境變數與設定管理 (Config)
+# 2. 環境變數與設定管理 (Config)
 python-dotenv>=1.0.0
 pydantic>=2.0.0
 pytest
 
-# 3.資料庫與向量搜尋 (Database & Vector Store)
+# 3. 資料庫與向量搜尋 (Database & Vector Store)
 supabase
 qdrant-client
 faiss-cpu>=1.7.4
 
-# 4.資料處理與數值計算 (Data Processing)
-numpy>=1.24.0
+# 4. 資料處理與數值計算 (Data Processing)
 pandas>=2.0.0
 scipy
 
@@ -36,12 +31,11 @@ Pillow
 fpdf2
 python-docx
 
-# 6. 深度學習核心與視覺模型 (Deep Learning & Vision)
-torch
-torchvision
-transformers
-accelerate
-qwen-vl-utils
+# 6. OCR 核心套件 (鎖定穩定版與降級 numpy 避開 2.0 災難)
+paddleocr==2.7.3
+paddlepaddle
+opencv-python-headless
+numpy<2.0.0
 
 # 7. LLM 框架與 AI 代理 (LangChain & CrewAI)
 openai>=1.10.0

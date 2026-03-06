@@ -2,7 +2,9 @@ import apiClient from './apiClient';
 
 export interface AuthResponse {
     user: {
-        id: string;
+        id: string;       // Supabase 的 UUID (字串)
+        user_id: number;  // 🌟 我們需要的真實整數 ID
+        email: string;
         role: string;
     };
     auth: {
@@ -24,6 +26,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
         localStorage.setItem('refreshToken', data.auth.refreshToken);
     }
 
+    // 💡 這裡回傳完整的 data，裡面已經包含了我們定義好的 user 結構
     return data;
 }
 
@@ -41,4 +44,5 @@ export function logout() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('token');
+    // 💡 登出時建議也清理一下全域狀態，這部分由 AppContext 處理
 }

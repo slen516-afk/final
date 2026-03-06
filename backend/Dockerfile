@@ -3,7 +3,8 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # 安裝系統依賴 (如果需要)
-RUN apt-get update && apt-get install -y gcc libpq-dev
+
+RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 libgomp1
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

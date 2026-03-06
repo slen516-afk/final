@@ -1,9 +1,7 @@
-# 後端入口統一變更為 main.py，app.py 僅保留 Flask App 組裝邏輯
-# 組裝 Flask App、註冊路由與掛載 OCR 模型
-
 import os
 from flask import Flask, jsonify
 from flask_cors import CORS
+import traceback  # 確保最上面有引入這個
 
 # API Blueprints
 from api.auth import auth_bp
@@ -32,13 +30,14 @@ extract_text_from_image = None
 # 🌟 2. 嘗試引入各種版本的 OCR
 try:
     from service.ocr_service.ocr_service import ResumeOCRService
-except ImportError:
-    pass
+    print("[System] 成功找到 ResumeOCRService 模組庫！")
+except Exception as e:
+    print(f"🚨 [Fatal Error] OCR 服務檔案 (ocr_service.py) 引入失敗：{e}")
+    print("👇👇👇 詳細錯誤追蹤 👇👇👇")
+    traceback.print_exc()  # 這行會把真正的兇手連根拔起！
+    print("👆👆👆 詳細錯誤追蹤 👆👆👆")
 
-try:
-    from service.ocr_service.ocr_service import load_model, extract_text_from_image
-except ImportError:
-    pass
+
 
 
 # ====== Flask App Factory ====================================================
@@ -54,36 +53,36 @@ def create_app():
     print("------------------------------------------------")
     print("[System] 正在初始化 Flask 伺服器...")
 
-    # 在測試模式或指定跳過時，不載入大型模型
-    # if app.config.get("TESTING") or os.getenv("SKIP_OCR") == "True":
-    #     print("[System] 測試模式或 SKIP_OCR=True，跳過 OCR 模型載入。")
-    #     app.config["OCR_HANDLER"] = None
-    #     app.extract_text_from_image = None
-    # else:
     try:
-    # ✅ 優先使用新版：ResumeOCRService
+        # ✅ 優先使用新版：ResumeOCRService
         if ResumeOCRService is not None:
             ocr_service = ResumeOCRService()
-            ocr_service.load_model()
+            
+            # ⚠️ 注意：新版 OpenAI+PaddleOCR 已經在 init 完成初始化，不需要 load_model() 了，所以拔掉！
+            
             app.config["OCR_HANDLER"] = ocr_service.extract_text_from_image
             app.extract_text_from_image = ocr_service.extract_text_from_image
             print("[System] ✅ OCR 模型初始化完成 (使用 ResumeOCRService)")
         
-    # ✅ 備用方案：使用舊版 load_model
+        # ✅ 備用方案：使用舊版 load_model
         elif load_model is not None:
             load_model()
             app.config["OCR_HANDLER"] = extract_text_from_image
             app.extract_text_from_image = extract_text_from_image
             print("[System] ✅ OCR 模型初始化完成 (使用 load_model)")
         
-    # ❌ 都沒找到
+        # ❌ 都沒找到
         else:
             app.config["OCR_HANDLER"] = None
             app.extract_text_from_image = None
+            # 👇 這裡直接印字串，不要再放 {e} 了
+            print("🚨 [Fatal Error] 找不到任何 OCR 模組！請檢查最上方的錯誤追蹤。")
             print("[Warning] 找不到任何 OCR 服務，已略過載入。")
 
     except Exception as e:
-        print(f"[Error] OCR 模型初始化失敗: {e}")
+        # 這裡才是真正的執行時期錯誤
+        print(f"🚨 [Fatal Error] OCR 服務實例化失敗: {e}")
+        traceback.print_exc()
         app.config["OCR_HANDLER"] = None
         app.extract_text_from_image = None
 
