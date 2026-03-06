@@ -32,13 +32,14 @@ class DatabaseTools:
     @staticmethod
     def get_user_survey(user_id: str) -> Any:
         """
-        根據 user_id 到 Supabase 抓取用戶問卷中的目標職位。
+        根據 user_id 到 Supabase 抓取用戶問卷中 questionnaire_response 不為空的最新結果。
         """
         supabase = get_supabase_client()
         try:
             response = supabase.table("career_survey") \
                 .select("questionnaire_response") \
                 .eq("user_id", user_id) \
+                .not_.is_("questionnaire_response", "null") \
                 .order("completed_at", desc=True) \
                 .limit(1) \
                 .single() \
