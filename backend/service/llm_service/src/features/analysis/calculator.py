@@ -35,25 +35,51 @@ class ScoreMapper:
         "translation_tool": 1, "slow_reading": 2, "fluent_reading": 3, "global_comm": 5 # Q15
     }
 
+    # D6 隱藏加分對照表 (Q9, Q10 專用)
+    SPECIAL_D6_MAPPING = {
+        "Q9": {
+            "incident_analysis": 5.0  # 只有選 D 才有 D6 分數
+        },
+        "Q10": {
+            "team_familiarity": 3.0,  # 選 C 有 D6=3
+            "tradeoff_analysis": 5.0  # 選 D 有 D6=5
+        }
+    }
+
     @staticmethod  # 靜態方法裝飾器：不需要存取 class 內部屬性，工具人
     def get_score(key: str) -> float:  # 將選項 str 轉換成 1-5 分的 float
         return float(ScoreMapper.MAPPING.get(key, 0.0)) 
         # .get(欲查詢的鍵, 找不到的預設值)
         ### 找不到預設值會回 0.0，完全無經驗的使用者
+    
+    @staticmethod
+    def get_special_d6_score(question: str, key: str) -> Any:
+        """獲取特殊題目的 D6 分數，若該選項無 D6 分數則明確回傳 None"""
+        return ScoreMapper.SPECIAL_D6_MAPPING.get(question, {}).get(key, None)
 
 # 2. 向量計算器
 class CareerAnalyzer:
     def __init__(self, user_data: Dict[str, Any]):
         self.data = user_data
         self.scores = {}
-
+    
+    def _safe_mean(self, values: List[Any]) -> float:
+        """
+        防呆平均計算法：過濾掉 None，只針對有分數的項目計算平均。
+        """
+        valid_values = [v for v in values if v is not None]
+        if not valid_values:
+            return 0.0
+        return statistics.mean(valid_values)
+    
     def _get_lang_score(self, category_langs: List[str]) -> float:
         """計算語言分數 (取該類別中最高分)"""
-        user_langs = self.data['module_a'].get('q1_languages', [])
+        user_langs = self.data.get('module_a', {}).get('q1_languages', [])
         max_score = 1.0
-        normalized_category = [l.lower() for l in category_langs]
+        # 將目標清單轉為 Set (集合) 並全小寫，查找時間複雜度從 O(N) 降為 O(1)
+        valid_targets = set(lang.lower() for lang in category_langs)
         for item in user_langs:
-            lang_name = item['name'].lower().strip()
+            lang_name = item.get('name','').lower().strip()
             # --- 舊版邏輯 (保留以供切換) ---
             # try:
             #     lang_score = float(item['score'])
@@ -64,17 +90,14 @@ class CareerAnalyzer:
             # --- 新版邏輯 ---
             try:
                 score_val = item.get('score')
-                if score_val in [None, "", "null"]:
-                    lang_score = 0.0
-                else:
-                    lang_score = float(score_val)
+                lang_score = 0.0 if score_val in [None, "", "null"] else float(score_val)
             except (TypeError, ValueError):
                 lang_score = 0.0
             # --- 新版邏輯結束 ---
             
             # 模糊比對: 例如使用者填 "Python 3.9" 也能對應到 "python"
             # 不符合實際狀況，可以修改
-            if any(c_lang in lang_name for c_lang in normalized_category):
+            if lang_name in valid_targets:
                 if lang_score > max_score:
                     max_score = lang_score
         return max_score
@@ -97,58 +120,76 @@ class CareerAnalyzer:
         """
         執行 PDF 4.1 節的向量化公式
         """
-        ma = self.data['module_a']
-        mb = self.data['module_b']
+        ma = self.data.get('module_a', {})
+        mb = self.data.get('module_b', {})
         user_db_choices = ma.get('q4_database', []) # 使用者在 Q4 的所有勾選
 
-        # 定義語言分類 (PDF Source 63-65)
+         # ==========================================
+        # 【架構師修正】：語言多重宇宙映射 (Many-to-Many Mapping)
+        # ==========================================
+        # 前端專屬
         frontend_langs = ['javascript', 'typescript', 'html', 'css']
-        backend_langs = ['java', 'go', 'python', 'c#', 'rust', 'php']
+        
+        # 後端包含：傳統後端 + Node.js(js/ts) + 資料庫操作(sql)
+        backend_langs = [
+            'java', 'go', 'python', 'c#', 'rust', 'php', 
+            'javascript', 'typescript', 'sql'
+        ]
+        
+        # 數據包含：傳統數據語言 + 基礎查詢(sql)
         data_langs = ['python', 'r', 'sql', 'julia']
+        # ==========================================
 
         # --- 計算 D1: 前端工程 ---
         # Formula: Avg(Q2, Q1 if JS)
-        s_q2 = ScoreMapper.get_score(ma['q2_frontend'])
+        s_q2 = ScoreMapper.get_score(ma.get('q2_frontend'))
         s_q1_fe = self._get_lang_score(frontend_langs)
-        self.scores['D1'] = statistics.mean([s_q2, s_q1_fe])
+        self.scores['D1'] = self._safe_mean([s_q2, s_q1_fe])
 
         # --- 計算 D2: 後端工程 ---
         # Formula: Avg(Q3, Q4_relational, Q1 if Backend)
-        s_q3 = ScoreMapper.get_score(ma['q3_backend'])
+        s_q3 = ScoreMapper.get_score(ma.get('q3_backend'))
         s_q1_be = self._get_lang_score(backend_langs)
         # 根據 PDF ，D2 關注 RDBMS, NoSQL, Cache (A/B/C 選項)
         d2_db_targets = ['rdbms_sql', 'nosql_document', 'key_value_cache']
         s_q4_backend_breadth = self._get_checkbox_score(d2_db_targets, user_db_choices)
-        self.scores['D2'] = statistics.mean([s_q3, s_q1_be, s_q4_backend_breadth])
+        self.scores['D2'] = self._safe_mean([s_q3, s_q1_be, s_q4_backend_breadth])
 
         # --- 計算 D3: 雲端維運 ---
         # Formula: Avg(Q5, Q9)
-        s_q5 = ScoreMapper.get_score(ma['q5_devops'])
-        s_q9 = ScoreMapper.get_score(mb['q9_troubleshoot'])
-        self.scores['D3'] = statistics.mean([s_q5, s_q9])
+        s_q5 = ScoreMapper.get_score(ma.get('q5_devops'))
+        s_q9_d3 = ScoreMapper.get_score(mb.get('q9_troubleshoot'))
+        self.scores['D3'] = self._safe_mean([s_q5, s_q9_d3])
 
         # --- 計算 D4: AI 與數據 ---
         # Formula: Avg(Q6, Q4_vector, Q4_nosql)
-        s_q6 = ScoreMapper.get_score(ma['q6_ai_data'])
+        s_q6 = ScoreMapper.get_score(ma.get('q6_ai_data'))
         # 根據 PDF ，D4 關注 Search, Vector, Warehouse (D/E/G 選項)
+        s_q1_data = self._get_lang_score(data_langs)  # 修正：補回漏掉的 Q1 數據語言
         d4_db_targets = ['search_engine', 'vector_db', 'data_warehouse']
         s_q4_data_breadth = self._get_checkbox_score(d4_db_targets, user_db_choices)
-        self.scores['D4'] = statistics.mean([s_q6, s_q4_data_breadth])
+        self.scores['D4'] = self._safe_mean([s_q6, s_q1_data, s_q4_data_breadth])
 
         # --- 計算 D5: 品質與架構 ---
         # Formula: Avg(Q7, Q10, Q12)
-        s_q7 = ScoreMapper.get_score(ma['q7_security'])
-        s_q10 = ScoreMapper.get_score(mb['q10_tech_choice'])
-        s_q12 = ScoreMapper.get_score(mb['q12_code_review'])
-        self.scores['D5'] = statistics.mean([s_q7, s_q10, s_q12])
+        s_q7 = ScoreMapper.get_score(ma.get('q7_security'))
+        s_q10_d5 = ScoreMapper.get_score(mb.get('q10_tech_choice'))
+        s_q12 = ScoreMapper.get_score(mb.get('q12_code_review'))
+        self.scores['D5'] = self._safe_mean([s_q7, s_q10_d5, s_q12])
 
         # --- 計算 D6: 軟實力 ---
         # Formula: Avg(Q11, Q13, Q14, Q15)
-        s_q11 = ScoreMapper.get_score(mb['q11_communication'])
-        s_q13 = ScoreMapper.get_score(mb['q13_learning'])
-        s_q14 = ScoreMapper.get_score(mb['q14_process'])
-        s_q15 = ScoreMapper.get_score(mb['q15_english'])
-        self.scores['D6'] = statistics.mean([s_q11, s_q13, s_q14, s_q15])
+        s_q11 = ScoreMapper.get_score(mb.get('q11_communication'))
+        s_q13 = ScoreMapper.get_score(mb.get('q13_learning'))
+        s_q14 = ScoreMapper.get_score(mb.get('q14_process'))
+        s_q15 = ScoreMapper.get_score(mb.get('q15_english'))
+
+        # 修正：萃取 Q9 與 Q10 的 D6 隱藏加分，若無則為 None
+        s_q9_d6 = ScoreMapper.get_special_d6_score("Q9", mb.get('q9_troubleshoot'))
+        s_q10_d6 = ScoreMapper.get_special_d6_score("Q10", mb.get('q10_tech_choice'))
+
+        # _safe_mean 會自動過濾掉 None，動態調整平均分母
+        self.scores['D6'] = self._safe_mean([s_q11, s_q13, s_q14, s_q15, s_q9_d6, s_q10_d6])
 
         # Round all scores to 1 decimal
         for k, v in self.scores.items():
