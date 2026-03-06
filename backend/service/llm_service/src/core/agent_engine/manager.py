@@ -180,12 +180,29 @@ class CareerAgentManager:
         # 若從資料庫撈取表單結果，外層會有多的包裝，需要修正程式碼來解包，目前不需要
         if task_type_str == "career_analysis":
             try:
-                survey_data = json.loads(user_input.get("survey_json", "{}"))
+                survey_data_raw = json.loads(user_input.get("survey_json", "{}"))
+
+                # 若包含 questionnaire_response (例如直接從 DB 撈的回傳格式)，則從裡面取
+                survey_data = survey_data_raw.get("questionnaire_response", survey_data_raw)
+
+                # --- 舊版判斷邏輯 (保留以供切換) ---
                 # 檢查 module_a 技術填寫紀錄 (q1_languages 是否有值且非空)
-                has_experience = (
-                    survey_data.get("module_a", {}).get("q1_languages") is not None and
-                    len(survey_data.get("module_a", {}).get("q1_languages")) > 0
-                )
+                # has_experience = (
+                #     survey_data.get("module_a", {}).get("q1_languages") is not None and
+                #     len(survey_data.get("module_a", {}).get("q1_languages")) > 0
+                # )
+
+                # --- 新版判斷邏輯 ---
+                q1_langs = survey_data.get("module_a", {}).get("q1_languages", [])
+                has_experience = False
+                
+                if isinstance(q1_langs, list):
+                    for lang in q1_langs:
+                        if isinstance(lang, dict):
+                            score = lang.get("score")
+                            if score not in [None, 0, "0", 0.0, ""]:
+                                has_experience = True
+                                break
 
                 if has_experience:
                     task_type_str = "career_analysis_experienced"
