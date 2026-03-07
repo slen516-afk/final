@@ -1,8 +1,6 @@
 from typing import List, Dict, Any, Optional
 import math
 import os
-# from service.llm_service.src.core.database.supabase_client import get_supabase_client
-# from src.core.database.supabase_client import get_supabase_client
 from src.core.database.supabase_client import get_supabase_client
 
 # =========================
@@ -51,6 +49,7 @@ class CourseRecommendationService:
             if not resp.data or len(resp.data) == 0:
                 return None
             
+            # 因為拿掉了 .single()，所以 resp.data 是一個 list，需取第一筆資料
             target_pos = resp.data[0]["target_position"]
             raw_role = target_pos["role"]
             raw_score = target_pos["match_score"]
@@ -60,7 +59,7 @@ class CourseRecommendationService:
             # 因 target_position 設定為必填，故沒有幫使用者判斷適合職類，但先保留
             clean_role = raw_role.replace("領航員分析您適合的職類為 - ", "").strip()
             
-             # 2. 處理 Match Score (轉為整數)
+            # 2. 處理 Match Score (轉為整數)
             if isinstance(raw_score, str):
                 clean_score = int(raw_score.replace("%", "").strip())
             else:
@@ -126,6 +125,14 @@ class CourseRecommendationService:
         elif match_score <= 80: return 4
         return 5
 
+    @staticmethod
+    def compute_user_ability_position(match_score: int) -> float:
+        """
+        將 0-100 的 match_score 映射到課程難度空間 (1.0-3.0)。
+        """
+        cursor = 1.0 + (match_score / 100) * 2.0
+        return round(cursor, 3)
+    
     @staticmethod
     def compute_priority_score(course_level: int, ability_position: float, user_level: int) -> float:
         """
@@ -225,3 +232,47 @@ class CourseRecommendationService:
         result = manager.run_task(TaskType.COURSE_REC.value, user_input)
 
         return result
+        
+        # return {
+        #     "user_id": user_id,
+        #     "role": job_category,
+        #     "match_score": match_score,
+        #     "user_level": user_level,
+        #     "recommended_courses": top_courses_raw
+        # }
+        
+# =========================
+# 測試專用區塊
+# =========================
+# if __name__ == "__main__":
+#     import json
+#     # 初始化推薦服務
+#     service = CourseRecommendationService()
+    
+#     # 這裡請替換成您資料庫中實際存在的 user_id
+#     # 也可以在終端機執行 `python -m src.features.course.course_matching` 時直接測
+#     test_user_id = 3 # 假設的測試 ID
+    
+#     print(f"\n[測試開始] 正在為 user_id: {test_user_id} 產生課程推薦...")
+    
+#     # 執行主流程 (目前已暫停丟給 Agent)
+#     result = service.get_recommendations(user_id=test_user_id, top_k=5)
+    
+#     if result.get("status") == "error":
+#         print(f"\n❌ 錯誤: {result.get('message')}")
+#     else:
+#         print("\n✅ [推薦成功] 演算法計算結果如下：")
+#         print("-" * 50)
+#         print(f"🎯 目標職位 (Role): {result['role']}")
+#         print(f"📊 媒合分數 (Match Score): {result['match_score']}")
+#         print(f"⭐ 使用者等級 (User Level): {result['user_level']}")
+#         print("\n📚 [Top 5 推薦課程清單]:")
+#         for i, course in enumerate(result['recommended_courses'], 1):
+#             print(f"  {i}. {course['course_name']} (難度: {course['level']})")
+#             print(f"     -> 優先權分數: {course['priority_score']:.4f} | 品質分數: {course['quality_score']:.4f}")
+#             print(f"     -> URL: {course['url']}")
+#             print("  " + "-"*40)
+        
+#         print("\n(測試完畢。確認資料正確性後，請移除這段測試程式碼，並將交接給 CareerAgentManager 的註解打開。)")
+
+
