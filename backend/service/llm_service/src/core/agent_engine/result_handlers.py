@@ -145,9 +145,27 @@ class ResumeAnalysisHandler(BaseResultHandler):
 
         target_resume_id = resume_info.data['resume_id']
 
+        # 2. 計算版本號 (取目前最大版本 + 1)
+        res = self.supabase.table("resume_analysis") \
+            .select("analysis_version") \
+            .eq("user_id", user_id) \
+            .order("analysis_version", desc=True) \
+            .limit(1) \
+            .execute()
+
+        # 1. 安全抓取舊版號字串 (如果沒有資料，就給預設字串 '0.0')
+        max_version_str = res.data[0].get('analysis_version', '0.0') if res.data else '0.0'
+
+        # 2. 轉成浮點數做數學加法
+        new_version_num = float(max_version_str) + 1.0
+
+        # 3. 【關鍵修復】將算好的數學數字，強制包裝回字串型別
+        new_version = str(new_version_num)
+
         payload = {
             "user_id": user_id,
             "resume_id": target_resume_id,
+            "analysis_version": new_version, # 這是計算出的值
             **pydantic_result,
             # "created_at": "now()"
         }

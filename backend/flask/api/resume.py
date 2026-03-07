@@ -26,8 +26,8 @@ def create_resume():
             return jsonify({'error': 'Missing structured_data'}), 400
 
         resume_type = data.get('resume_type')
-        if resume_type not in ('uploaded', 'generic'):
-            return jsonify({'error': "resume_type must be 'uploaded' or 'generic'"}), 400
+        if resume_type not in ('uploaded', 'generated'):
+            return jsonify({'error': "resume_type must be 'uploaded' or 'generated'"}), 400
 
         now_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S+00')
 
