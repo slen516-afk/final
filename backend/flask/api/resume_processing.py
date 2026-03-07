@@ -7,9 +7,6 @@ import uuid
 import time
 import random
 from core.supabase_client import supabase
-# from service.ocr_service.ocr_service import ResumeOCRService
-
-
 
 # 取個簡短的 blueprint 名稱
 resume_proc_bp = Blueprint('resume_proc', __name__) 
@@ -28,76 +25,126 @@ def upload_resume():
         return jsonify({"error": "沒有選擇檔案", "code": 400}), 400
     
     try:
-        # --- 存檔並定義 filepath ---
-        filename = secure_filename(file.filename)
-        unique_filename = f"{int(time.time())}_{filename}"
-        filepath = os.path.join(UPLOAD_FOLDER, unique_filename)
+        # ==========================================
+        # 🌟 1. 終極防呆存檔法：強制加上 .pdf
+        # ==========================================
+        current_timestamp = int(time.time() * 1000)
+        safe_filename = f"{current_timestamp}_{uuid.uuid4().hex[:8]}.pdf"
+        filepath = os.path.join(UPLOAD_FOLDER, safe_filename)
+        
         file.save(filepath)
-        parsed_data = current_app.extract_text_from_image(filepath)
         print(f"✅ 檔案已暫存至: {filepath}")
         
         # ==========================================
-        # 🌟 效能大升級：從全域環境直接呼叫已經載好的 OCR
+        # 🌟 2. 呼叫 OCR 進行辨識
         # ==========================================
         ocr_handler = current_app.config.get("OCR_HANDLER")
         if not ocr_handler:
             return jsonify({"error": "OCR 服務尚未準備好或載入失敗", "code": 500}), 500
         
         print("[API] 呼叫已待命的 OCR 管家開始辨識...")
-        # 直接把 filepath 丟給它處理
         raw_ocr_result = ocr_handler(filepath)
         
         # --- 防呆機制：如果 OCR 失敗回傳 Error ---
-        if "error" in raw_ocr_result:
+        if isinstance(raw_ocr_result, dict) and "error" in raw_ocr_result:
             return jsonify({"error": raw_ocr_result["error"], "code": 500}), 500
 
-        # 3. 數據映射 (Mapping)
-        res_struct = raw_ocr_result.get("structured_data", {})
-        norm = raw_ocr_result.get("normalized_data", {})
-        contact = norm.get("contact", {})
+        # ==========================================
+        # 🌟 3. 無敵鐵金剛數據映射 (Mapping) + 型別防呆
+        # ==========================================
+        # 確保 raw_ocr_result 是字典，避免 .get() 報錯
+        if isinstance(raw_ocr_result, str):
+            try:
+                raw_ocr_result = json.loads(raw_ocr_result)
+            except:
+                raw_ocr_result = {}
+        if not isinstance(raw_ocr_result, dict):
+            raw_ocr_result = {}
 
-        # 防呆：處理 projects 陣列裡可能混入字串或字典的問題
-        raw_projects = res_struct.get("projects", [])
-        safe_projects = []
-        for p in raw_projects:
-            if isinstance(p, dict):
-                title = p.get("title", p.get("name", ""))
-                desc = p.get("description", p.get("details", ""))
-                safe_projects.append(f"{title} - {desc}".strip(" -"))
-            else:
-                safe_projects.append(str(p))
+        print("\n🔍 [Debug] AI 辨識出的原始結構:", raw_ocr_result, "\n")
+
+        # 容錯提取子結構
+        res_struct = raw_ocr_result.get("structured_data", {})
+        if not isinstance(res_struct, dict): res_struct = raw_ocr_result
+        
+        norm = raw_ocr_result.get("normalized_data", {})
+        if not isinstance(norm, dict): norm = raw_ocr_result
+        
+        contact = norm.get("contact", {})
+        if not isinstance(contact, dict): contact = raw_ocr_result
+
+        # 🛡️ 安全處理教育背景 (解決垂直文字「跑版」問題)
+        raw_edu = res_struct.get("education", [])
+        if isinstance(raw_edu, list):
+            safe_edu = "\n".join([str(e.get("details", e.get("school", ""))) if isinstance(e, dict) else str(e) for e in raw_edu])
+        else:
+            safe_edu = str(raw_edu) # 如果是單純字串，直接轉型，絕對不跑迴圈！
+
+        # 🛡️ 安全處理工作經歷 (Experience)
+        raw_exp = res_struct.get("experience", res_struct.get("work_experience", []))
+        if isinstance(raw_exp, list):
+            exp_list = []
+            for exp in raw_exp:
+                if isinstance(exp, dict):
+                    title = exp.get('title', exp.get('role', ''))
+                    comp = exp.get('company', '')
+                    desc = exp.get('responsibilities', exp.get('description', ''))
+                    exp_list.append(f"{title} - {comp}\n{desc}".strip(" -\n"))
+                else:
+                    exp_list.append(str(exp))
+            safe_exp = "\n\n".join(exp_list)
+        else:
+            safe_exp = str(raw_exp)
+
+        # 🛡️ 安全處理專案/作品集 (Portfolio)
+        raw_projects = res_struct.get("projects", res_struct.get("portfolio", []))
+        if isinstance(raw_projects, list):
+            proj_list = []
+            for p in raw_projects:
+                if isinstance(p, dict):
+                    title = p.get("title", p.get("name", ""))
+                    desc = p.get("description", p.get("details", ""))
+                    proj_list.append(f"{title}\n{desc}".strip(" -\n"))
+                else:
+                    proj_list.append(str(p))
+            safe_projects = "\n\n".join(proj_list)
+        else:
+            safe_projects = str(raw_projects)
+
+        # 🛡️ 安全處理技能
+        raw_skills = norm.get("skills", res_struct.get("skills", []))
+        safe_skills = ", ".join([str(s) for s in raw_skills]) if isinstance(raw_skills, list) else str(raw_skills)
+
+        # 🛡️ 安全處理自傳 / 關於我
+        safe_bio = res_struct.get("summary", res_struct.get("autobiography", res_struct.get("bio", res_struct.get("關於我", ""))))
+        if isinstance(safe_bio, list): 
+            safe_bio = "\n".join([str(b) for b in safe_bio])
+        else:
+            safe_bio = str(safe_bio)
 
         # ==========================================
-        # 組合 mapped_data 準備回傳給前端
+        # 🌟 4. 嚴格對齊前端需要的欄位名稱 (非常重要！)
         # ==========================================
         mapped_data = {
-            "name": contact.get("name", ""),
+            "name": contact.get("name", contact.get("full_name", "")),
             "email": contact.get("email", ""),
-            "phone": "",  
-            "addressCity": contact.get("location", ""),
-            "addressDistrict": "",
-            "addressDetail": "",
-            "bio": res_struct.get("summary", ""),
+            "phone": contact.get("phone", ""),
+            "address": contact.get("location", contact.get("address", "")), # 前端叫 address
             
-            "education": "\n".join([e.get("details", "") for e in res_struct.get("education", [])]),
+            "education": safe_edu,
+            "experience": safe_exp,
+            "skills": safe_skills,
+            "portfolio": safe_projects, # 專案經驗會被填入這裡
+            "autobiography": safe_bio,  # 關於我會被填入這裡
             
-            "experience": "\n\n".join([
-                f"{exp.get('title', '')} - {exp.get('company', '')}\n{exp.get('responsibilities', '')}" 
-                for exp in res_struct.get("experience", [])
-            ]),
-            
-            "skills": ", ".join(norm.get("skills", [])),
-            
-            "projects": "\n".join(safe_projects),
-            
-            "languages": [{"language": "中文", "proficiency": "3"}],
+            "languages": "中文(精通)", 
             "certifications": "",
-            "other": ""
+            "other": res_struct.get("other", "")
         }
 
         return jsonify({
             "message": "Resume analyzed successfully",
-            "data": parsed_data,
+            "data": raw_ocr_result,
         }), 200
 
     except Exception as e:

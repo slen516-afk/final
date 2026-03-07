@@ -185,7 +185,7 @@ class ResumeOCRService:
             # 步驟 4：因為使用了 JSON Mode，這裡可以直接轉成 Dict
             # ==========================================
             parsed_data = json.loads(raw_output)
-            print("\n[DEBUG] 準備回傳給 Flask 的 JSON 資料：", json.dumps(parsed_data, indent=2, ensure_ascii=False))
+            
             print(f"[OCR Service] ✅ 總流程完成！總耗時: {time.time() - start_time:.2f} 秒")
             return parsed_data
 

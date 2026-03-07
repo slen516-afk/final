@@ -145,16 +145,21 @@ const Optimize = () => {
   const { isLoggedIn, isResumeUploaded, isPersonalityQuizDone, avatarUrl } = useAppState();
   const { resumes } = useResumes();
 
-  // Auto-select the latest resume
+  // 🌟 1. 自動抓取最新履歷 (加入時間排序防呆)
   const latestResume = useMemo(() => {
     if (resumes.length === 0) return null;
-    return [...resumes].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+    return [...resumes].sort((a, b) => {
+      const timeA = a.created_at || a.updatedAt || '';
+      const timeB = b.created_at || b.updatedAt || '';
+      return timeB.localeCompare(timeA);
+    })[0];
   }, [resumes]);
 
-  // Restore persisted state if available
+  // 🌟 2. 載入本地暫存狀態
   const persisted = useMemo(() => loadOptimizeState(), []);
   const canRestore = persisted && (persisted.phase === 'suggestions' || persisted.phase === 'templates' || persisted.phase === 'result');
 
+  // 🌟 3. 乾淨俐落！把所有 useState 狀態集中放在這裡
   const [phase, setPhase] = useState<Phase>(canRestore ? persisted!.phase : 'initial');
   const [originalData, setOriginalData] = useState<OriginalResumeData>(canRestore ? persisted!.originalData : mockOriginalResumeData);
   const [editedOriginalData, setEditedOriginalData] = useState<OriginalResumeData>(canRestore ? persisted!.originalData : mockOriginalResumeData);
@@ -169,12 +174,88 @@ const Optimize = () => {
   const [showAccessAlert, setShowAccessAlert] = useState(false);
   const [accessAlertMessage, setAccessAlertMessage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
-  const resumeRef = useRef<HTMLDivElement>(null);
   const [showSuggestionsDrawer, setShowSuggestionsDrawer] = useState(false);
   const [editPhase, setEditPhase] = useState<'view' | 'edit'>('view');
   const [isEditSaved, setIsEditSaved] = useState(canRestore ? !!persisted?.isEditSaved : false);
   const [isTemplateSaved, setIsTemplateSaved] = useState(canRestore ? !!persisted?.isTemplateSaved : false);
   const [showTemplateSaveConfirm, setShowTemplateSaveConfirm] = useState(false);
+  const resumeRef = useRef<HTMLDivElement>(null);
+
+  // 🌟 4. 攔截器：當抓到最新履歷時，把預設的王小明替換成你的真實資料！
+  useEffect(() => {
+    if (!canRestore && latestResume) {
+      console.log("💡 [履歷優化] 抓到的最新履歷:", latestResume);
+
+      let rawData = latestResume.resume_data || latestResume.structured_data || {};
+      if (typeof rawData === 'string') {
+        try { rawData = JSON.parse(rawData); } catch (e) { rawData = {}; }
+      }
+
+      // 💡 終極資料攤平術：不管 AI 把資料藏在哪一層，全部倒出來放在同一層！
+      let flatData: any = { ...rawData };
+      if (rawData.data) Object.assign(flatData, rawData.data);
+      if (rawData.resume_data) Object.assign(flatData, rawData.resume_data);
+      if (rawData.structured_data) Object.assign(flatData, rawData.structured_data);
+      if (rawData.normalized_data) {
+        Object.assign(flatData, rawData.normalized_data);
+        if (rawData.normalized_data.contact) {
+          Object.assign(flatData, rawData.normalized_data.contact);
+        }
+      }
+
+      console.log("✅ [履歷優化] 攤平後成功挖出的資料:", flatData);
+
+      // 處理陣列轉文字的超級防呆函式
+      const safeJoin = (arr: any) => {
+        if (!arr) return '';
+        if (typeof arr === 'string') return arr;
+        if (Array.isArray(arr)) {
+          return arr.map(item => {
+            if (typeof item === 'string') return item;
+            // 如果是物件，就把裡面的值全部用短橫線串起來 (例如: 台大 - 資訊系 - 碩士)
+            return Object.values(item).filter(Boolean).join(' - ');
+          }).join('\n\n');
+        }
+        return '';
+      };
+
+      // 準備給第一階段 (優化前) 的真實資料
+      const realOriginalData = {
+        name: flatData.name || flatData.full_name || '未辨識',
+        phone: flatData.phone || '',
+        email: flatData.email || '',
+        address: flatData.address || flatData.location || '',
+        education: safeJoin(flatData.education),
+        experience: safeJoin(flatData.experience || flatData.work_experience),
+        languages: '中文(精通)', // 寫死預設，避免 AI 傳回奇怪的陣列
+        skills: Array.isArray(flatData.skills) ? flatData.skills.join(', ') : (flatData.skills || ''),
+        certifications: Array.isArray(flatData.certifications) ? flatData.certifications.join(', ') : (flatData.certifications || ''),
+        portfolio: safeJoin(flatData.projects || flatData.portfolio),
+        autobiography: flatData.autobiography || flatData.summary || flatData.bio || '',
+        other: flatData.other || '',
+      };
+
+      // 準備給第三階段 (優化後) 的真實資料
+      const realResumeData = {
+        name: realOriginalData.name,
+        email: realOriginalData.email,
+        phone: realOriginalData.phone,
+        linkedin: flatData.linkedin || '',
+        github: flatData.github || '',
+        professional_summary: realOriginalData.autobiography,
+        professional_experience: realOriginalData.experience,
+        core_skills: realOriginalData.skills,
+        projects: realOriginalData.portfolio,
+        education: realOriginalData.education,
+        autobiography: realOriginalData.autobiography,
+      };
+
+      setOriginalData(realOriginalData);
+      setEditedOriginalData(realOriginalData);
+      setResumeData(realResumeData);
+      setEditedData(realResumeData);
+    }
+  }, [latestResume, canRestore]);
 
   // Check access conditions
   useEffect(() => {

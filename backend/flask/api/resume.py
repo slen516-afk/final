@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 resume_bp = Blueprint('resume', __name__)
 
 
+
+
 @resume_bp.route('/form', methods=['POST'])
 @login_required
 def create_resume():

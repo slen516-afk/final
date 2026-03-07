@@ -4,6 +4,7 @@ import uuid
 import json
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify, current_app
+import time
 
 # 解決跨資料夾 Import core 的問題
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -64,8 +65,13 @@ def run_ocr_api():
             continue
 
         dynamic_user_id = available_ids[index]
-        filename = f"{uuid.uuid4()}_{file.filename}"
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        
+        # 🌟 終極防呆法：自己產生時間戳記，再加上 uuid 確保檔名絕對不重複
+        current_timestamp = int(time.time() * 1000) 
+        safe_filename = f"{current_timestamp}_{uuid.uuid4().hex[:8]}.pdf"
+        file_path = os.path.join(UPLOAD_FOLDER, safe_filename)
+        
+        # 存檔
         file.save(file_path)
 
         try:
