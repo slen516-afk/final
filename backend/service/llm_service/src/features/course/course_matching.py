@@ -15,10 +15,11 @@ COURSE_LEVEL_MAP = {
 }
 
 # 政策權重分佈 (Policy Distribution)
-# 決定不同 User Level 與 Course Level 間的推薦強弱
+# 每一級的總和不需為1，這是「增益係數」
+# 用途：決定「大方向」，例如 Level 2 主要看 Beginner/Intermediate，絕不看 Advanced
 USER_TO_COURSE_DISTRIBUTION = {
     1: {1: 1.0, 2: 0.0, 3: 0.0},  # 新手：專注基礎
-    2: {1: 0.9, 2: 0.6, 3: 0.0},  # 關鍵級別：主要基礎，部分中階
+    2: {1: 0.9, 2: 0.6, 3: 0.0},  # 關鍵級別：開放 60% 的窗口給中階，讓 40分的人有機會
     3: {1: 0.5, 2: 1.0, 3: 0.4},  # 中階：向下複習，向上探索
     4: {1: 0.0, 2: 0.7, 3: 0.9},  # 中高階：強度提升
     5: {1: 0.0, 2: 0.0, 3: 1.0},  # 專家：只看難的
@@ -44,40 +45,37 @@ class CourseRecommendationService:
                 .eq("user_id", user_id) \
                 .order("generated_at", desc=True) \
                 .limit(1) \
-                .single() \
                 .execute()
             )
             
-            if not resp.data:
+            if not resp.data or len(resp.data) == 0:
                 return None
             
-            raw_role = resp.data["target_position"]["role"]
-            raw_score = resp.data["target_position"]["match_score"]
+            target_pos = resp.data[0]["target_position"]
+            raw_role = target_pos["role"]
+            raw_score = target_pos["match_score"]
             
             # 清理資料：移除 AI 產生的前綴與百分比符號
             # 1. 處理 Role (提取關鍵字)
             # 因 target_position 設定為必填，故沒有幫使用者判斷適合職類，但先保留
             clean_role = raw_role.replace("領航員分析您適合的職類為 - ", "").strip()
             
-            # 2. 處理 Match Score (轉為整數)
-            try:
-                if isinstance(raw_score, str):
-                    clean_score = int(raw_score.replace("%", "").strip())
-                else:
-                    clean_score = int(raw_score)
-            except:
-                clean_score = 40
+             # 2. 處理 Match Score (轉為整數)
+            if isinstance(raw_score, str):
+                clean_score = int(raw_score.replace("%", "").strip())
+            else:
+                clean_score = int(raw_score)
                 
             return {
-                "job_category": clean_role,
+                "role": clean_role,
                 "match_score": clean_score
             }
             
         except Exception as e:
             if "PGRST205" in str(e):
-                print(f"ℹ️ 提示: 資料表 'user_skill' 尚未建立，將使用預設參數。")
+                print(f"ℹ️ 提示: 資料表尚未建立，將使用預設參數。")
             elif "42703" in str(e):
-                print(f"⚠️ 欄位名稱不符，請檢查 user_skill 表結構: {e}")
+                print(f"⚠️ 欄位名稱不符，請檢查資料表表結構: {e}")
             else:
                 print(f"⚠️ 獲取使用者缺口分析失敗: {e}")
             return None
@@ -100,6 +98,7 @@ class CourseRecommendationService:
             print(f"⚠️ 獲取候選課程失敗: {e}")
             return []
 
+    @staticmethod
     def normalize_course_difficulty(courses: List[Dict]) -> List[Dict]:
         """
         將課程的中文字難易度轉換為數值，方便後續計算。
@@ -128,76 +127,101 @@ class CourseRecommendationService:
         return 5
 
     @staticmethod
-    def compute_user_ability_position(match_score: int) -> float:
-        """
-        將 0-100 的 match_score 映射到課程難度空間 (1.0-3.0)。
-        """
-        cursor = 1.0 + (match_score / 100) * 2.0
-        return round(cursor, 3)
-
-    def calculate_scores(self, courses: List[Dict], match_score: int, user_level: int) -> List[Dict]:
+    def compute_priority_score(course_level: int, ability_position: float, user_level: int) -> float:
         """
         計算每一門課程的推薦分數。
         """
+        # A. 距離分數 (Distance Score) - 連續性
+        # 課程等級與使用者游標越近，分數越高
+        # 使用高斯函數概念或簡單倒數： 1 / (1 + 距離平方) 讓接近的權重放大
+        distance = abs(course_level - ability_position)
+        distance_score = 1 / (1 + distance ** 2)
+
+        # B. 政策權重 (Policy Weight) - 離散性
+        # 查表確認該等級使用者是否適合此難度
+        level_weight = USER_TO_COURSE_DISTRIBUTION[user_level].get(
+            course_level, 0
+        )
+        return distance_score * level_weight
+
+    def rank_courses(self, courses: List[Dict], match_score: int, user_level: int) -> List[Dict]:
+
         ability_position = self.compute_user_ability_position(match_score)
-        processed_courses = []
+
+        ranked_list = [] # 建立新列表
 
         for c in courses:
-            level_val = COURSE_LEVEL_MAP.get(c.get("level"))
-            if level_val is None:
-                continue
+            priority_score = self.compute_priority_score(
+                c["course_level"],
+                ability_position,
+                user_level
+            )
+            # --- 重點：過濾掉課程難易度分數為 0 的課程 ---
+            if priority_score <= 0.0:
+              continue
 
-            # 1. Priority Score (基於距離與政策權重)
-            distance = abs(level_val - ability_position)
-            distance_score = 1 / (1 + distance ** 2)
-            policy_weight = USER_TO_COURSE_DISTRIBUTION[user_level].get(level_val, 0)
-            # --- 重點：過濾掉權重為 0 的課程 ---
-            if policy_weight <= 0:
-                continue
-            priority_score = distance_score * policy_weight
-
-            # 2. Quality Score (基於評價與評論數)
-            rating = c.get("rating", 0) or 0
-            reviews = c.get("review_count", 0) or 0
-            quality_score = (rating / 5 * 0.7) + (min(reviews, 1000) / 1000 * 0.3)
-
-            # 更新課程資訊
-            c["course_level"] = level_val
             c["priority_score"] = priority_score
-            c["quality_score"] = quality_score
-            processed_courses.append(c)
 
-        return processed_courses
+            # 次排序分數（品質）
+            c["quality_score"] = (
+                (c.get("rating", 0) / 5 * 0.7) +
+                (min(c.get("review_count") or 0, 1000) / 1000 * 0.3)
+            )
+
+            ranked_list.append(c) # 只將合格的課程加入
+
+        return sorted(
+            ranked_list,
+            key=lambda x: (
+                x["priority_score"],     # 1.難度最重要
+                x["quality_score"],      # 2.品質
+            ),
+            reverse=True
+        )
 
     def get_recommendations(self, user_id: str, top_k: int = 5) -> Dict[str, Any]:
         """
         主推薦流程入口。
         """
+        from src.core.agent_engine.manager import CareerAgentManager
+        from src.core.agent_engine.task_types import TaskType
+
         # 1. 獲取使用者狀態 (從 Supabase 取得 match_score 與 job_category)
         user_gap = self.fetch_user_gap(user_id)
         if not user_gap:
-            match_score = 40
-            job_category = "backend"
-        else:
-            match_score = user_gap["match_score"]
-            job_category = user_gap["job_category"]
+            return {"status": "error", "message": "尚未找到您的職涯測驗報告，無法推薦課程。"}
+        match_score = user_gap["match_score"]
+        job_category = user_gap["role"]
 
         # 計算 User Level
         user_level = self.score_to_user_level(match_score)
 
         # 2. 獲取並處理課程
         courses = self.fetch_candidate_courses(job_category)
-        scored_courses = self.calculate_scores(courses, match_score, user_level)
+        if not courses:
+            return {"status": "error", "message": f"目前資料庫中缺乏 {job_category} 的相關課程。"}
+        scored_courses = self.normalize_course_difficulty(courses)
 
         # 3. 排序
-        ranked = sorted(
+        ranked = self.rank_courses(
             scored_courses,
-            key=lambda x: (x["priority_score"], x["quality_score"]),
-            reverse=True
+            match_score,
+            user_level
         )
 
-        # 4. 封裝回傳 (依據建議方案優化)
-        # 假設 ranked 已經算好了
+        # 4. 取得 Top K 精華清單
         top_courses_raw = ranked[:top_k]
         
-        return top_courses_raw
+        # 5. 交接給 CrewAI Manager 進行認知分析與路線規劃
+        # 先暫停丟給 Manager，為了測試將結果直接回傳
+        user_input = {
+            "user_id": user_id,
+            "role": job_category,
+            "match_score": match_score,
+            "courses": top_courses_raw
+        }
+        
+        manager = CareerAgentManager()
+        result = manager.run_task(TaskType.COURSE_REC.value, user_input)
+
+        return result
