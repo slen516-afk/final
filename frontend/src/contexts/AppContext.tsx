@@ -23,6 +23,7 @@ interface AppState {
   setIsJobPreferenceQuizDone: (value: boolean) => void;
   setIsPersonalityTestDone: (value: boolean) => void;
   setAvatarUrl: (value: string | null) => void;
+  isMockMode: () => boolean;
 }
 
 const APP_STATE_KEY = 'app-global-state';
@@ -96,6 +97,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setIsJobPreferenceQuizDone,
         setIsPersonalityTestDone,
         setAvatarUrl,
+        isMockMode: () => localStorage.getItem('mock-mode') === 'true',
       }}
     >
       {children}

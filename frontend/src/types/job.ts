@@ -9,6 +9,28 @@ export interface JobData {
   externalUrl: string;
 }
 
+/** Backend recommendation API response per job */
+export interface RecommendedJob {
+  id: string;
+  title: string;
+  company: string;
+  industry: string;
+  location: string;
+  externalUrl: string;
+  salary_range: string;
+  match_score: string | number;
+  recommendation_reason: string;
+  strengths: string;
+  weaknesses: string;
+  interview_tips: string;
+  isMock?: boolean;
+}
+
+export interface RecommendedJobDetail extends RecommendedJob {
+  description: string;
+  requirements: string[];
+}
+
 export interface JobDetailData {
   id: number;
   title: string;
