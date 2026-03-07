@@ -51,6 +51,7 @@ class CourseRecommendationService:
             
             # 因為拿掉了 .single()，所以 resp.data 是一個 list，需取第一筆資料
             target_pos = resp.data[0]["target_position"]
+            gap_description = target_pos["gap_description"]
             raw_role = target_pos["role"]
             raw_score = target_pos["match_score"]
             
@@ -67,7 +68,8 @@ class CourseRecommendationService:
                 
             return {
                 "role": clean_role,
-                "match_score": clean_score
+                "match_score": clean_score,
+                "gap_description": gap_description
             }
             
         except Exception as e:
@@ -199,6 +201,7 @@ class CourseRecommendationService:
             return {"status": "error", "message": "尚未找到您的職涯測驗報告，無法推薦課程。"}
         match_score = user_gap["match_score"]
         job_category = user_gap["role"]
+        gap_description = user_gap["gap_description"]
 
         # 計算 User Level
         user_level = self.score_to_user_level(match_score)
@@ -225,6 +228,7 @@ class CourseRecommendationService:
             "user_id": user_id,
             "role": job_category,
             "match_score": match_score,
+            "gap_description": gap_description,
             "courses": top_courses_raw
         }
         
@@ -274,5 +278,3 @@ class CourseRecommendationService:
 #             print("  " + "-"*40)
         
 #         print("\n(測試完畢。確認資料正確性後，請移除這段測試程式碼，並將交接給 CareerAgentManager 的註解打開。)")
-
-
