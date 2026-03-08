@@ -115,6 +115,8 @@ const Optimize = () => {
   const [showAccessAlert, setShowAccessAlert] = useState(false);
   const [accessAlertMessage, setAccessAlertMessage] = useState('');
   const [isLoadingDB, setIsLoadingDB] = useState(true);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveModalConfig, setSaveModalConfig] = useState({ type: 'success', title: '', message: '' });
   const resumeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -201,13 +203,19 @@ const Optimize = () => {
 
       const result = await response.json();
       if (response.ok) {
-        alert("🎉 優化版履歷已成功儲存至資料庫！");
+        // 🌟 成功時：顯示精美的成功視窗
+        setSaveModalConfig({ type: 'success', title: '儲存成功', message: '🎉 優化版履歷已成功儲存至資料庫！' });
+        setShowSaveModal(true);
       } else {
-        alert("儲存失敗：" + (result.message || result.error));
+        // 🌟 失敗時：顯示警告視窗
+        setSaveModalConfig({ type: 'warning', title: '儲存失敗', message: result.message || result.error });
+        setShowSaveModal(true);
       }
     } catch (error) {
       console.error("儲存優化履歷失敗:", error);
-      alert("網路連線錯誤，儲存失敗！");
+      // 🌟 網路錯誤時：顯示警告視窗
+      setSaveModalConfig({ type: 'warning', title: '網路錯誤', message: '網路連線錯誤，儲存失敗！' });
+      setShowSaveModal(true);
     }
   };
 
@@ -319,6 +327,15 @@ const Optimize = () => {
           title="系統提示"
           message={accessAlertMessage}
           confirmLabel="返回上傳"
+        />
+        {/* 🌟 新增的：儲存結果提示 Modal */}
+        <AlertModal
+          open={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          type={saveModalConfig.type as any}
+          title={saveModalConfig.title}
+          message={saveModalConfig.message}
+          confirmLabel="確定"
         />
 
         <div className="text-center mb-12">
