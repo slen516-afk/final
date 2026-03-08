@@ -8,6 +8,7 @@ import time
 import random
 from core.supabase_client import supabase
 from src.core.agent_engine.manager import CareerAgentManager
+from datetime import datetime, timezone
 
 # 取個簡短的 blueprint 名稱
 resume_proc_bp = Blueprint('resume_proc', __name__) 
@@ -310,4 +311,68 @@ def generate_optimized_resume():
 
     except Exception as e:
         print(f"🚨 [Error] AI 履歷生成失敗: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# ==========================================
+# 🌟 儲存優化後的履歷到資料庫 (完美對齊 Schema)
+# ==========================================
+@resume_proc_bp.route('/optimize/save', methods=['POST'])
+def save_optimized_resume():
+    try:
+        req_data = request.json
+        user_id = req_data.get('user_id')
+        resume_id = req_data.get('original_resume_id')
+        template_id = req_data.get('template_id')
+        optimized_data = req_data.get('optimized_data', {})
+
+        if not user_id:
+            return jsonify({"status": "error", "message": "缺少 user_id"}), 400
+
+        print(f"🚀 [API] 準備將 User {user_id} 的優化履歷存入 resume_optimization...")
+
+        from src.core.database.supabase_client import get_supabase_client
+        supabase = get_supabase_client()
+
+        # 🔧 輔助函式：確保要存入 jsonb 的欄位絕對是 list 或 dict，防止 Supabase 報錯
+        def to_jsonb(val):
+            if isinstance(val, list) or isinstance(val, dict):
+                return val
+            if isinstance(val, str) and val.strip():
+                # 如果前端傳來的是換行字串，我們把它包成陣列
+                return [val]
+            return []
+
+        # 🌟 完美對齊你截圖中的所有欄位
+        insert_data = {
+            "user_id": user_id,
+            "resume_id": resume_id,
+            # Text 欄位
+            "professional_summary": optimized_data.get("professional_summary", ""),
+            "autobiography": optimized_data.get("autobiography", ""),
+            "resume_name": f"{optimized_data.get('name', '未命名')} 的優化履歷",
+            "optimization_version": "v1.0",
+            "llm_model_used": "gpt-4o",
+            # JSONB 欄位 (使用輔助函式確保格式正確)
+            "professional_experience": to_jsonb(optimized_data.get("professional_experience")),
+            "core_skills": to_jsonb(optimized_data.get("core_skills")),
+            "projects": to_jsonb(optimized_data.get("projects")),
+            "education": to_jsonb(optimized_data.get("education")),
+            "template_color": {"template_id": template_id}, # 將樣板紀錄在 jsonb 裡
+            # 其他欄位
+            "is_embedded": False,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+
+        # 寫入 Supabase
+        response = supabase.table('resume_optimization').insert(insert_data).execute()
+
+        print("✅ [API] 優化履歷已成功儲存！")
+        return jsonify({
+            "status": "success",
+            "message": "優化履歷儲存成功",
+            "data": response.data
+        }), 200
+
+    except Exception as e:
+        print(f"🚨 [Error] 儲存優化履歷失敗: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
