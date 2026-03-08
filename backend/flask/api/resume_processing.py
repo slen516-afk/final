@@ -7,6 +7,7 @@ import uuid
 import time
 import random
 from core.supabase_client import supabase
+from src.core.agent_engine.manager import CareerAgentManager
 
 # 取個簡短的 blueprint 名稱
 resume_proc_bp = Blueprint('resume_proc', __name__) 
@@ -229,3 +230,84 @@ def save_processed_resume():
             "status": "error", 
             "message": str(e)
         }), 500
+
+@resume_proc_bp.route('/analyze', methods=['POST'])
+def analyze_resume_with_ai():
+    try:
+        req_data = request.json
+        user_id = req_data.get('user_id')
+        resume_data = req_data.get('resume_data')
+
+        if not user_id or not resume_data:
+            return jsonify({"status": "error", "message": "缺少 user_id 或 resume_data"}), 400
+
+        print(f"\n🚀 [API] 收到 User {user_id} 的履歷 AI 診斷請求！")
+
+        # 1. 召喚你的大腦總機！
+        # 💡 測試階段可以先保持 mock_mode=True，確定連線通了再改成 False 讓真 LLM 跑
+        manager = CareerAgentManager() 
+
+        # 2. 準備給 CrewAI 的輸入字典 (對應 manager.py 的 user_input)
+        # 把 JSON 轉成格式化字串，讓 LLM 比較好閱讀
+        user_input = {
+            "user_id": user_id,
+            "resume_text": json.dumps(resume_data, ensure_ascii=False, indent=2) 
+        }
+
+        # 3. 執行任務！告訴 Manager 我們要做 "resume_analysis"
+        print("🤖 [CrewAI] 開始執行履歷深度診斷任務...")
+        result = manager.run_task("resume_analysis", user_input)
+
+        # 4. 錯誤處理 (如果 manager 回傳 status: error)
+        if isinstance(result, dict) and result.get("status") == "error":
+             print(f"❌ [CrewAI Error] {result.get('message')}")
+             return jsonify({"status": "error", "message": result.get("message")}), 500
+
+        # 5. 成功！把符合 Pydantic schema 的完美 JSON 丟回給前端
+        print("✅ [CrewAI] 診斷完成，準備回傳給前端 UI！")
+        return jsonify({
+            "status": "success",
+            "data": result  
+        }), 200
+
+    except Exception as e:
+        print(f"🚨 [Fatal Error] AI 履歷診斷發生致命錯誤: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@resume_proc_bp.route('/optimize/generate', methods=['POST'])
+def generate_optimized_resume():
+    try:
+        req_data = request.json
+        user_id = req_data.get('user_id')
+        resume_data = req_data.get('resume_data')
+
+        if not user_id or not resume_data:
+            return jsonify({"status": "error", "message": "缺少 user_id 或 resume_data"}), 400
+
+        print(f"\n🚀 [API] 收到使用者 {user_id} 的 AI 全文履歷優化請求！")
+
+        # 🌟 直接呼叫 Manager (不用再寫 import 了，因為最上面已經 import 過了)
+        manager = CareerAgentManager(mock_mode=False) 
+
+        # 準備給 CrewAI 的輸入資料
+        user_input = {
+            "user_id": user_id,
+            "resume_text": json.dumps(resume_data, ensure_ascii=False, indent=2) 
+        }
+
+        print("🤖 [CrewAI] 開始執行履歷全文重寫與優化任務 (resume_opt)...")
+        result = manager.run_task("resume_opt", user_input)
+
+        if isinstance(result, dict) and result.get("status") == "error":
+             print(f"❌ [CrewAI Error] {result.get('message')}")
+             return jsonify({"status": "error", "message": result.get("message")}), 500
+
+        print("✅ [CrewAI] 履歷生成完成，準備渲染至前端樣板！")
+        return jsonify({
+            "status": "success",
+            "data": result  
+        }), 200
+
+    except Exception as e:
+        print(f"🚨 [Error] AI 履歷生成失敗: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500

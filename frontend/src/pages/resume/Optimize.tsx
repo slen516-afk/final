@@ -9,22 +9,47 @@ import LoginRequired from '@/components/gatekeeper/LoginRequired';
 import AlertModal from '@/components/modals/AlertModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import logoCat from '@/assets/logocat.png';
+import { templateThumbnailComponents } from '@/components/resume/TemplateThumbnails';
 import { mockResumeData } from '@/mocks/resumes';
 
 type Phase = 'initial' | 'analyzing' | 'suggestions' | 'templates' | 'generating' | 'result';
 
+// 🌟 保留這個用來控制最後生成出來的 PDF 顏色
 const TEMPLATE_THEMES: Record<string, any[]> = {
   corporate: [{ name: '深海藍經典', main: '#1F3A5F', secondary: '#4A6FA5' }],
   modern: [{ name: '科技藍', main: '#2563EB', secondary: '#1E3A8A' }],
   creative: [{ name: '莫蘭迪粉橘', main: '#E07A5F', secondary: '#C9604A' }],
 };
 
+// 🌟 新增這個用來渲染「選擇樣板」畫面的詳細資訊
+const templates = [
+  {
+    id: 'corporate',
+    name: '經典專業型',
+    subtitle: 'The Corporate Classic',
+    description: '強調邏輯性與權威感，適合金融、法律、管理顧問或大型企業',
+    features: ['單欄式佈局', '襯線體設計', 'ATS 友善度最高'],
+  },
+  {
+    id: 'modern',
+    name: '現代極簡型',
+    subtitle: 'Modern Minimalist',
+    description: '清晰的資訊層級，適合軟體工程、科技產業或新創公司',
+    features: ['雙欄式 (3:7)', '技能進度條', '大量留白設計'],
+  },
+  {
+    id: 'creative',
+    name: '創意視覺型',
+    subtitle: 'Creative Portfolio',
+    description: '個人品牌展現，專為設計、行銷、公關或媒體從業者設計',
+    features: ['非對稱設計', '莫蘭迪色系', '卡片式作品集'],
+  },
+];
+
 // ==========================================
 // 🌟 核心新增：動態診斷生成器 (Dynamic Diagnosis Generator)
-// 它會讀取你上傳的真實履歷，把你的經歷、學歷、技能截取出來，組成專屬的診斷報告！
 // ==========================================
 const generateDynamicDiagnosis = (data: any) => {
-  // 安全地擷取真實履歷的一小段內容來當作「原文內容」
   const expSnippet = data.experience && data.experience.length > 10
     ? data.experience.slice(0, 60) + "..."
     : "缺乏具體的工作經歷描述";
@@ -186,16 +211,98 @@ const Optimize = () => {
     }
   };
 
+  // ==========================================
+  // 🌟 真・AI 診斷串接 (呼叫後端 CrewAI)
+  // ==========================================
   const handleStartOptimize = async () => {
     setPhase('analyzing');
-    // 模擬 AI 分析時間
-    await new Promise(r => setTimeout(r, 2000));
 
-    // 🌟 關鍵修改：呼叫動態生成器，將真實資料 (originalData) 餵給它！
-    const dynamicReport = generateDynamicDiagnosis(originalData);
-    setDiagnosticResult(dynamicReport);
+    try {
+      const payload = {
+        user_id: realUserId,
+        resume_data: originalData
+      };
+
+      console.log("🚀 準備發送給 CrewAI 評估的資料:", payload);
+
+      const response = await fetch('/api/resume_process/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.data) {
+        console.log("✅ CrewAI 評估完成，收到真實報告:", result.data);
+        setDiagnosticResult(result.data);
+      } else {
+        throw new Error(result.error || result.message || "AI 分析回傳格式錯誤");
+      }
+
+    } catch (error) {
+      console.error("🚨 AI 評估 API 呼叫失敗:", error);
+      alert("⚠️ 後端 AI 連線失敗，啟用本地動態備援模式！(請檢查終端機報錯)");
+
+      const fallbackReport = generateDynamicDiagnosis(originalData);
+      setDiagnosticResult(fallbackReport);
+    }
 
     setPhase('suggestions');
+  };
+
+  // ==========================================
+  // 🌟 真・AI 履歷優化生成串接 (呼叫 resume_opt)
+  // ==========================================
+  const handleGenerateOptimizedResume = async (templateId: string) => {
+    setSelectedTemplate(templateId);
+    setPhase('generating');
+
+    try {
+      const payload = {
+        user_id: realUserId,
+        resume_data: originalData
+      };
+
+      console.log("🚀 準備發送給 AI 進行全文優化的資料:", payload);
+
+      const response = await fetch('/api/resume_process/optimize/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.data) {
+        console.log("✅ AI 全文優化完成，收到全新履歷:", result.data);
+
+        setResumeData((prev: any) => ({
+          ...prev,
+          professional_summary: result.data.professional_summary || '',
+          professional_experience: Array.isArray(result.data.professional_experience)
+            ? result.data.professional_experience.join('\n\n')
+            : result.data.professional_experience || prev.professional_experience,
+          core_skills: Array.isArray(result.data.core_skills)
+            ? result.data.core_skills.join(', ')
+            : result.data.core_skills || prev.core_skills,
+          projects: Array.isArray(result.data.projects)
+            ? result.data.projects.join('\n\n')
+            : result.data.projects || prev.projects,
+          education: Array.isArray(result.data.education)
+            ? result.data.education.join('\n\n')
+            : result.data.education || prev.education,
+          autobiography: result.data.autobiography || prev.autobiography
+        }));
+      } else {
+        throw new Error(result.error || "AI 優化生成失敗");
+      }
+    } catch (error) {
+      console.error("🚨 AI 生成履歷 API 呼叫失敗:", error);
+      alert("AI 生成失敗，將使用原始資料渲染樣板！");
+    }
+
+    setPhase('result');
   };
 
   if (isLoadingDB) {
@@ -259,7 +366,7 @@ const Optimize = () => {
               </motion.div>
             )}
 
-            {/* 🌟 階段 3：滿血版優化建議 UI (資料已動態替換) */}
+            {/* 階段 3：滿血版優化建議 UI */}
             {phase === 'suggestions' && diagnosticResult && (
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -360,34 +467,93 @@ const Optimize = () => {
               </motion.div>
             )}
 
-            {/* 階段 4：選擇樣板 */}
+            {/* 🌟 階段 4：滿血版華麗樣板選擇 UI */}
             {phase === 'templates' && (
-              <div className="grid md:grid-cols-3 gap-6">
-                {['corporate', 'modern', 'creative'].map(id => (
-                  <Card key={id} className="p-6 cursor-pointer hover:border-primary hover:shadow-warm transition-all" onClick={() => { setSelectedTemplate(id); setPhase('generating'); setTimeout(() => setPhase('result'), 1500); }}>
-                    <div className="h-40 bg-muted mb-4 rounded-lg flex items-center justify-center uppercase font-black text-muted-foreground/30">{id}</div>
-                    <Button variant="outline" className="w-full">使用此樣板</Button>
-                  </Card>
-                ))}
-              </div>
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold mb-2">選擇履歷樣板</h2>
+                  <p className="text-muted-foreground">根據您的職業目標選擇最適合的履歷風格與配色</p>
+                </div>
+                <div className="grid md:grid-cols-3 gap-6">
+                  {templates.map(template => {
+                    // 根據 id 取得對應的縮圖元件
+                    const ThumbnailComponent = templateThumbnailComponents[template.id as keyof typeof templateThumbnailComponents];
+                    // 從 TEMPLATE_THEMES 中抓取顏色方案來展示圓點
+                    const swatches = TEMPLATE_THEMES[template.id].map((t: any) => t.main);
+
+                    return (
+                      <Card key={template.id} className="overflow-hidden group border-border/60 hover:border-primary/40 hover:shadow-warm transition-all duration-300 flex flex-col">
+                        {/* 上方縮圖區塊 */}
+                        <div className="w-full aspect-[4/3] bg-[#f5efe8] overflow-hidden border-b border-border/40 flex items-center justify-center p-4">
+                          <div className="w-[70%] shadow-sm border border-gray-200/60 rounded-sm overflow-hidden bg-white group-hover:scale-105 transition-transform duration-300">
+                            {ThumbnailComponent ? <ThumbnailComponent /> : <div className="h-full w-full bg-white flex items-center justify-center"><FileText className="h-8 w-8 text-muted-foreground/30" /></div>}
+                          </div>
+                        </div>
+                        {/* 下方內容區塊 */}
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-lg">{template.name}</CardTitle>
+                          <CardDescription className="text-xs">{template.subtitle}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4 flex-1 flex flex-col">
+                          <p className="text-sm text-muted-foreground flex-1">{template.description}</p>
+
+                          {/* 功能特色列表 */}
+                          <ul className="space-y-1">
+                            {template.features.map((feature, j) => (
+                              <li key={j} className="text-xs flex items-center gap-2 text-muted-foreground">
+                                <Check className="h-3 w-3 text-primary" />
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+
+                          {/* 配色方案展示 (小圓點) */}
+                          <div className="pt-2 border-t border-border/40">
+                            <p className="text-xs text-muted-foreground mb-2">配色方案</p>
+                            <div className="flex gap-2.5">
+                              {swatches.map((color, j) => (
+                                <div key={j} className="h-6 w-6 rounded-full border shadow-sm" style={{ backgroundColor: color }} />
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* 🌟 按鈕：精準觸發呼叫 API 生成！ */}
+                          <Button
+                            className="w-full mt-4 gradient-primary"
+                            onClick={() => handleGenerateOptimizedResume(template.id)}
+                          >
+                            選擇此樣板
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </motion.div>
             )}
 
             {/* 階段 5：優化結果與儲存 */}
+            {phase === 'generating' && (
+              <motion.div key="generating" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-10">
+                <AILoadingSpinner message="AI 正在將您的履歷套用至全新樣板中..." /><AnalysisSkeleton />
+              </motion.div>
+            )}
+
             {phase === 'result' && (
               <div className="space-y-6">
                 <Card className="shadow-2xl overflow-hidden"><CardContent className="p-8 bg-white"><div ref={resumeRef} className="text-black max-w-[800px] mx-auto min-h-[600px]">
-                  <h1 className="text-4xl font-black border-b-4 pb-4 mb-8" style={{ color: TEMPLATE_THEMES[selectedTemplate][0].main, borderColor: TEMPLATE_THEMES[selectedTemplate][0].main }}>{resumeData.name}</h1>
+                  <h1 className="text-4xl font-black border-b-4 pb-4 mb-8" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000' }}>{resumeData.name}</h1>
                   <div className="grid md:grid-cols-[200px_1fr] gap-10">
                     <div className="space-y-6">
-                      <div className="h-44 w-44 rounded-full overflow-hidden border-4 shadow-lg" style={{ borderColor: TEMPLATE_THEMES[selectedTemplate][0].main }}><img src={avatarUrl || logoCat} className="w-full h-full object-cover" /></div>
+                      <div className="h-44 w-44 rounded-full overflow-hidden border-4 shadow-lg" style={{ borderColor: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000' }}><img src={avatarUrl || logoCat} className="w-full h-full object-cover" /></div>
                       <div className="space-y-2 text-sm text-gray-600">
                         <p className="flex items-center gap-2"><Mail className="h-4 w-4" /> {resumeData.email}</p>
                         <p className="flex items-center gap-2"><Phone className="h-4 w-4" /> {resumeData.phone}</p>
                       </div>
                     </div>
                     <div className="space-y-8">
-                      <section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate][0].main, borderColor: `${TEMPLATE_THEMES[selectedTemplate][0].main}30` }}>工作經歷</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.professional_experience}</p></section>
-                      <section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate][0].main, borderColor: `${TEMPLATE_THEMES[selectedTemplate][0].main}30` }}>教育背景</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.education}</p></section>
+                      <section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>工作經歷</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.professional_experience}</p></section>
+                      <section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>教育背景</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.education}</p></section>
                     </div>
                   </div>
                 </div></CardContent></Card>

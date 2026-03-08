@@ -128,7 +128,7 @@ const UploadResume = () => {
       console.log("🕵️‍♂️ 原始 Response:", response);
       let realData = response.data || response;
       if (realData && realData.data) {
-        realData = realData.data;
+        realData = realData.data; t
       }
       console.log("✅ 拆解後的真實資料:", realData);
 
