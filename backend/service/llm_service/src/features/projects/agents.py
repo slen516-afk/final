@@ -1,6 +1,10 @@
 from crewai import Agent
+from src.common.logger import setup_logger
+
+logger = setup_logger()
 
 def get_project_architect_agent(tools: list = None) -> Agent:
+    logger.info("開始建立職涯專案架構師 Agent (Project Architect)...")
     return Agent(
         role="職涯專案架構師 (Project Architect)",
         goal="根據使用者的能力缺口分析，推薦一個具備職場高度可解釋性且最具「履歷補強價值」的 Side Project。",
@@ -27,6 +31,7 @@ def get_project_architect_agent(tools: list = None) -> Agent:
     )
 
 def get_industry_qa_agent(tools: list = None) -> Agent:
+    logger.info("開始建立產業技術監控官 Agent (Industry QA)...")
     return Agent(
         role="產業技術監控官 (Industry QA)",
         goal="審核專案計畫的技術可行性、階段合理性，並強化其『履歷轉換價值』。",

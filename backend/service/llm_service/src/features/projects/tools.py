@@ -3,8 +3,11 @@ from pydantic import BaseModel, Field
 import os
 from src.core.database.supabase_client import get_supabase_client
 from dotenv import load_dotenv
+from src.common.logger import setup_logger
 
 load_dotenv()
+
+logger = setup_logger()
 
 class DatabaseTools:
 
@@ -13,6 +16,7 @@ class DatabaseTools:
         """
         根據 user_id 到 Supabase 抓取用戶與目標職位的缺口分析資料。
         """
+        logger.info(f"開始從資料庫獲取使用者缺口分析資料 (user_id: {user_id})")
         supabase = get_supabase_client()
 
         try:
@@ -33,6 +37,7 @@ class DatabaseTools:
             return str(response.data["target_position"])
 
         except Exception as e:
+            logger.error(f"獲取使用者缺口分析資料失敗: {str(e)}", exc_info=True)
             return {"error": f"資料庫抓取失敗: {str(e)}"}
 
 
