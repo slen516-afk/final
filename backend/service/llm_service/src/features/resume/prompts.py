@@ -31,7 +31,7 @@ def get_resume_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional[D
                     "description": analysis_task.description,
                     "expected_output": analysis_task.expected_output,
                     "callback": getattr(analysis_task, "callback", None),
-                    "callback": getattr(opt_task, "callback", None)
+                    "callback": getattr(analysis_task, "callback", None)
                 }
             ]
         }
@@ -55,7 +55,8 @@ def get_resume_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional[D
             "tasks": [
                 {
                     "description": opt_task.description,
-                    "expected_output": opt_task.expected_output
+                    "expected_output": opt_task.expected_output,
+                    "callback": getattr(opt_task, "callback", None)
                 }
             ]
         }
