@@ -93,6 +93,7 @@ erDiagram
         string location_preference "VARCHAR(100)"
         string remote_preference "VARCHAR(50)"
         jsonb career_motivation
+        jsonb personality "人格特質問卷完整結果（例如 Big Five／16 型人格等），原始輸出結構整包存放"
         jsonb questionnaire_response "完整問卷 module_a/b/c/d；GIN idx_survey_response_gin"
         datetime completed_at
         datetime updated_at
@@ -102,6 +103,7 @@ erDiagram
         int resume_id PK "🔵 履歷生成"
         int user_id FK
         string resume_type "VARCHAR(50)"
+        string resume_name "VARCHAR(100) NOT NULL 履歷名稱，供前端列表顯示與選取（必填，允許重複）"
         jsonb structured_data "⚡ 需向量化"
         jsonb normalized_data "⚡ 需向量化"
         uuid vector_id "Qdrant Point ID"
@@ -320,6 +322,7 @@ erDiagram
         int resume_id FK "NOT NULL"
         int version_id FK "可選"
         int user_id FK "NOT NULL"
+        string resume_name "VARCHAR(100) NOT NULL 履歷名稱，供前端顯示與選取（必填，允許重複）"
         text professional_summary "優化後的專業摘要"
         jsonb professional_experience "List[dict] 優化後的工作經歷（含 STAR 原則）"
         jsonb core_skills "List[str] 萃取的核心技能關鍵字"
