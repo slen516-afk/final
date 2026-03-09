@@ -13,10 +13,9 @@ import { useAppState } from '@/contexts/AppContext';
 import apiClient, { fetchUserResumesAPI } from '@/services/api';
 
 const MyResumes = () => {
-  const { user } = useAppState();
+  const { user, setIsPersonalityQuizDone } = useAppState();
   // 🌟 3. 取得目前登入者的真實 ID
   const realUserId = user?.user_id;
-
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState<any | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);

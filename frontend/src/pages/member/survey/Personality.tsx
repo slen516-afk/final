@@ -43,7 +43,7 @@ const clearProgress = () => {
 const RESULT_KEY = 'career-survey-done';
 
 const Personality = () => {
-  const { isPersonalityQuizDone, setIsPersonalityQuizDonee, isPersonalityTestDone, isResumeUploaded } = useAppState();
+  const { isPersonalityQuizDone, setIsPersonalityQuizDone, isPersonalityTestDone, isResumeUploaded } = useAppState();
   const navigate = useNavigate();
 
   const [progress, setProgress] = useState<SurveyProgress>(loadProgress);
@@ -138,8 +138,14 @@ const Personality = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.MouseEvent) => {
+    // 防呆：防止表單預設刷新行為
+    if (e) e.preventDefault();
+
+    console.log("👉 [Debug] 按鈕有被點擊到了！開始執行 handleSubmit...");
+
     if (!validateCurrentModule()) {
+      console.log("⚠️ [Debug] 驗證失敗：還有必填項目未完成");
       setShowIncompleteAlert(true);
       return;
     }
@@ -155,22 +161,56 @@ const Personality = () => {
       if (!finalAnswers['Q8']) finalAnswers['Q8'] = '';
     }
 
-    // Simulate analysis
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // 🌟 1. 幫後端分類：將扁平的 answers 分裝到四個 module 箱子裡
+      const payload = {
+        module_a: {} as Record<string, any>,
+        module_b: {} as Record<string, any>,
+        module_c: {} as Record<string, any>,
+        module_d: {} as Record<string, any>
+      };
 
-    setIsAnalyzing(false);
-    setShowResult(true);
-    setIsPersonalityQuizDone(true);
-    localStorage.setItem(RESULT_KEY, 'true');
-  };
+      for (const [key, val] of Object.entries(finalAnswers)) {
+        const k = key.toLowerCase();
+        if (k.match(/^q[1-8]($|_)/)) payload.module_a[key] = val;
+        else if (k.match(/^q(9|1[0-5])($|_)/)) payload.module_b[key] = val;
+        else if (k.match(/^q(1[6-7])($|_)/)) payload.module_c[key] = val;
+        else payload.module_d[key] = val;
+      }
 
-  const handleReset = () => {
-    clearProgress();
-    setProgress({ hasSkillBase: null, answers: {}, currentStep: 0 });
-    setShowResult(false);
-    setIsPersonalityQuizDone(false);
-    localStorage.removeItem(RESULT_KEY);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+      console.log("🚀 準備發送格式化後的問卷給後端:", payload);
+
+      // 🌟 2. 呼叫正牌 API
+      const response = await fetch('/api/questionnaire/questionnaire-response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      // 🌟 3. 防呆：確保後端回傳的是 JSON，不然就報錯
+      let result;
+      try {
+        result = await response.json();
+      } catch (err) {
+        throw new Error("後端回傳的不是 JSON，請檢查 Flask 終端機是否有報錯");
+      }
+
+      if (response.ok) {
+        console.log("✅ 問卷儲存與 API 呼叫大成功:", result);
+        setIsAnalyzing(false);
+        setShowResult(true);
+        setIsPersonalityQuizDone(true);
+        localStorage.setItem(RESULT_KEY, 'true');
+      } else {
+        throw new Error(result.error || result.message || "發生未知錯誤");
+      }
+    } catch (error: any) {
+      console.error("🚨 提交問卷失敗:", error);
+      alert(`提交失敗：${error.message}`);
+      setIsAnalyzing(false);
+    }
   };
 
   // Choose path
@@ -299,7 +339,6 @@ const Personality = () => {
                   )}
                   <Button
                     variant="outline"
-                    onClick={handleReset}
                     className="h-12 border-primary/40 text-primary hover:bg-primary/5"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
@@ -352,7 +391,6 @@ const Personality = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={handleReset}
                   className="gap-1.5 text-xs"
                   style={{ color: '#675143' }}
                 >

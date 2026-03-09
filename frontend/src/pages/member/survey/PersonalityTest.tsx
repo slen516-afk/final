@@ -13,7 +13,6 @@ import { motion } from 'framer-motion';
 import LoginRequired from '@/components/gatekeeper/LoginRequired';
 import { personalityTestModules, type PTModule } from '@/data/personalityTestQuestions';
 import { computePersonalityResult, type PersonalityResult } from '@/data/personalityScoring';
-
 import PersonalityTestResult from '@/components/personality/PersonalityTestResult';
 
 const STORAGE_KEY = 'personality-test-progress';
@@ -41,7 +40,8 @@ const clearProgress = () => {
 };
 
 const PersonalityTest = () => {
-  const { isPersonalityTestDone, setIsPersonalityTestDone } = useAppState();
+  // 🌟 確保所有需要的 state 都從 AppContext 拿出來
+  const { user, isPersonalityTestDone, setIsPersonalityTestDone } = useAppState();
   const navigate = useNavigate();
 
   const [progress, setProgress] = useState<TestProgress>(loadProgress);
@@ -57,6 +57,7 @@ const PersonalityTest = () => {
     } catch { }
     return null;
   });
+
   const [showResult, setShowResult] = useState(() => {
     if (isPersonalityTestDone) return true;
     try { return localStorage.getItem(RESULT_KEY) !== null; } catch { return false; }
@@ -70,7 +71,6 @@ const PersonalityTest = () => {
   useEffect(() => {
     saveProgress(progress);
   }, [progress]);
-
 
   const updateProgress = useCallback((partial: Partial<TestProgress>) => {
     setProgress((prev) => ({ ...prev, ...partial }));
@@ -117,20 +117,31 @@ const PersonalityTest = () => {
     }
   };
 
+  // 🌟 確保 handleSubmit 是一個 async function 且包在元件內部
   const handleSubmit = async () => {
     if (!validateCurrentModule()) {
       setShowIncompleteAlert(true);
       return;
     }
+
     setIsAnalyzing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    const computed = computePersonalityResult(answers);
-    setResult(computed);
-    localStorage.setItem(RESULT_KEY, JSON.stringify(computed));
-    setIsAnalyzing(false);
-    setShowResult(true);
-    setIsPersonalityTestDone(true);
-    clearProgress();
+
+    try {
+      // 🌟 這裡使用 async/await 模擬運算時間 (或真實打 API)
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      const computed = computePersonalityResult(answers);
+      setResult(computed);
+      localStorage.setItem(RESULT_KEY, JSON.stringify(computed));
+
+      setIsAnalyzing(false);
+      setShowResult(true);
+      setIsPersonalityTestDone(true);
+      clearProgress();
+    } catch (error) {
+      console.error("提交失敗:", error);
+      setIsAnalyzing(false);
+    }
   };
 
   const handleReset = () => {
@@ -145,6 +156,7 @@ const PersonalityTest = () => {
 
   const progressPercent = totalSteps > 0 ? ((currentStep + 1) / totalSteps) * 100 : 0;
 
+  // 🌟 元件的最終 return
   return (
     <LoginRequired>
       <div className="container py-8 md:py-12 animate-fade-in">
@@ -193,8 +205,8 @@ const PersonalityTest = () => {
                       <Card
                         key={q.id}
                         className={`rounded-2xl border-0 bg-white shadow-[0_4px_20px_rgba(150,105,73,0.08)] transition-all ${invalidIds.has(q.id)
-                            ? 'ring-2 ring-destructive/50 shadow-[0_4px_20px_rgba(150,105,73,0.08),0_0_8px_hsl(var(--destructive)/0.25)]'
-                            : ''
+                          ? 'ring-2 ring-destructive/50 shadow-[0_4px_20px_rgba(150,105,73,0.08),0_0_8px_hsl(var(--destructive)/0.25)]'
+                          : ''
                           }`}
                       >
                         <CardContent className="p-6 md:p-8">
@@ -213,8 +225,8 @@ const PersonalityTest = () => {
                                 <div
                                   key={opt.key}
                                   className={`flex items-start space-x-3 p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-muted/40 ${answers[q.id] === opt.key
-                                      ? 'border-primary/60 bg-primary/5 shadow-[0_0_8px_hsl(var(--primary)/0.15)]'
-                                      : 'border-border/60'
+                                    ? 'border-primary/60 bg-primary/5 shadow-[0_0_8px_hsl(var(--primary)/0.15)]'
+                                    : 'border-border/60'
                                     }`}
                                 >
                                   <RadioGroupItem value={opt.key} id={`${q.id}-${opt.key}`} className="mt-0.5" />
@@ -269,6 +281,6 @@ const PersonalityTest = () => {
       </div>
     </LoginRequired>
   );
-};
+}; // 🌟 元件結束括號
 
 export default PersonalityTest;
