@@ -38,8 +38,16 @@ def get_course_config(task_type: TaskType, inputs: Dict[str, Any]) -> Dict[str, 
             {"role": planner.role, "goal": planner.goal, "backstory": planner.backstory, "tools": []}
         ],
         "tasks": [
-            {"description": diagnostic_task.description, "expected_output": diagnostic_task.expected_output},
-            {"description": roadmap_task.description, "expected_output": roadmap_task.expected_output}
+            {
+                "description": diagnostic_task.description, 
+                "expected_output": diagnostic_task.expected_output,
+                "callback": getattr(diagnostic_task, "callback", None)
+            },
+            {
+                "description": roadmap_task.description, 
+                "expected_output": roadmap_task.expected_output,
+                "callback": getattr(roadmap_task, "callback", None)
+            }
         ],
         "output_model": CareerRoadmap
     }

@@ -1,7 +1,12 @@
 from crewai import Task
 from crewai import Agent
+from src.common.logger import setup_logger
+from src.common.crewai_callbacks import task_audit_callback
+
+logger = setup_logger()
 
 def get_diagnostic_analysis_task(agent: Agent) -> Task:
+    logger.info("開始生成課程診斷戰略任務 (Diagnostic Analysis Task)...")
     """
     診斷痛點與給予戰略大方向的任務
     """
@@ -18,13 +23,15 @@ def get_diagnostic_analysis_task(agent: Agent) -> Task:
         3. 設定期望：描述完成這套學習後，使用者在職場上的競爭地位將會如何改變。
         """,
         expected_output="一份包含技能缺口診斷、戰略方向建議與競爭力提升預測的戰略報告。",
-        agent=agent
+        agent=agent,
+        callback=task_audit_callback
     )
 
 def get_roadmap_design_task(agent: Agent, context_tasks: list) -> Task:
     """
     路徑設計任務
     """
+    logger.info("開始生成學習路線圖設計任務 (Roadmap Design Task)...")
     return Task(
         description="""
         參考『戰略分析師』的診斷報告，針對從演算法精準挑選出來的以下課程清單進行專業編排：{courses}。
@@ -35,5 +42,6 @@ def get_roadmap_design_task(agent: Agent, context_tasks: list) -> Task:
         """,
         expected_output="完整的學習路線圖，需包含大方向建議、排序後的課程詳情與里程碑。",
         agent=agent,
-        context=context_tasks
+        context=context_tasks,
+        callback=task_audit_callback
     )

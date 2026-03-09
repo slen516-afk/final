@@ -2,7 +2,9 @@ from typing import List, Dict, Any, Optional
 import math
 import os
 from src.core.database.supabase_client import get_supabase_client
+from src.common.logger import setup_logger
 
+logger = setup_logger()
 # =========================
 # 基礎設定與權重表
 # =========================
@@ -74,11 +76,11 @@ class CourseRecommendationService:
             
         except Exception as e:
             if "PGRST205" in str(e):
-                print(f"ℹ️ 提示: 資料表尚未建立，將使用預設參數。")
+                logger.info("資料表尚未建立，將使用預設參數。")
             elif "42703" in str(e):
-                print(f"⚠️ 欄位名稱不符，請檢查資料表表結構: {e}")
+                logger.warning(f"欄位名稱不符，請檢查資料表表結構: {e}")
             else:
-                print(f"⚠️ 獲取使用者缺口分析失敗: {e}")
+                logger.error(f"獲取使用者缺口分析失敗: {e}", exc_info=True)
             return None
 
     def fetch_candidate_courses(self, job_category: str) -> List[Dict]:
@@ -96,7 +98,7 @@ class CourseRecommendationService:
             )
             return resp.data
         except Exception as e:
-            print(f"⚠️ 獲取候選課程失敗: {e}")
+            logger.error(f"獲取候選課程失敗: {e}", exc_info=True)
             return []
 
     @staticmethod

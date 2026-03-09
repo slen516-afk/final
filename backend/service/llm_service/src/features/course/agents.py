@@ -1,7 +1,11 @@
 from crewai import Agent
+from src.common.logger import setup_logger
+
+logger = setup_logger()
 
 def get_career_strategist_agent(tools: list = None) -> Agent:
     """資深職涯發展戰略家"""
+    logger.info("開始建立資深職涯發展戰略家 Agent (Career Growth Strategist)...")
     return Agent(
         role="資深職涯發展戰略家 (Senior Career Growth Strategist)",
         goal="精準診斷使用者在目標職位的競爭力缺口，並定義從與目標職位匹配值提升至卓越級別的關鍵戰略。",
@@ -17,6 +21,7 @@ def get_career_strategist_agent(tools: list = None) -> Agent:
 
 def get_learning_designer_agent() -> Agent:
     """教學系統設計專家"""
+    logger.info("開始建立教學系統設計專家 Agent (Learning Experience Designer)...")
     return Agent(
         role="教學系統設計專家 (Learning Experience Designer)",
         goal="依據教育心理學與知識依賴性，將課程轉化為一條具備『先後承接邏輯』的成長路徑，確保學習效率最大化。",
