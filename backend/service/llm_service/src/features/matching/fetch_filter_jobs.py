@@ -6,6 +6,9 @@ from src.core.database.supabase_client import get_supabase_client
 # 1. 載入環境變數 (確保你有 .env 檔案存放 URL 和 KEY)
 load_dotenv()
 
+from src.common.logger import setup_logger
+logger = setup_logger()
+
 class JobFilterTester:
     """
     用於測試 Supabase 硬篩選邏輯的獨立類別
@@ -17,7 +20,7 @@ class JobFilterTester:
         """
         執行硬篩選 (Hard Filtering)
         """
-        print(f"🔄 正在執行篩選，條件: {json.dumps(filters, indent=2, ensure_ascii=False)}")
+        logger.info(f"正在執行篩選，條件: {json.dumps(filters, indent=2, ensure_ascii=False)}")
         
         # 初始化查詢
         # 注意: 請確保你的資料表名稱正確，這裡預設為 'jobs'
@@ -97,8 +100,8 @@ if __name__ == "__main__":
             
             # 驗證邏輯：檢查是否真的有交集
             is_match = (s_min <= user_filters['salary_max']) and (s_max >= user_filters['salary_min'])
-            print(f"🔍 驗證匹配: {'Pass' if is_match else 'FAIL'}")
+            logger.info(f"驗證匹配: {'Pass' if is_match else 'FAIL'}")
             print("-" * 50)
             
     except Exception as e:
-        print(f"❌ 發生錯誤: {e}")
+        logger.error(f"發生錯誤: {e}", exc_info=True)
