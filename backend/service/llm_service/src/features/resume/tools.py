@@ -1,6 +1,9 @@
 from typing import Any, Dict
 from crewai.tools import BaseTool
 from src.core.database.supabase_client import get_supabase_client
+from src.common.logger import setup_logger
+
+logger = setup_logger()
 
 class DatabaseTools:
     """
@@ -12,6 +15,7 @@ class DatabaseTools:
         """
         根據 user_id 到 Supabase 抓取用戶最新的履歷內容。
         """
+        logger.info(f"開始抓取最新的履歷內容 (user_id: {user_id})")
         supabase = get_supabase_client()
         try:
             response = supabase.table("resume") \
@@ -27,6 +31,7 @@ class DatabaseTools:
             return response.data
 
         except Exception as e:
+            logger.error(f"抓取用戶最新履歷內容失敗: {str(e)}", exc_info=True)
             return {"error": f"資料庫抓取失敗: {str(e)}"}
 
     @staticmethod
@@ -35,6 +40,7 @@ class DatabaseTools:
         根據 user_id 到 Supabase 抓取用戶問卷中 questionnaire_response 不為空的最新結果。
         (已針對 CrewAI 強化防呆：發生任何錯誤皆回傳自然語言提示，確保 Agent 不會崩潰)
         """
+        logger.info(f"開始抓取最新的問卷結果 (user_id: {user_id})")
         from src.core.database.supabase_client import get_supabase_client # 確保你有引入
         
         supabase = get_supabase_client()
@@ -64,6 +70,7 @@ class DatabaseTools:
             return f"使用者的目標職位為：{target_role}"
 
         except Exception as e:
+            logger.error(f"抓取用戶問卷結果失敗: {str(e)}", exc_info=True)
             # 🌟 終極防呆 3：發生任何未知錯誤時，絕對不回傳 dict，而是用文字安撫 AI 繼續工作！
             return f"【系統提示】：讀取問卷時發生異常（{str(e)}），請忽略問卷目標，直接對現有履歷進行深度評估與全文重寫優化。"
     
@@ -72,6 +79,7 @@ class DatabaseTools:
         """
         根據 user_id 到 Supabase 抓取用戶最新的履歷分析報告。
         """
+        logger.info(f"開始抓取最新的履歷分析報告 (user_id: {user_id})")
         supabase = get_supabase_client()
         try:
             fields = (
@@ -93,6 +101,7 @@ class DatabaseTools:
             return response.data
 
         except Exception as e:
+            logger.error(f"抓取用戶履歷分析報告失敗: {str(e)}", exc_info=True)
             return {"error": f"資料庫抓取失敗: {str(e)}"}
 
 
