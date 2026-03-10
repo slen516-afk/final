@@ -109,16 +109,31 @@ def login():
 
         # 🌟 核心修改：從 USER 資料表撈取包含「整數 user_id」的完整資料
         # 我們利用 auth_uid (UUID) 來對應
+        # 🌟 核心修改：從 USER 資料表撈取包含「整數 user_id」的完整資料
+        # 我們利用 auth_uid (UUID) 來對應
         try:
+            # 1. 撈取使用者資料 (來自你的修改，確保後續 API 回傳有整數 user_id)
             user_record = supabase.table("USER").select("*").eq("auth_uid", user.id).single().execute()
             db_user_data = user_record.data
             
-            # 順便更新最後登入時間
-            supabase.table("USER").update(
-                {"last_login": datetime.utcnow().isoformat()}
-            ).eq("auth_uid", user.id).execute()
+            # 2. 準備精確的 timestamp (來自 be_tz 的修改)
+            current_time = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S+00')
+            
+            # 3. 優先使用 auth_uid 更新最後登入時間 (來自 be_tz 的修改)
+            update_res = supabase.table("USER").update(
+                {"last_login": current_time}
+            ).eq("auth_uid", str(user.id)).execute()
+            
+            # 4. 備案：如果 auth_uid 無法更新，嘗試以 email 更新 (來自 be_tz 的修改)
+            if not update_res.data:
+                print(f"[Auth] last_login update by auth_uid failed, trying email fallback for {email}")
+                supabase.table("USER").update(
+                    {"last_login": current_time}
+                ).eq("email", email).execute()
+
         except Exception as e:
-            print(f"[Debug] Failed to fetch user record or update last_login: {e}")
+            print(f"[Debug] Failed to fetch user record or update last_login for {email}: {e}")
+            # 確保萬一出錯，db_user_data 有預設值，不會導致下方 return 時發生 Key Error
             db_user_data = {}
 
         # 🌟 修改回傳格式：把 db_user_data 裡面的整數 user_id 塞進去
