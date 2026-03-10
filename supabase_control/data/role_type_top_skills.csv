@@ -1,0 +1,61 @@
+﻿role_type,role_name,rank,skill_id,skill_name,job_count
+A,前端工程師,1,2,JavaScript,695
+A,前端工程師,2,45,CSS,647
+A,前端工程師,3,21,Git,633
+A,前端工程師,4,42,HTML,620
+A,前端工程師,5,11,React,430
+A,前端工程師,6,12,Vue,412
+A,前端工程師,7,37,Communication,355
+A,前端工程師,8,4,TypeScript,305
+A,前端工程師,9,38,Problem Solving,244
+A,前端工程師,10,48,jQuery,228
+B,後端工程師,1,21,Git,1173
+B,後端工程師,2,44,Linux,1146
+B,後端工程師,3,1,Python,1134
+B,後端工程師,4,41,C#,1132
+B,後端工程師,5,5,C++,1102
+B,後端工程師,6,37,Communication,1057
+B,後端工程師,7,2,JavaScript,889
+B,後端工程師,8,3,Java,830
+B,後端工程師,9,32,MySQL,728
+B,後端工程師,10,38,Problem Solving,697
+C,全端工程師,1,2,JavaScript,851
+C,全端工程師,2,42,HTML,570
+C,全端工程師,3,41,C#,529
+C,全端工程師,4,45,CSS,526
+C,全端工程師,5,21,Git,521
+C,全端工程師,6,1,Python,402
+C,全端工程師,7,12,Vue,385
+C,全端工程師,8,3,Java,372
+C,全端工程師,9,37,Communication,340
+C,全端工程師,10,48,jQuery,337
+D,資料科學家/數據分析師,1,1,Python,396
+D,資料科學家/數據分析師,2,43,Excel,322
+D,資料科學家/數據分析師,3,37,Communication,248
+D,資料科學家/數據分析師,4,59,Tableau,189
+D,資料科學家/數據分析師,5,57,Power BI,184
+D,資料科學家/數據分析師,6,38,Problem Solving,155
+D,資料科學家/數據分析師,7,60,ETL,147
+D,資料科學家/數據分析師,8,39,Project Management,129
+D,資料科學家/數據分析師,9,32,MySQL,80
+D,資料科學家/數據分析師,10,21,Git,77
+E,AI/演算法工程師,1,1,Python,638
+E,AI/演算法工程師,2,5,C++,415
+E,AI/演算法工程師,3,54,PyTorch,287
+E,AI/演算法工程師,4,58,tensorflow,254
+E,AI/演算法工程師,5,52,LLM,228
+E,AI/演算法工程師,6,21,Git,193
+E,AI/演算法工程師,7,37,Communication,192
+E,AI/演算法工程師,8,44,Linux,184
+E,AI/演算法工程師,9,67,NLP,153
+E,AI/演算法工程師,10,41,C#,132
+F,DevOps/SRE工程師,1,44,Linux,214
+F,DevOps/SRE工程師,2,37,Communication,184
+F,DevOps/SRE工程師,3,43,Excel,116
+F,DevOps/SRE工程師,4,38,Problem Solving,115
+F,DevOps/SRE工程師,5,1,Python,114
+F,DevOps/SRE工程師,6,24,AWS,102
+F,DevOps/SRE工程師,7,55,Shell,90
+F,DevOps/SRE工程師,8,23,Kubernetes,83
+F,DevOps/SRE工程師,9,25,Azure,81
+F,DevOps/SRE工程師,10,21,Git,75

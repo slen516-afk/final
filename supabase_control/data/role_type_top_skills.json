@@ -1,0 +1,324 @@
+{
+  "role_type_top_skills": {
+    "A": [
+      {
+        "skill_id": 2,
+        "skill_name": "JavaScript",
+        "job_count": 695
+      },
+      {
+        "skill_id": 45,
+        "skill_name": "CSS",
+        "job_count": 647
+      },
+      {
+        "skill_id": 21,
+        "skill_name": "Git",
+        "job_count": 633
+      },
+      {
+        "skill_id": 42,
+        "skill_name": "HTML",
+        "job_count": 620
+      },
+      {
+        "skill_id": 11,
+        "skill_name": "React",
+        "job_count": 430
+      },
+      {
+        "skill_id": 12,
+        "skill_name": "Vue",
+        "job_count": 412
+      },
+      {
+        "skill_id": 37,
+        "skill_name": "Communication",
+        "job_count": 355
+      },
+      {
+        "skill_id": 4,
+        "skill_name": "TypeScript",
+        "job_count": 305
+      },
+      {
+        "skill_id": 38,
+        "skill_name": "Problem Solving",
+        "job_count": 244
+      },
+      {
+        "skill_id": 48,
+        "skill_name": "jQuery",
+        "job_count": 228
+      }
+    ],
+    "B": [
+      {
+        "skill_id": 21,
+        "skill_name": "Git",
+        "job_count": 1173
+      },
+      {
+        "skill_id": 44,
+        "skill_name": "Linux",
+        "job_count": 1146
+      },
+      {
+        "skill_id": 1,
+        "skill_name": "Python",
+        "job_count": 1134
+      },
+      {
+        "skill_id": 41,
+        "skill_name": "C#",
+        "job_count": 1132
+      },
+      {
+        "skill_id": 5,
+        "skill_name": "C++",
+        "job_count": 1102
+      },
+      {
+        "skill_id": 37,
+        "skill_name": "Communication",
+        "job_count": 1057
+      },
+      {
+        "skill_id": 2,
+        "skill_name": "JavaScript",
+        "job_count": 889
+      },
+      {
+        "skill_id": 3,
+        "skill_name": "Java",
+        "job_count": 830
+      },
+      {
+        "skill_id": 32,
+        "skill_name": "MySQL",
+        "job_count": 728
+      },
+      {
+        "skill_id": 38,
+        "skill_name": "Problem Solving",
+        "job_count": 697
+      }
+    ],
+    "C": [
+      {
+        "skill_id": 2,
+        "skill_name": "JavaScript",
+        "job_count": 851
+      },
+      {
+        "skill_id": 42,
+        "skill_name": "HTML",
+        "job_count": 570
+      },
+      {
+        "skill_id": 41,
+        "skill_name": "C#",
+        "job_count": 529
+      },
+      {
+        "skill_id": 45,
+        "skill_name": "CSS",
+        "job_count": 526
+      },
+      {
+        "skill_id": 21,
+        "skill_name": "Git",
+        "job_count": 521
+      },
+      {
+        "skill_id": 1,
+        "skill_name": "Python",
+        "job_count": 402
+      },
+      {
+        "skill_id": 12,
+        "skill_name": "Vue",
+        "job_count": 385
+      },
+      {
+        "skill_id": 3,
+        "skill_name": "Java",
+        "job_count": 372
+      },
+      {
+        "skill_id": 37,
+        "skill_name": "Communication",
+        "job_count": 340
+      },
+      {
+        "skill_id": 48,
+        "skill_name": "jQuery",
+        "job_count": 337
+      }
+    ],
+    "D": [
+      {
+        "skill_id": 1,
+        "skill_name": "Python",
+        "job_count": 396
+      },
+      {
+        "skill_id": 43,
+        "skill_name": "Excel",
+        "job_count": 322
+      },
+      {
+        "skill_id": 37,
+        "skill_name": "Communication",
+        "job_count": 248
+      },
+      {
+        "skill_id": 59,
+        "skill_name": "Tableau",
+        "job_count": 189
+      },
+      {
+        "skill_id": 57,
+        "skill_name": "Power BI",
+        "job_count": 184
+      },
+      {
+        "skill_id": 38,
+        "skill_name": "Problem Solving",
+        "job_count": 155
+      },
+      {
+        "skill_id": 60,
+        "skill_name": "ETL",
+        "job_count": 147
+      },
+      {
+        "skill_id": 39,
+        "skill_name": "Project Management",
+        "job_count": 129
+      },
+      {
+        "skill_id": 32,
+        "skill_name": "MySQL",
+        "job_count": 80
+      },
+      {
+        "skill_id": 21,
+        "skill_name": "Git",
+        "job_count": 77
+      }
+    ],
+    "E": [
+      {
+        "skill_id": 1,
+        "skill_name": "Python",
+        "job_count": 638
+      },
+      {
+        "skill_id": 5,
+        "skill_name": "C++",
+        "job_count": 415
+      },
+      {
+        "skill_id": 54,
+        "skill_name": "PyTorch",
+        "job_count": 287
+      },
+      {
+        "skill_id": 58,
+        "skill_name": "tensorflow",
+        "job_count": 254
+      },
+      {
+        "skill_id": 52,
+        "skill_name": "LLM",
+        "job_count": 228
+      },
+      {
+        "skill_id": 21,
+        "skill_name": "Git",
+        "job_count": 193
+      },
+      {
+        "skill_id": 37,
+        "skill_name": "Communication",
+        "job_count": 192
+      },
+      {
+        "skill_id": 44,
+        "skill_name": "Linux",
+        "job_count": 184
+      },
+      {
+        "skill_id": 67,
+        "skill_name": "NLP",
+        "job_count": 153
+      },
+      {
+        "skill_id": 41,
+        "skill_name": "C#",
+        "job_count": 132
+      }
+    ],
+    "F": [
+      {
+        "skill_id": 44,
+        "skill_name": "Linux",
+        "job_count": 214
+      },
+      {
+        "skill_id": 37,
+        "skill_name": "Communication",
+        "job_count": 184
+      },
+      {
+        "skill_id": 43,
+        "skill_name": "Excel",
+        "job_count": 116
+      },
+      {
+        "skill_id": 38,
+        "skill_name": "Problem Solving",
+        "job_count": 115
+      },
+      {
+        "skill_id": 1,
+        "skill_name": "Python",
+        "job_count": 114
+      },
+      {
+        "skill_id": 24,
+        "skill_name": "AWS",
+        "job_count": 102
+      },
+      {
+        "skill_id": 55,
+        "skill_name": "Shell",
+        "job_count": 90
+      },
+      {
+        "skill_id": 23,
+        "skill_name": "Kubernetes",
+        "job_count": 83
+      },
+      {
+        "skill_id": 25,
+        "skill_name": "Azure",
+        "job_count": 81
+      },
+      {
+        "skill_id": 21,
+        "skill_name": "Git",
+        "job_count": 75
+      }
+    ]
+  },
+  "role_names": {
+    "A": "前端工程師",
+    "B": "後端工程師",
+    "C": "全端工程師",
+    "D": "資料科學家/數據分析師",
+    "E": "AI/演算法工程師",
+    "F": "DevOps/SRE工程師"
+  }
+}
