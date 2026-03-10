@@ -41,13 +41,24 @@ const MemberCenter = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { isLoggedIn, setIsLoggedIn, isResumeUploaded, isPersonalityQuizDone, isPersonalityTestDone, avatarUrl, setAvatarUrl } = useAppState();
+
   useEffect(() => {
+    if (!isLoggedIn) return;
+
     const fetchProfile = async () => {
       try {
         const data = await getMyProfile();
         setProfile(data);
-      } catch (err) {
+      } catch (err: any) {
         console.error("載入個人資料失敗，啟動備援方案:", err);
+        // 如果是 401 代表 Token 已經過期或無效
+        if (err.message && err.message.includes("401")) {
+          setIsLoggedIn(false);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('token');
+        }
         // 備援方案：載入寫定的 Mock 資料
         setProfile(mockProfile);
       } finally {
@@ -55,7 +66,7 @@ const MemberCenter = () => {
       }
     };
     fetchProfile();
-  }, []);
+  }, [isLoggedIn]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -98,7 +109,7 @@ const MemberCenter = () => {
     }
   };
 
-  const { isResumeUploaded, isPersonalityQuizDone, isPersonalityTestDone, avatarUrl, setAvatarUrl } = useAppState();
+  // 此行已移至上方，避免變數使用順序的問題
 
   const currentUserId = (profile as any)?.id || mockUserId;
   const name = profile

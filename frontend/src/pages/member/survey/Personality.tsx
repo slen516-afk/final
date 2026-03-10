@@ -146,10 +146,12 @@ const Personality = () => {
 
     setIsAnalyzing(true);
 
-    // Build final data: fill Q1-Q7 with 0 if skipped
+    // Build final data: fill Q1-Q7 & Q9-Q14 with 0 if skipped
     const finalAnswers = { ...answers };
     if (!hasSkillBase) {
-      for (let i = 1; i <= 7; i++) {
+      // 模組 A (Q1-Q7) 與 模組 B (Q9-Q14) 如果跳過則補 0
+      for (let i = 1; i <= 14; i++) {
+        if (i === 8) continue; // Q8 是文字題，非數字
         finalAnswers[`Q${i}`] = finalAnswers[`Q${i}`] ?? 0;
       }
       if (!finalAnswers['Q8']) finalAnswers['Q8'] = '';

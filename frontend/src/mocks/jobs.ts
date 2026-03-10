@@ -209,3 +209,121 @@ export const ICON_NAME_MAP: Record<string, string> = {
   'CI/CD Pipeline': 'Jenkins',
   '資安基礎': 'security',
 };
+
+/** Mock recommended jobs matching backend API shape */
+export const generateMockRecommendedJobs = (page: number): RecommendedJob[] => {
+  const base: RecommendedJob[] = [
+    {
+      id: 'rec-1',
+      title: 'Senior Backend Engineer - Python',
+      company: '塔台智能網絡股份有限公司',
+      industry: '資訊科技',
+      location: '台北市南港區園區街3之2號9樓',
+      externalUrl: 'https://www.104.com.tw/job/8n0gu?jobsource=joblist_list',
+      salary_range: '60k - 100k',
+      match_score: "79.8%",
+      recommendation_reason: '此職缺強調 Python 後端開發能力，並需要在 AWS 和 Docker 上有豐富經驗。候選人在 D3 (DevOps) 和 D5 (Quality) 上的高分顯示其具備相關經驗，契合度高。',
+      strengths: '候選人在 D3 (DevOps) 和 D6 (Soft Skills) 上的高分顯示了他在系統部署和團隊合作方面的強項，這對於優化現有架構和團隊溝通至關重要。',
+      weaknesses: '候選人在 D1 (Frontend) 和 D4 (AI/Data) 的分數較低，可能在前端技術和數據處理上缺乏經驗。',
+      interview_tips: '建議候選人在面試前深入了解 AWS 和 Docker 的最新技術趨勢，並準備一些實際應用案例。',
+    },
+    {
+      id: 'rec-2',
+      title: '全端工程師',
+      company: '數位創新科技有限公司',
+      industry: '軟體服務',
+      location: '新北市板橋區中山路一段100號',
+      externalUrl: 'https://www.104.com.tw/job/example2',
+      salary_range: '50k - 80k',
+      match_score: "85.2%",
+      recommendation_reason: '該職位需要前後端開發能力（D1）及後端開發能力（D2），候選人的全端經驗完美匹配。D5 (Quality) 分數也顯示其具備優良的工程品質意識。',
+      strengths: '候選人在 D2 (Backend) 與 D5 (Quality) 表現突出，展現了紮實的後端架構能力與對程式碼品質的高標準。',
+      weaknesses: '候選人在 D4 (AI/Data) 方面得分偏低，在資料處理與AI應用上可能需要額外學習。',
+      interview_tips: '建議準備全端架構設計案例，展示前後端整合經驗。',
+    },
+    {
+      id: 'rec-3',
+      title: 'DevOps Engineer',
+      company: '雲端架構顧問公司',
+      industry: '雲端服務',
+      location: '台中市西屯區台灣大道三段99號',
+      externalUrl: 'https://www.104.com.tw/job/example3',
+      salary_range: '70k - 90k',
+      match_score: "72.5%",
+      recommendation_reason: '此職位專注於 D3 (DevOps) 領域，需要 Kubernetes 和 Terraform 經驗。候選人在運維部署（D3）方面有較強背景。',
+      strengths: '候選人在 D3 (DevOps) 上的表現出色，具備 CI/CD 與容器化部署的豐富經驗。',
+      weaknesses: '候選人的 D1 (Frontend) 和 D6 (Soft Skills) 分數有提升空間。',
+      interview_tips: '建議深入了解 Kubernetes 集群管理和 Terraform IaC 最佳實踐。',
+    },
+    {
+      id: 'rec-4',
+      title: '資深前端工程師',
+      company: '互動體驗設計公司',
+      industry: '數位媒體',
+      location: '高雄市前鎮區成功二路88號',
+      externalUrl: 'https://www.104.com.tw/job/example4',
+      salary_range: '60k - 95k',
+      match_score: "68.3%",
+      recommendation_reason: '職缺要求精通 React 與 TypeScript，屬於 D1 (Frontend) 核心領域。候選人雖在前端開發（D1）得分中等，但 D6 (Soft Skills) 和 D5 (Quality) 高分彌補了差距。',
+      strengths: '候選人在 D6 (Soft Skills) 表現卓越，具備良好的溝通與協作能力，適合跨團隊合作。',
+      weaknesses: '候選人在前端開發（D1）的專精度不如後端開發（D2），可能需要更多前端框架的深度學習。',
+      interview_tips: '建議展示 React 效能優化與使用者體驗設計的實務案例。',
+    },
+    {
+      id: 'rec-5',
+      title: 'AI 應用工程師',
+      company: '智慧數據分析股份有限公司',
+      industry: '人工智慧',
+      location: '新竹市東區光復路二段101號',
+      externalUrl: 'https://www.104.com.tw/job/example5',
+      salary_range: '80k - 120k',
+      match_score: "61.7%",
+      recommendation_reason: '此職位聚焦 D4 (AI/Data) 領域，要求 LLM 與 NLP 經驗。候選人在 D4 (AI/Data) 分數偏低，但 D2 (Backend) 的強項可支撐 model 部署工作。',
+      strengths: '候選人的 D2 (Backend) 和 D3 (DevOps) 能力可協助 AI 模型的工程化部署與 MLOps 流程建設。',
+      weaknesses: '候選人在 D4 (AI/Data) 的核心 AI 技能不足，需補強機器學習與深度學習基礎。',
+      interview_tips: '建議了解 LLM 與 RAG 架構的基本原理，並準備後端系統支撐 AI 應用的案例。',
+    },
+  ];
+
+  // For pagination simulation: shift scores slightly per page
+  return base.map((job, idx) => {
+    const scoreVal = parseFloat((job.match_score as string).replace('%', ''));
+    const newScore = Math.max(50, Math.min(99, scoreVal - (page - 1) * 3 + idx));
+    return {
+      ...job,
+      match_score: `${newScore.toFixed(1)}%`,
+    };
+  });
+};
+
+/** Mock detail data for a recommended job */
+export const getMockRecommendedJobDetail = (id: string): RecommendedJobDetail => {
+  const allJobs = generateMockRecommendedJobs(1);
+  const found = allJobs.find(j => j.id === id);
+
+  const base = found ?? allJobs[0];
+
+  return {
+    ...base,
+    description: `加入我們，參與和改進以下領域的應用開發：
+
+SaaS 平台：
+打造一個高度可靠的雲端平台，具有強大的服務水準協議 (SLA)。優化現有架構，實現自動化部署，以確保系統性能的最佳表現。
+
+AWS 雲端和本地基礎架構：
+我們的系統主要部署在 AWS Lightsail 上，我們正在尋求您的專業知識，以利用微服務架構，使其能夠兼容將軟體部署到客戶的本地伺服器上。
+
+產品擴展專案和內部工具：
+參與客戶管理系統、郵件傳送系統、系統穩定性監控工具和客服回報系統的開發。這些改進旨在提升我們客戶的整體產品體驗。`,
+    requirements: [
+      '三年以上後端開發經驗，精通 Python',
+      '精通 Python 後端框架，如 Flask、FastAPI 或 Django。熟悉 Gunicorn/Uvicorn 程序管理',
+      '熟悉 AWS Lightsail、VPC 架構，以及各種 AWS 服務，包括 EC2、S3、KMS 等',
+      '精通 Docker，包括使用 Docker-Compose 進行環境開發和部署的經驗',
+      '具備配置 Nginx 作為代理伺服器和負載平衡器的能力',
+      '專業的 Postgres 資料庫知識，能夠使用 Python SQLAlchemy 進行 ORM 操作',
+      '熟練運用 MemCache 資料庫 Redis，能夠緩存高負載計算的結果',
+      '具備使用 Celery 執行非同步任務和設計任務工作流程的實務經驗',
+    ],
+  };
+};
