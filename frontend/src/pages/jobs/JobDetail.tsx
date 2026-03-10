@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getJobDetailAPI, fetchUserResumesAPI } from '@/services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 🌟 1. 從全域狀態拿到你的真實 user 資料
   const { isLoggedIn, user, isMockMode } = useAppState();
@@ -62,18 +63,24 @@ const JobDetail = () => {
 
         const res = await getJobDetailAPI(id);
         const rawData = res.data;
+        const stateJob = (location.state as any)?.job;
 
         // 將後端原始資料對接成 RecommendedJobDetail (後端已標準化，此處僅做防呆)
         const formattedJob: RecommendedJobDetail = {
           ...rawData,
-          id: rawData.id || id,
-          title: rawData.title || "職缺詳情",
-          company: rawData.company || "精選企業",
+          id: rawData.id || rawData.job_id || id,
+          title: rawData.title || rawData.job_name || rawData.job_title || "職缺詳情",
+          company: rawData.company || rawData.comp_name || rawData.company_name || "精選企業",
+          industry: rawData.industry || rawData.job_category || "產業未提供",
           description: rawData.description || rawData.job_description || "",
-          location: rawData.location || rawData.city || "地區未提供",
+          location: rawData.full_address || rawData.location || rawData.city || "地區未提供",
           externalUrl: rawData.externalUrl || rawData.source_url || `https://www.104.com.tw/job/${id}`,
           salary_range: rawData.salary_range || "依公司規定",
-          requirements: Array.isArray(rawData.requirements) ? rawData.requirements : (rawData.requirements ? [rawData.requirements] : [])
+          requirements: Array.isArray(rawData.requirements) ? rawData.requirements : (rawData.requirements ? [rawData.requirements] : []),
+          // 以下 AI 欄位優先從 Router state (上頁點擊傳遞) 取得，若無則留空
+          strengths: stateJob?.strengths || "",
+          weaknesses: stateJob?.weaknesses || "",
+          interview_tips: stateJob?.interview_tips || ""
         };
         setJob(formattedJob);
       } catch (error) {
