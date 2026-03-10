@@ -94,7 +94,7 @@ def poll_job(job_id):
     if job["status"] == "done":
         resp["result"] = json.loads(job["result"]) if job.get("result") else None
         resp["suggestions"] = json.loads(job["suggestions"]) if job.get("suggestions") else None
-    elif job["status"] == "failed":
+    elif job["status"] == "dlq":
         resp["error"] = job.get("error", "")
 
     return jsonify(resp), 200

@@ -105,7 +105,7 @@ Authorization: Bearer {{token}}
 - **權限**: Protected
 - **Method**: `POST`
 - **Path**: `/questionnaire-response`
-- **用途**: 將前端完整問卷 JSON 存入 `career_survey.questionnaire_response`。若該使用者已有 survey 紀錄則更新，否則新增一筆。
+- **用途**: 將前端完整問卷 JSON 存入 `career_survey.questionnaire_response`，並**同步觸發 AI 職涯分析**（直接呼叫 `CareerAgentManager`，不走 Redis Queue）。若 AI 分析成功，回傳分析報告。
 
 | 參數         | 類型 | 必填 | 說明                         |
 | ------------ | ---- | ---- | ---------------------------- |
@@ -165,8 +165,9 @@ Authorization: Bearer {{token}}
 ```json
 {
   "survey_id": 42,
-  "status": "saved",
-  "updated_at": "2026-03-05T17:47:54.400474+00:00"
+  "status": "success",
+  "updated_at": "2026-03-05T17:47:54.400474+00:00",
+  "data": { /* AI 職涯分析報告 (CareerReport 結構) */ }
 }
 ```
 
@@ -254,7 +255,7 @@ Authorization: Bearer {{token}}
 
 > **架構**: 提交問卷分析 → Redis Stream → cv_worker 處理 → 前端 Polling 取結果
 
-### B-01 提交職能問卷
+### B-01 提交職能問卷（丟 Queue）
 
 - **權限**: Protected
 - **Method**: `POST`
@@ -367,12 +368,12 @@ Authorization: Bearer {{token}}
 }
 ```
 
-**Response 200 OK — 失敗**
+**Response 200 OK — 失敗（DLQ）**
 
 ```json
 {
   "job_id": "job_a1b2c3d4e5f6",
-  "status": "failed",
+  "status": "dlq",
   "error": "超過重試上限 (3 次): ..."
 }
 ```
@@ -728,12 +729,12 @@ Authorization: Bearer {{token}}
 }
 ```
 
-**Response 200 OK — 失敗**
+**Response 200 OK — 失敗（DLQ）**
 
 ```json
 {
   "job_id": "job_a1b2c3d4e5f6",
-  "status": "failed",
+  "status": "dlq",
   "error": "超過重試上限 (3 次): ..."
 }
 ```
@@ -745,13 +746,13 @@ Authorization: Bearer {{token}}
 ### 系統架構圖
 
 ```text
-┌──────────────┐   POST /dream-jobs          ┌──────────────┐
-│              │   POST /analysis/tasks      │              │
-│   Client     │ ─────────────────────────► │  Flask App   │
-│  (Postman)   │ ◄───────────────────────── │  :8000       │
-│              │   202 { job_id }            │              │
-└──────────────┘                            └──────┬───────┘
-                                                   │ XADD
+┌──────────────┐   POST /dream-jobs          ┌──────────────┐      ┌──────────────┐
+│              │   POST /analysis/tasks      │              │      │              │
+│   Client     │ ─────────────────────────► │  Flask App   │─────►│  LLM Engine  │
+│  (Postman)   │ ◄───────────────────────── │  :8000       │◄─────│              │
+│              │   202 { job_id }            │              │      └──────────────┘
+└──────────────┘   (E-01: 201 同步回傳)     └──────┬───────┘         ↑ 同步(E-01)
+                                                   │ XADD              非同步(B,D)
                                                    ▼
                                             ┌──────────────┐
                                             │  Redis       │
@@ -760,10 +761,10 @@ Authorization: Bearer {{token}}
                                             └──────┬───────┘
                                                    │ XREADGROUP
                                                    ▼
-┌──────────────┐   GET /analysis/jobs/{id}  ┌──────────────┐
-│   Client     │ ─────────────────────────► │ cv_worker    │
-│   (Poll)     │ ◄───────────────────────── │ (常駐進程)    │
-└──────────────┘   200 { status: done }    └──────────────┘
+┌──────────────┐   GET /analysis/jobs/{id}  ┌──────────────┐      ┌──────────────┐
+│   Client     │   GET /dream-jobs/{id}     │ cv_worker    │─────►│  LLM Engine  │
+│   (Poll)     │ ─────────────────────────► │ (常駐進程)    │◄─────│              │
+└──────────────┘   200 { status: done }    └──────────────┘      └──────────────┘
 ```
 
 ### Redis 資料結構
@@ -796,7 +797,7 @@ queued ──► processing ──► done
 | Flask 啟動報 `SUPABASE_URL` 錯誤 | `.env` 缺少或路徑錯 | 確認 `backend/.env` 存在且有正確的金鑰                 |
 | API 回 `401 請先登入`            | Token 過期或格式錯    | 重跑 `get_token.py`，注意 Header 是 `Bearer <token>` |
 | 任務一直卡 `queued`              | Worker 沒啟動         | 另開 Terminal 跑 `python -m flask.worker.cv_worker`    |
-| 任務 `failed`                    | Worker 處理出錯       | 檢查 Worker Terminal 的錯誤訊息                          |
+| 任務 `dlq`                       | Worker 處理出錯       | 檢查 Worker Terminal 的錯誤訊息                          |
 | `BUSYGROUP` 警告                 | Consumer Group 已存在 | 正常現象，不影響功能                                     |
 | Port 8000 已佔用                   | 另一個 Flask 還在跑   | 關掉舊的 Flask 進程                                      |
 
