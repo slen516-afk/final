@@ -238,7 +238,6 @@ def analyze_resume_with_ai():
         req_data = request.json
         user_id = req_data.get('user_id')
         resume_data = req_data.get('resume_data')
-        resume_id = req_data.get('resume_id') # 🌟 確保這行有寫！
 
         if not user_id or not resume_data:
             return jsonify({"status": "error", "message": "缺少 user_id 或 resume_data"}), 400
@@ -253,7 +252,6 @@ def analyze_resume_with_ai():
         # 把 JSON 轉成格式化字串，讓 LLM 比較好閱讀
         user_input = {
             "user_id": user_id,
-            "resume_id": resume_id, # 🌟 確保有傳遞給 Manager
             "resume_text": json.dumps(resume_data, ensure_ascii=False, indent=2) 
         }
 
@@ -276,40 +274,6 @@ def analyze_resume_with_ai():
     except Exception as e:
         print(f"🚨 [Fatal Error] AI 履歷診斷發生致命錯誤: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
-# 🌟 使用正確的 Blueprint 名稱：resume_proc_bp
-@resume_proc_bp.route('/career-analyze', methods=['POST'])
-def analyze_career_with_ai():
-    try:
-        req_data = request.json
-        user_id = req_data.get('user_id')
-        resume_id = req_data.get('resume_id')
-
-        if not user_id:
-            return jsonify({"status": "error", "message": "缺少 user_id"}), 400
-
-        print(f"\n🚀 [API] 收到 User {user_id} 的【職能圖譜】AI 診斷請求！")
-
-        from service.llm_service.src.core.agent_engine.manager import CareerAgentManager
-        manager = CareerAgentManager() 
-
-        user_input = {
-            "user_id": user_id,
-            "resume_id": resume_id
-        }
-
-        print("🤖 [CrewAI] 開始執行職能圖譜深度分析...")
-        result = manager.run_task("career_analysis", user_input)
-
-        if isinstance(result, dict) and result.get("status") == "error":
-             return jsonify({"error": result.get("message")}), 500
-
-        print("✅ [CrewAI] 職能分析完成！")
-        return jsonify(result), 200
-
-    except Exception as e:
-        print(f"🚨 [Fatal Error] AI 職能分析發生致命錯誤: {str(e)}")
-        return jsonify({"error": str(e)}), 500
 
 @resume_proc_bp.route('/optimize/generate', methods=['POST'])
 def generate_optimized_resume():

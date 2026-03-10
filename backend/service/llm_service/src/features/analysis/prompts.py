@@ -14,72 +14,95 @@ from .tasks import (
     create_discovery_mentor_task,
     create_entry_level_final_task
 )
-from .tools import FetchResumeFromDBTool, CalculateTechVectorsTool, CalculateMatchScoreTool
+from .tools import (
+    FetchResumeFromDBTool,
+    CalculateTechVectorsTool,
+    CalculateMatchScoreTool
+)
 
-def get_analysis_config(task_type: Any, inputs: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    type_key = str(task_type).upper()
-    print(f"🔍 [Debug] Prompts 收到匹配鍵: {type_key}")
-
-    # 🌟 確保這裡只有變數，沒有任何「後端」範例文字！
-    resume_json = inputs.get("resume_json", "【無履歷資料】")
-    
-    authority_prompt = f"""
-    【📄 使用者真實履歷原文（最高權威基準）】
-    {resume_json}
-
-    【核心指令】
-    請分析上述履歷。如果履歷中充滿 Vue, Nuxt, CSS，你必須認定他是「前端」人才。
-    絕對不要參考任何外部範例或假設使用者是後端工程師。
+def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
-
-    # === 模式 A: 有經驗者 ===
-    if "EXPERIENCED" in type_key:
+    提供 Manager 呼叫的配置字典。
+    透過調用 agents.py 與 tasks.py 的工廠函數來動態組裝零件。
+    """
+    
+    # === 設定 1: 有經驗者職涯分析 ===
+    if task_type == TaskType.CAREER_ANALYSIS_EXPERIENCED:
+        # 初始化工具，預先將 survey_json 注入給 CalculateTechVectorsTool
         calc_tool = CalculateTechVectorsTool(survey_json_str=inputs.get('survey_json', '{}'))
         tech_tools = [FetchResumeFromDBTool(), calc_tool, CalculateMatchScoreTool()]
-        
-        a1, a2, a3 = create_tech_lead_agent(tools=tech_tools), create_psychologist_agent(), create_career_advisor_agent()
-        t1, t2, t3 = create_tech_verification_task(a1, tools=tech_tools), create_trait_analysis_task(a2), create_final_report_task(a3)
 
-        t1.description = str(t1.description) + authority_prompt
+        # 初始化 Agent 零件
+        tech_lead = create_tech_lead_agent(tools=tech_tools)
+        psychologist = create_psychologist_agent()
+        advisor = create_career_advisor_agent()
+
+        # 初始化 Task 零件
+        tech_task = create_tech_verification_task(tech_lead, tools=tech_tools)
+        trait_task = create_trait_analysis_task(psychologist)
+        final_task = create_final_report_task(advisor)
+
         return {
             "output_model": CareerReport,
-            "qa_extra_instructions": f"user_id: {inputs.get('user_id')}",
+            "qa_extra_instructions": f"""
+               - **report_metadata (必須包含此物件)**: 
+                 - `user_id`: 必須填入 "{inputs.get('user_id', 'unknown')}"。
+                 - `timestamp`: 必須填入 "{inputs.get('current_timestamp', 'unknown')}"。
+                 - `version`: 必須填入 "{inputs.get('report_version', '1.0')}"。
+               - **職位與職級**:
+                 - `role` 與 `actual_level` 等欄位，**必須完全匹配** Schema 描述中提供的標準清單。
+            """,
             "agents": [
-                {"role": a1.role, "goal": a1.goal, "backstory": a1.backstory, "tools": a1.tools},
-                {"role": a2.role, "goal": a2.goal, "backstory": a2.backstory, "tools": []},
-                {"role": a3.role, "goal": a3.goal, "backstory": a3.backstory, "tools": []}
+                {"role": tech_lead.role, "goal": tech_lead.goal, "backstory": tech_lead.backstory, "tools": tech_lead.tools},
+                {"role": psychologist.role, "goal": psychologist.goal, "backstory": psychologist.backstory, "tools": []},
+                {"role": advisor.role, "goal": advisor.goal, "backstory": advisor.backstory, "tools": []}
             ],
             "tasks": [
-                {"description": t1.description, "expected_output": t1.expected_output},
-                {"description": t2.description, "expected_output": t2.expected_output},
-                {"description": t3.description, "expected_output": t3.expected_output}
+                {"description": tech_task.description, "expected_output": tech_task.expected_output},
+                {"description": trait_task.description, "expected_output": trait_task.expected_output},
+                {"description": final_task.description, "expected_output": final_task.expected_output}
             ]
         }
 
-    # === 模式 B: 轉職者 (就算誤判進來也要能動) ===
-    elif "ENTRY_LEVEL" in type_key:
+    # === 設定 2: 無經驗/轉職者分析 ===
+    elif task_type == TaskType.CAREER_ANALYSIS_ENTRY_LEVEL:
+        # 初始化工具
         mentor_tools = [FetchResumeFromDBTool()]
-        a_m, a_a = create_discovery_mentor_agent(tools=mentor_tools), create_career_advisor_agent()
-        t_t = create_discovery_mentor_task(a_m, tools=mentor_tools)
+
+        # 初始化 Agent 零件
+        mentor = create_discovery_mentor_agent(tools=mentor_tools)
+        advisor = create_career_advisor_agent()
+
+        # 初始化 Task 零件
+        transition_task = create_discovery_mentor_task(mentor, tools=mentor_tools)
+
+        # [NEW] 注入問卷與使用者 ID 參數與特質參數
+        transition_task.description = transition_task.description.format(
+            user_id=inputs.get("user_id", "Unknown"),
+            survey_json=inputs.get("survey_json", "{}"),
+            trait_json=inputs.get("trait_json", "{}")
+        )
         
-        # 🌟 安全替換法：直接拿建立好的描述來改
-        new_desc = str(t_t.description).replace("{user_id}", str(inputs.get("user_id", "Unknown")))
-        new_desc = new_desc.replace("{survey_json}", str(inputs.get("survey_json", "{}")))
-        new_desc = new_desc.replace("{trait_json}", str(inputs.get("trait_json", "{}")))
-        
-        t_t.description = new_desc + authority_prompt
-        t_f = create_entry_level_final_task(a_a)
+        final_entry_task = create_entry_level_final_task(advisor)
 
         return {
             "output_model": CareerReport,
-            "qa_extra_instructions": f"user_id: {inputs.get('user_id')}",
+            "qa_extra_instructions": f"""
+               - **report_metadata (必須包含此物件)**: 
+                 - `user_id`: 必須填入 "{inputs.get('user_id', 'unknown')}"。
+                 - `timestamp`: 必須填入 "{inputs.get('current_timestamp', 'unknown')}"。
+                 - `version`: 必須填入 "{inputs.get('report_version', '1.0')}"。
+               - **職位與職級**:
+                 - `role` 與 `actual_level` 等欄位，**必須完全匹配** Schema 描述中提供的標準清單。
+            """,
             "agents": [
-                {"role": a_m.role, "goal": a_m.goal, "backstory": a_m.backstory, "tools": a_m.tools},
-                {"role": a_a.role, "goal": a_a.goal, "backstory": a_a.backstory, "tools": []}
+                {"role": mentor.role, "goal": mentor.goal, "backstory": mentor.backstory, "tools": []},
+                {"role": advisor.role, "goal": advisor.goal, "backstory": advisor.backstory, "tools": []}
             ],
             "tasks": [
-                {"description": t_t.description, "expected_output": t_t.expected_output},
-                {"description": t_f.description, "expected_output": t_f.expected_output}
+                {"description": transition_task.description, "expected_output": transition_task.expected_output},
+                {"description": final_entry_task.description, "expected_output": final_entry_task.expected_output}
             ]
         }
+    
     return None

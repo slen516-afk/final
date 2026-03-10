@@ -100,9 +100,4 @@ def poll_job(job_id):
     return jsonify(resp), 200
 
 
-    
-
-    
-
-
 
