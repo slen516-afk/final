@@ -63,14 +63,10 @@ def ensure_group():
         redis_client.xgroup_create(STREAM_NAME, GROUP_NAME, id="0", mkstream=True)
         print(f"[Worker] 建立 consumer group '{GROUP_NAME}' on '{STREAM_NAME}'")
     except Exception as e:
-        # BUSYGROUP = group 已存在則跳過
         if "BUSYGROUP" in str(e):
             print(f"[Worker] Consumer group '{GROUP_NAME}' 已存在，繼續...")
         else:
             raise
-
-
-# 核心處理邏輯
 
 def process_job(job_id: str, task_type: str) -> dict:
 
@@ -94,20 +90,27 @@ def process_job(job_id: str, task_type: str) -> dict:
             .select("questionnaire_response, personality")
             .eq("user_id", user_id)
             .order("survey_id", desc=True)
-            .limit(1)
+            .limit(2)
             .execute()
         )
 
         if not survey_row.data:
             raise ValueError(f"career_survey 中找不到 user_id={user_id} 的問卷資料")
 
-        row = survey_row.data[0]
-        survey_dict = row.get("questionnaire_response") or {}
-        trait_dict = row.get("personality") or {}
+        # questionnaire_response 和 personality 分別存在不同的 row，合併取值
+        survey_dict = {}
+        trait_dict = {}
+        for row in survey_row.data:
+            if not survey_dict and row.get("questionnaire_response"):
+                survey_dict = row["questionnaire_response"]
+            if not trait_dict and row.get("personality"):
+                trait_dict = row["personality"]
 
         # 移除 trait_raw_responses（不送給 model）
         trait_dict.pop("trait_raw_responses", None)
 
+        print(f"[Worker {CONSUMER_NAME}] survey_dict={survey_dict}")
+        print(f"[Worker {CONSUMER_NAME}] trait_dict={trait_dict}")
         survey_json_str = json.dumps(survey_dict, ensure_ascii=False)
         trait_json_str = json.dumps(trait_dict, ensure_ascii=False)
 
@@ -191,7 +194,6 @@ def handle_message(msg_id: str, fields: dict):
         if isinstance(e, NonRecoverableError):
             is_non_recoverable = True
         elif "JSON" in error_msg.upper() or "400" in error_msg:
-            # 簡單範例判斷，若遇到 payload 解析錯誤則視為不可恢復
             is_non_recoverable = True
 
         if is_non_recoverable:
