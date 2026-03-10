@@ -250,7 +250,8 @@ class CareerAgentManager:
                 tools=agent_cfg.get("tools", []),
                 verbose=True,
                 llm=self.llm,
-                allow_delegation=False
+                allow_delegation=False,
+                step_callback=agent_cfg.get("step_callback") # 掛載 agent 步驟回呼
             )
             worker_agents.append(worker)
 
@@ -281,7 +282,9 @@ class CareerAgentManager:
                 description=task_cfg["description"],
                 expected_output=task_cfg["expected_output"],
                 agent=worker_agents[idx], # 對應的 Agent
-                context=previous_tasks if idx > 0 else None # 串接上下文
+                context=previous_tasks if idx > 0 else None, # 串接上下文
+                callback=task_cfg.get("callback"), # 掛載 callback
+                tools=task_cfg.get("tools", []) # 掛載 tools (確保 Task 層級也有工具可用)
             )
             crew_tasks.append(worker_task)
             previous_tasks.append(worker_task)

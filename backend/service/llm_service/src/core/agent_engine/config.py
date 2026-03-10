@@ -27,5 +27,10 @@ def get_config_by_type(task_type: TaskType, inputs: Dict[str, Any]) -> Optional[
     elif task_type == TaskType.COVER_LETTER:
         from src.features.cover_letter.prompts import get_cover_letter_config
         return get_cover_letter_config(task_type, inputs)
+    
+    # 5. 課程推薦 (Course Recommendation)
+    elif task_type == TaskType.COURSE_REC:
+        from src.features.course.prompts import get_course_config
+        return get_course_config(task_type, inputs)
 
     return None

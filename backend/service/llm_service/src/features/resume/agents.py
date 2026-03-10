@@ -1,5 +1,8 @@
 from crewai import Agent
 from .tools import FetchResumeTool, FetchSurveyTool, FetchResumeAnalysisTool
+from src.common.logger import setup_logger
+
+logger = setup_logger()
 
 # ==========================================
 # Agent 定義常數 (單一事實來源)
@@ -27,6 +30,7 @@ OPTIMIZATION_CONSULTANT_BACKSTORY = """
 
 def create_analysis_consultant() -> Agent:
     """建立履歷分析顧問 Agent"""
+    logger.info("開始建立履歷分析顧問 Agent (Analysis Consultant)...")
     return Agent(
         role=ANALYSIS_CONSULTANT_ROLE,
         goal=ANALYSIS_CONSULTANT_GOAL,
@@ -41,6 +45,7 @@ def create_analysis_consultant() -> Agent:
 
 def create_optimization_strategy_consultant() -> Agent:
     """建立履歷優化顧問 Agent"""
+    logger.info("開始建立履歷優化顧問 Agent (Optimization Strategy Consultant)...")
     return Agent(
         role=OPTIMIZATION_CONSULTANT_ROLE,
         goal=OPTIMIZATION_CONSULTANT_GOAL,

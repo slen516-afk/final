@@ -1,7 +1,12 @@
 from crewai import Task
 from .schemas import SideProject
+from src.common.logger import setup_logger
+from src.common.crewai_callbacks import task_audit_callback
+
+logger = setup_logger()
 
 def get_project_design_task(agent, tools: list = None) -> Task:
+    logger.info("開始生成專案設計任務 (Project Design Task)...")
     return Task(
         description="""
         身為職涯專案架構師，請先使用 FetchUserGapAnalysis 工具，傳入使用者 ID：{user_id} 以獲取缺口分析資料。
@@ -22,10 +27,12 @@ def get_project_design_task(agent, tools: list = None) -> Task:
         """,
         expected_output="一份包含專案名稱、技術棧與階段劃分的詳細專案計畫書草案，且必須為台灣繁體中文。",
         agent=agent,
-        tools=tools or []
+        tools=tools or [],
+        callback=task_audit_callback
     )
 
 def get_project_refinement_task(agent, context_tasks, tools: list = None) -> Task:
+    logger.info("開始生成專案審核與優化任務 (Project Refinement Task)...")
     return Task(
         description="""
         審核上一個任務產出的專案計畫書。
@@ -38,5 +45,6 @@ def get_project_refinement_task(agent, context_tasks, tools: list = None) -> Tas
         expected_output="最終審核通過的 Side Project 計畫 JSON 報告，且必須為台灣繁體中文。",
         agent=agent,
         context=context_tasks,
-        tools=tools or []
+        tools=tools or [],
+        callback=task_audit_callback
     )

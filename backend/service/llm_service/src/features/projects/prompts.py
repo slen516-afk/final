@@ -35,8 +35,16 @@ def get_project_config(task_type: TaskType, inputs: Dict[str, Any]) -> Dict[str,
             {"role": qa_expert.role, "goal": qa_expert.goal, "backstory": qa_expert.backstory}
         ],
         "tasks": [
-            {"description": design_task.description, "expected_output": design_task.expected_output},
-            {"description": refinement_task.description, "expected_output": refinement_task.expected_output}
+             {
+                "description": design_task.description, 
+                "expected_output": design_task.expected_output,
+                "callback": getattr(design_task, "callback", None)
+            },
+            {
+                "description": refinement_task.description, 
+                "expected_output": refinement_task.expected_output,
+                "callback": getattr(refinement_task, "callback", None)
+            }
         ],
         "output_model": SideProject
     }
