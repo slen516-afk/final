@@ -45,11 +45,14 @@ import { generateAnalysis } from "@/services/analysisService";
 import type { AnalysisResult } from "@/types/analysis";
 import { parseSWOT } from "@/types/analysis";
 import { mockAnalysisResult } from "@/mocks/analysis";
+import { splitIntoParagraphs } from "@/utils/textFormat";
 import { getLearningRecommendationsAPI } from "@/services/api";
 import { careerTemplates } from "@/data/careerLadderTemplates";
 
 const ANALYSIS_DONE_KEY = "skills-analysis-done";
 const ANALYSIS_RESULT_KEY = "skills-analysis-result";
+const ANALYSIS_MOCK_VERSION = "v4"; // bump to invalidate cached mock data
+const ANALYSIS_VERSION_KEY = "skills-analysis-version";
 // ❌ 剛剛這裡有兩行錯誤的 useState 跑到了外面，我已經幫你移除了！
 
 const loadingMessages = [
@@ -106,8 +109,16 @@ const Skills = () => {
 
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult>(() => {
     try {
-      const saved = localStorage.getItem(ANALYSIS_RESULT_KEY);
-      if (saved) return JSON.parse(saved);
+      const savedVersion = localStorage.getItem(ANALYSIS_VERSION_KEY);
+      if (savedVersion === ANALYSIS_MOCK_VERSION) {
+        const saved = localStorage.getItem(ANALYSIS_RESULT_KEY);
+        if (saved) return JSON.parse(saved);
+      } else {
+        // Version mismatch — clear stale cache
+        localStorage.removeItem(ANALYSIS_RESULT_KEY);
+        localStorage.removeItem(ANALYSIS_DONE_KEY);
+        localStorage.setItem(ANALYSIS_VERSION_KEY, ANALYSIS_MOCK_VERSION);
+      }
     } catch { }
     return mockAnalysisResult;
   });
@@ -117,6 +128,8 @@ const Skills = () => {
 
   const [dynamicSideProjects, setDynamicSideProjects] = useState<any[]>(sideProjects || []);
   const [dynamicLearningResources, setDynamicLearningResources] = useState<any[]>(learningResources || []);
+  const [dynamicLearningStrategy, setDynamicLearningStrategy] = useState<any>(analysisResult?.learningStrategy || null);
+  const [isDefaultLearningData, setIsDefaultLearningData] = useState(false);
 
   // Get target radar from career templates based on role
   const targetRoleKey = useMemo(() => {
@@ -180,25 +193,50 @@ const Skills = () => {
 
     if (view === "learning") {
       try {
+        setIsDefaultLearningData(false);
         console.log("🚀 準備呼叫 API: /api/learning/recommendations");
         const res = await getLearningRecommendationsAPI({});
         console.log("📦 後端回傳的學習資源資料:", res);
 
-        if (res.status === "success" && res.resources) {
-          const mappedResources = res.resources.map((r: any) => ({
-            title: r.course_name || "未命名推薦課程",
-            description: `這是一份 ${r.course_type || "專業"} 類型的資源，建議您可以前往參考，以補足當前職能落差。`,
-            tags: [
-              r.course_level ? `難度: ${r.course_level}` : "難度: 適合所有人",
-              r.duration_suggested ? `預計時長: ${r.duration_suggested}` : "彈性時長"
+        const backendData = res.resources || res;
+        const resourcesArray = Array.isArray(backendData) ? backendData : (backendData.learning_pathway || []);
+        const hasResources = resourcesArray.length > 0;
+
+        if (hasResources) {
+          const mappedResources = resourcesArray.map((r: any) => ({
+            ...r,
+            title: r.course_name || r.title || "未命名推薦課程",
+            description: r.description || `這是一份 ${r.course_type || "專業"} 類型的資源，建議您可以前往參考，以補足當前職能落差。`,
+            tags: r.tags || [
+              r.course_level || r.level ? `難度: ${r.course_level || r.level}` : "難度: 適合所有人",
+              r.duration_suggested || r.duration ? `預計時長: ${r.duration_suggested || r.duration}` : "彈性時長"
             ],
-            url: r.url || r.link || "#"
+            link: r.url || r.link || "#",
+            level: r.course_level || r.level,
+            duration: r.duration_suggested || r.duration,
+            priority: r.priority_order || r.priority,
+            strategy_reason: r.strategic_reason || r.strategy_reason,
           }));
 
           setDynamicLearningResources(mappedResources);
+
+          if (!Array.isArray(backendData)) {
+            setDynamicLearningStrategy({
+              overall_strategy: backendData.overall_strategy || analysisResult?.learningStrategy?.overall_strategy,
+              milestones: backendData.key_milestones || analysisResult?.learningStrategy?.milestones
+            });
+          }
+        } else {
+          setIsDefaultLearningData(true);
+          setDynamicLearningResources(learningResources || []);
+          setDynamicLearningStrategy(analysisResult?.learningStrategy || null);
         }
+
       } catch (error) {
         console.error("❌ 無法載入學習資源，使用預設資料", error);
+        setIsDefaultLearningData(true);
+        setDynamicLearningResources(learningResources || []);
+        setDynamicLearningStrategy(analysisResult?.learningStrategy || null);
       }
     } else {
       await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -227,6 +265,8 @@ const Skills = () => {
         actionPlan: gap_analysis?.action_plan ?? { short_term: "", mid_term: "", long_term: "" },
         learningResources,
         sideProjects,
+        overallStrategy: analysisResult?.learningStrategy?.overall_strategy,
+        milestones: analysisResult?.learningStrategy?.milestones,
       }),
     });
   };
@@ -239,8 +279,44 @@ const Skills = () => {
     </div>
   );
 
+  const handleDownloadLearningResources = async () => {
+    const { exportHtmlToPdf, buildLearningResourcesReportHtml } = await import("@/utils/pdfExport");
+    const strategy = dynamicLearningStrategy || analysisResult?.learningStrategy;
+    const visibleResources = (dynamicLearningResources.length > 0 ? dynamicLearningResources : (learningResources ?? [])).slice(0, 6);
+    await exportHtmlToPdf({
+      filename: "學習資源推薦報告.pdf",
+      htmlContent: buildLearningResourcesReportHtml({
+        overallStrategy: strategy?.overall_strategy,
+        milestones: strategy?.milestones,
+        learningResources: visibleResources.map((r) => ({
+          title: r.title,
+          tags: r.tags,
+          rating: r.rating,
+          review_count: r.review_count,
+          level: r.level,
+          course_type: r.course_type,
+          duration: r.duration,
+          priority: r.priority,
+          strategy_reason: r.strategy_reason,
+          link: r.link,
+        })),
+      }),
+    });
+  };
+
+  const handleDownloadSideProjects = async () => {
+    const { exportHtmlToPdf, buildSideProjectsReportHtml } = await import("@/utils/pdfExport");
+    await exportHtmlToPdf({
+      filename: "Side_Project推薦報告.pdf",
+      htmlContent: buildSideProjectsReportHtml(sideProjects ?? []),
+    });
+  };
+
   // ── Learning Resources Sub-view ──
   if (subView === "learning") {
+    const strategy = dynamicLearningStrategy || analysisResult?.learningStrategy;
+    const visibleResources = (dynamicLearningResources.length > 0 ? dynamicLearningResources : (learningResources ?? [])).slice(0, 6);
+
     return (
       <div className="min-h-screen bg-card">
         <div className="container py-8 md:py-12">
@@ -252,7 +328,7 @@ const Skills = () => {
             >
               <ArrowLeft className="h-4 w-4" /> 返回職能圖譜
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleDownloadReport}>
+            <Button variant="ghost" size="icon" onClick={handleDownloadLearningResources}>
               <Download className="h-5 w-5 text-[#502D03]" />
             </Button>
           </div>
@@ -262,48 +338,151 @@ const Skills = () => {
               <p className="mt-4 text-[#8d4903] animate-pulse">正在載入學習資源...</p>
             </div>
           ) : (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-              <h1 className="text-2xl font-bold text-foreground">學習資源推薦</h1>
-              <p className="text-muted-foreground">
-                根據您的職能差距分析，我們為您精選以下學習資源。建議優先完成「高優先」技能的相關課程，每週投入 5-10
-                小時，預計 3-6 個月內可達成目標職位的技能要求。
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {dynamicLearningResources.map((resource, index) => (
-                  <motion.div
-                    key={resource.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="h-full bg-white transition-all duration-300 hover:shadow-medium hover:-translate-y-1 group cursor-pointer"
-                      onClick={() => {
-                        if (resource.url && resource.url !== "#") {
-                          window.open(resource.url, "_blank", "noopener,noreferrer");
-                        } else {
-                          alert("很抱歉，這堂課目前沒有提供網址連結喔！");
-                        }
-                      }}>
-                      <CardContent className="pt-6 h-full flex flex-col">
-                        <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">
-                          {resource.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-4 flex-grow">{resource.description}</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-wrap gap-1">
-                            {resource.tags.map((tag: string) => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
-                                {tag}
-                              </Badge>
-                            ))}
-                          </div>
-                          <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">學習資源推薦</h1>
+              <p className="text-muted-foreground leading-[1.85] mt-1">根據您的職能分析結果，為您精選最適合的學習路徑與課程資源。</p>
+
+              {/* ── Mock Data Banner ── */}
+              {isDefaultLearningData && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg flex items-center gap-3 text-sm shadow-sm">
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+                  <p>抱歉，暫時無法從伺服器取得為您量身打造的推薦清單。目前顯示的內容為系統預設的範例學習資源。</p>
+                </div>
+              )}
+
+              {/* ── Overall Strategy ── */}
+              {strategy?.overall_strategy && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-2">
+                        <Target className="h-5 w-5 text-[#8d4903]" />
+                        <CardTitle className="text-lg">整體策略</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {splitIntoParagraphs(strategy.overall_strategy).map((p, i) => (
+                          <p key={i} className="text-sm text-foreground/80 leading-[1.85] tracking-wide">{p}</p>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* ── Milestones ── */}
+              {strategy?.milestones && strategy.milestones.length > 0 && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                  <Card className="border-l-4 border-l-[#8d4903] bg-gradient-to-br from-[#fbf1e8] to-white">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        <CardTitle className="text-lg">關鍵里程碑</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {strategy.milestones.map((m, i) => (
+                          <li key={i} className="flex items-start gap-2.5 text-sm text-foreground/80 leading-[1.8]">
+                            <span className="mt-2 h-2 w-2 rounded-full bg-[#8d4903] shrink-0" />
+                            {m}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+
+              {/* ── Learning Path Cards ── */}
+              {visibleResources.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-semibold">課程推薦</h2>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {visibleResources.map((resource, index) => (
+                      <motion.div
+                        key={resource.title}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 + index * 0.08 }}
+                      >
+                        <Card className="h-full bg-white transition-all duration-300 hover:shadow-medium hover:-translate-y-1 group">
+                          <CardContent className="pt-5 h-full flex flex-col">
+                            {/* Priority badge + level */}
+                            <div className="flex items-center justify-between mb-3">
+                              {resource.priority != null && (
+                                <Badge className="bg-[#8d4903] text-white text-xs">
+                                  優先 {resource.priority}
+                                </Badge>
+                              )}
+                              {resource.level && (
+                                <Badge variant="outline" className="text-xs">
+                                  {resource.level}
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="font-semibold mb-1 group-hover:text-primary transition-colors leading-snug">
+                              {resource.title}
+                            </h3>
+
+                            {/* Meta row: rating, reviews, type, duration */}
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground mb-2">
+                              {resource.rating != null && (
+                                <span className="flex items-center gap-1">
+                                  <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                                  {resource.rating}
+                                </span>
+                              )}
+                              {resource.review_count != null && (
+                                <span>{resource.review_count.toLocaleString()} 則評論</span>
+                              )}
+                              {resource.course_type && <span>· {resource.course_type}</span>}
+                              {resource.duration && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {resource.duration}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Strategy reason */}
+                            {resource.strategy_reason && (
+                              <div className="bg-[#fbf1e8] rounded-md p-3 mb-3">
+                                <p className="text-xs text-[#502D03] leading-[1.8]">
+                                  <span className="font-semibold">策略原因：</span>
+                                  {resource.strategy_reason}
+                                </p>
+                              </div>
+                            )}
+
+                            {/* Tags + link */}
+                            <div className="flex items-center justify-between pt-2 border-t">
+                              <div className="flex flex-wrap gap-1">
+                                {resource.tags.map((tag) => (
+                                  <Badge key={tag} variant="secondary" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                              {resource.link && resource.link !== '#' && (
+                                <a href={resource.link} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                                </a>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </div>
@@ -324,7 +503,7 @@ const Skills = () => {
             >
               <ArrowLeft className="h-4 w-4" /> 返回職能圖譜
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleDownloadReport}>
+            <Button variant="ghost" size="icon" onClick={handleDownloadSideProjects}>
               <Download className="h-5 w-5 text-[#502D03]" />
             </Button>
           </div>
@@ -334,47 +513,156 @@ const Skills = () => {
               <p className="mt-4 text-[#8d4903] animate-pulse">正在載入 Side Project 推薦...</p>
             </div>
           ) : (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-              <h1 className="text-2xl font-bold text-foreground">Side Project 推薦</h1>
-              <p className="text-muted-foreground">
-                實作 Side Project
-                是提升技術深度最有效的方式。以下專案根據您的職能落差量身推薦，建議從低難度開始逐步挑戰。
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">Side Project 推薦</h1>
+              <p className="text-muted-foreground leading-[1.85]">
+                根據您的職能落差，為您量身規劃的 Side Project，透過階段式開發逐步補足技術缺口。
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {dynamicSideProjects.map((project, index) => (
-                  <motion.div
-                    key={project.name}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="h-full bg-white transition-all duration-300 hover:shadow-medium hover:-translate-y-1">
-                      <CardContent className="pt-6 h-full flex flex-col">
-                        <h3 className="font-semibold text-lg mb-3">{project.name}</h3>
-                        <div className="flex flex-wrap gap-1 mb-4">
-                          {project.technologies.map((tech: string) => (
+
+              {sideProjects.map((project, pIdx) => (
+                <motion.div
+                  key={project.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: pIdx * 0.15 }}
+                  className="space-y-5"
+                >
+                  {/* ── Project Header ── */}
+                  <Card className="border-l-4 border-l-[#8d4903] bg-gradient-to-br from-[#fbf1e8] to-white">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-xl">
+                        {project.name}
+                        {project.name_en && (
+                          <span className="text-sm font-normal text-muted-foreground ml-2">
+                            （{project.name_en}）
+                          </span>
+                        )}
+                      </CardTitle>
+                      {/* Difficulty + duration meta */}
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-1">
+                        <span className="flex items-center gap-1">
+                          難度：
+                          <span className="font-medium text-foreground">{project.difficulty_label ?? `${project.difficulty}/5`}</span>
+                        </span>
+                        {project.estimated_duration && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5" />
+                            預計開發週期：{project.estimated_duration}
+                          </span>
+                        )}
+                      </div>
+                      {project.difficulty_note && (
+                        <p className="text-xs text-muted-foreground mt-1">{project.difficulty_note}</p>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Capability Gaps */}
+                      <div>
+                        <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                          <Target className="h-4 w-4 text-[#8d4903]" /> 能力缺口
+                        </h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {project.capability_gaps.map((gap) => (
+                            <Badge key={gap} className="bg-[#8d4903]/10 text-[#502D03] border border-[#8d4903]/20 text-xs">
+                              {gap}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Tech Stack */}
+                      <div>
+                        <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                          <Lightbulb className="h-4 w-4 text-primary" /> 技術棧
+                        </h4>
+                        <div className="flex flex-wrap gap-1.5">
+                          {project.technologies.map((tech) => (
                             <Badge key={tech} variant="outline" className="text-xs">
                               {tech}
                             </Badge>
                           ))}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-4 flex-grow">{project.highlights}</p>
-                        <div className="flex items-center justify-between pt-3 border-t">
-                          <span className="text-sm text-muted-foreground">實作難度</span>
-                          {renderDifficulty(project.difficulty)}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* ── Phases Timeline ── */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      <h2 className="text-lg font-semibold">項目階段</h2>
+                    </div>
+                    <div className="relative pl-6 space-y-0">
+                      {/* vertical line */}
+                      <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-[#8d4903]/20" />
+                      {project.phases.map((phase, phaseIdx) => (
+                        <motion.div
+                          key={phase.phase_name}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 + phaseIdx * 0.1 }}
+                          className="relative pb-6 last:pb-0"
+                        >
+                          {/* dot */}
+                          <div className="absolute -left-6 top-1 h-5 w-5 rounded-full bg-[#8d4903] text-white flex items-center justify-center text-[10px] font-bold">
+                            {phaseIdx + 1}
+                          </div>
+                          <Card className="bg-white hover:shadow-medium transition-shadow">
+                            <CardContent className="pt-4 pb-4 space-y-2">
+                              <h3 className="font-semibold text-foreground tracking-tight">{phase.phase_name}</h3>
+                              <div className="text-sm text-muted-foreground leading-[1.8] space-y-1.5">
+                                <span className="font-medium text-foreground">目標：</span>
+                                {splitIntoParagraphs(phase.goal).map((p, i) => (
+                                  <p key={i}>{p}</p>
+                                ))}
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-foreground">任務：</span>
+                                <ul className="mt-1.5 space-y-1.5">
+                                  {phase.tasks.map((task, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground leading-[1.75]">
+                                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#8d4903] shrink-0" />
+                                      {task}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div className="bg-[#fbf1e8] rounded-md p-2.5 mt-2">
+                                <p className="text-xs text-[#502D03]">
+                                  <span className="font-semibold">履歷價值：</span>{phase.resume_value}
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* ── Overall Resume Impact ── */}
+                  <Card className="bg-gradient-to-r from-[#fbf1e8] to-[#f5e6d3] border-[#8d4903]/20">
+                    <CardContent className="pt-5 pb-5">
+                      <div className="flex items-start gap-3">
+                        <FileText className="h-5 w-5 text-[#8d4903] shrink-0 mt-0.5" />
+                        <div>
+                          <h4 className="font-semibold text-sm text-[#502D03] mb-1">整體履歷影響</h4>
+                          <div className="text-sm text-[#502D03]/80 leading-[1.85] tracking-wide space-y-2">
+                            {splitIntoParagraphs(project.overall_resume_impact).map((p, i) => (
+                              <p key={i}>{p}</p>
+                            ))}
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </motion.div>
           )}
         </div>
       </div>
     );
   }
-
   // ── Pre-Analysis (idle) State ──
   if (phase === "idle") {
     return (
@@ -852,7 +1140,7 @@ const Skills = () => {
                           <item.icon className="h-5 w-5" style={{ color: item.accent }} />
                           <span className="font-semibold text-foreground">{item.label}</span>
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{item.text}</p>
+                        <p className="text-sm text-muted-foreground leading-[1.85] tracking-wide">{item.text}</p>
                       </CardContent>
                     </Card>
                   </motion.div>
