@@ -53,7 +53,11 @@ const ANALYSIS_DONE_KEY = "skills-analysis-done";
 const ANALYSIS_RESULT_KEY = "skills-analysis-result";
 const ANALYSIS_MOCK_VERSION = "v4"; // bump to invalidate cached mock data
 const ANALYSIS_VERSION_KEY = "skills-analysis-version";
-// ❌ 剛剛這裡有兩行錯誤的 useState 跑到了外面，我已經幫你移除了！
+
+const SKILLS_LEARNING_CACHE_KEY = "skills-learning-cache";
+const SKILLS_STRATEGY_CACHE_KEY = "skills-strategy-cache";
+const SKILLS_PROJECTS_CACHE_KEY = "skills-projects-cache";
+const SKILLS_LEARNING_IS_DEFAULT_KEY = "skills-learning-is-default";
 
 const loadingMessages = [
   "正在解析履歷關鍵字...",
@@ -183,6 +187,14 @@ const Skills = () => {
   const handleReAnalyse = useCallback(() => {
     localStorage.removeItem(ANALYSIS_DONE_KEY);
     localStorage.removeItem(ANALYSIS_RESULT_KEY);
+    localStorage.removeItem(SKILLS_LEARNING_CACHE_KEY);
+    localStorage.removeItem(SKILLS_STRATEGY_CACHE_KEY);
+    localStorage.removeItem(SKILLS_PROJECTS_CACHE_KEY);
+    localStorage.removeItem(SKILLS_LEARNING_IS_DEFAULT_KEY);
+    setDynamicLearningResources([]);
+    setDynamicLearningStrategy(null);
+    setDynamicSideProjects([]);
+    setIsDefaultLearningData(false);
     startAnalysis();
   }, [startAnalysis]);
 
@@ -192,6 +204,20 @@ const Skills = () => {
     setSubView(view);
 
     if (view === "learning") {
+      // 1. Check Cache first
+      const cachedResources = localStorage.getItem(SKILLS_LEARNING_CACHE_KEY);
+      const cachedStrategy = localStorage.getItem(SKILLS_STRATEGY_CACHE_KEY);
+      const cachedIsDefault = localStorage.getItem(SKILLS_LEARNING_IS_DEFAULT_KEY) === "true";
+
+      if (cachedResources && cachedStrategy) {
+        console.log("♻️ 使用快取中的學習資源資料");
+        setDynamicLearningResources(JSON.parse(cachedResources));
+        setDynamicLearningStrategy(JSON.parse(cachedStrategy));
+        setIsDefaultLearningData(cachedIsDefault);
+        setSubViewLoading(false);
+        return;
+      }
+
       try {
         setIsDefaultLearningData(false);
         console.log("🚀 準備呼叫 API: /api/learning/recommendations");
@@ -219,24 +245,59 @@ const Skills = () => {
           }));
 
           setDynamicLearningResources(mappedResources);
-
+          
+          let strategyObj = null;
           if (!Array.isArray(backendData)) {
-            setDynamicLearningStrategy({
-              overall_strategy: backendData.overall_strategy || analysisResult?.learningStrategy?.overall_strategy,
-              milestones: backendData.key_milestones || analysisResult?.learningStrategy?.milestones
-            });
+            strategyObj = {
+              overall_strategy: backendData.overall_strategy || (analysisResult as any)?.learningStrategy?.overall_strategy,
+              milestones: backendData.key_milestones || (analysisResult as any)?.learningStrategy?.milestones
+            };
+            setDynamicLearningStrategy(strategyObj);
           }
+
+          // Save to Cache
+          localStorage.setItem(SKILLS_LEARNING_CACHE_KEY, JSON.stringify(mappedResources));
+          if (strategyObj) localStorage.setItem(SKILLS_STRATEGY_CACHE_KEY, JSON.stringify(strategyObj));
+          localStorage.setItem(SKILLS_LEARNING_IS_DEFAULT_KEY, "false");
+
         } else {
           setIsDefaultLearningData(true);
           setDynamicLearningResources(learningResources || []);
-          setDynamicLearningStrategy(analysisResult?.learningStrategy || null);
+          setDynamicLearningStrategy((analysisResult as any)?.learningStrategy || null);
+          localStorage.setItem(SKILLS_LEARNING_IS_DEFAULT_KEY, "true");
         }
 
       } catch (error) {
         console.error("❌ 無法載入學習資源，使用預設資料", error);
         setIsDefaultLearningData(true);
         setDynamicLearningResources(learningResources || []);
-        setDynamicLearningStrategy(analysisResult?.learningStrategy || null);
+        setDynamicLearningStrategy((analysisResult as any)?.learningStrategy || null);
+        localStorage.setItem(SKILLS_LEARNING_IS_DEFAULT_KEY, "true");
+      }
+    } else if (view === "sideproject") {
+      // 1. Check Cache
+      const cachedProjects = localStorage.getItem(SKILLS_PROJECTS_CACHE_KEY);
+      if (cachedProjects) {
+        console.log("♻️ 使用快取中的 Side Project 資料");
+        setDynamicSideProjects(JSON.parse(cachedProjects));
+        setSubViewLoading(false);
+        return;
+      }
+
+      try {
+        console.log("🚀 準備呼叫 API: /api/projects/suggestions");
+        const res = await getProjectSuggestionsAPI({});
+        console.log("📦 後端回傳的 Side Project 資料:", res);
+
+        if (res.status === "success" && res.projects) {
+          setDynamicSideProjects(res.projects);
+          localStorage.setItem(SKILLS_PROJECTS_CACHE_KEY, JSON.stringify(res.projects));
+        } else {
+          setDynamicSideProjects(sideProjects || []);
+        }
+      } catch (error) {
+        console.error("❌ 無法載入 Side Project，使用預設資料", error);
+        setDynamicSideProjects(sideProjects || []);
       }
     } else {
       await new Promise((resolve) => setTimeout(resolve, 1200));
