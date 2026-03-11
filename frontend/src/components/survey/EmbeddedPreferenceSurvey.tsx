@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Wallet, Building2, FileText, Loader2 } from 'lucide-react';
+import { MapPin, Wallet, FileText, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,13 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { motion } from 'framer-motion';
 import AlertModal from '@/components/modals/AlertModal';
-import apiClient from '@/services/api'; // 🌟 補上這行
+import apiClient from '@/services/api';
 
-// 🌟 1. 引入必要工具：換成真實 API 與全域狀態
+// 引入必要工具：換成真實 API 與全域狀態
 import { useAppState } from '@/contexts/AppContext';
-import { fetchUserResumesAPI } from '@/services/api';
-// 如果你還有用到 supabase 也可以留著
-import { supabase } from '@/lib/supabaseClient';
 
 const taiwanCities = [
   '台北市', '新北市', '桃園市', '台中市', '台南市', '高雄市',
@@ -27,7 +24,6 @@ interface EmbeddedPreferenceSurveyProps {
 }
 
 const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps) => {
-  // 🌟 2. 拿到目前的真實 user_id
   const { user, isLoggedIn } = useAppState();
   const realUserId = user?.user_id;
 
@@ -40,20 +36,16 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
   const [salaryRange, setSalaryRange] = useState<number[]>([40000, 80000]);
   const [showIncompleteAlert, setShowIncompleteAlert] = useState(false);
 
-  // 🌟 3. 修改：使用與「我的履歷」相同的暴力拆包法！
   useEffect(() => {
     const fetchMyResumes = async () => {
       if (isLoggedIn && realUserId) {
         setIsLoadingResumes(true);
         try {
-          console.log("🚀 [偏好設定] 開始向後端請求 ID:", realUserId);
-          // 💡 直接用 apiClient 呼叫，繞過舊的死板檢查
           const response = await apiClient.get(`/resume_process/list/${realUserId}`);
 
           let finalData: any[] = [];
           const rawData = response.data;
 
-          // 💡 智慧拆包：不管後端怎麼包，我們都挖出來
           if (Array.isArray(rawData)) {
             finalData = rawData;
           } else if (rawData?.data && Array.isArray(rawData.data)) {
@@ -62,14 +54,12 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
             finalData = rawData.resumes;
           }
 
-          console.log("✅ [偏好設定] 挖出的履歷陣列:", finalData);
-
-          // 💡 轉換格式給下拉選單使用 (加入同款防呆機制)
+          // 💡 轉換格式給下拉選單使用 (加入 isOptimized 標記)
           const formatted = finalData.map((r: any) => ({
             id: r.resume_id || r.id,
-            // 確保一定抓得到名字，否則顯示未命名
             title: r.resume_name || r.name || '未命名履歷',
-            sourceType: r.resume_type || 'RESUME'
+            sourceType: r.resume_type || 'RESUME',
+            isOptimized: r.is_optimized || false // 🌟 接住後端傳來的標記
           }));
 
           setResumeOptions(formatted);
@@ -105,14 +95,13 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
 
     const [sourceType, docId] = selectedResume.split('-');
 
-    // 🌟 4. 修改：將 user_id 換成你的真實 ID
     const realSurveyData = {
       region: regionType,
       city: selectedCity,
       minSalary: salaryRange[0],
       maxSalary: salaryRange[1],
-      user_id: realUserId, // 動態抓取 ID
-      document_id: parseInt(docId),
+      user_id: realUserId,
+      document_id: docId, // 將 ID 傳給後端
       source_type: sourceType,
       filters: {
         city: [selectedCity],
@@ -131,7 +120,6 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
         animate={{ opacity: 1, y: 0 }}
         className="space-y-4 md:space-y-6"
       >
-        {/* 🌟 選擇履歷的區塊 */}
         <Card>
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
@@ -155,7 +143,8 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
                 {resumeOptions.length > 0 ? (
                   resumeOptions.map((opt) => (
                     <SelectItem key={`${opt.sourceType}-${opt.id}`} value={`${opt.sourceType}-${opt.id}`}>
-                      {opt.title} ({opt.sourceType === 'OPTIMIZATION' ? '優化版' : '原版'})
+                      {/* 🌟 乾淨俐落的判斷：如果是優化版就不加字，如果是原版才加 (原版) */}
+                      {opt.isOptimized ? opt.title : `${opt.title} (原版)`}
                     </SelectItem>
                   ))
                 ) : (
@@ -166,7 +155,6 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
           </CardContent>
         </Card>
 
-        {/* Location Selection (你原本的，完整保留！) */}
         <Card>
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="text-base md:text-lg flex items-center gap-2">
@@ -213,7 +201,6 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
           </CardContent>
         </Card>
 
-        {/* Salary Range (你原本的，完整保留！) */}
         <Card>
           <CardHeader className="pb-2 md:pb-4">
             <CardTitle className="text-base md:text-lg flex items-center gap-2">

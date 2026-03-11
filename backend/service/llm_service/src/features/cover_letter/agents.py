@@ -1,6 +1,10 @@
 from crewai import Agent
+from src.common.logger import setup_logger
+
+logger = setup_logger()
 
 def get_cover_letter_strategist_agent() -> Agent:
+    logger.info("開始建立求職信專家 Agent (Cover Letter Strategist)...")
     return Agent(
         role="服務外商與大型科技公司的資深獵頭 (Cover Letter Strategist)",
         goal="根據優化後的履歷與職缺資訊，撰寫一封能通過招募方審核、提高點擊率的 Cover Letter。",

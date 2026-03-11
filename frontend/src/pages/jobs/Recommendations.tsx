@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  MapPin,
-  Building2,
-  Banknote,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
-  Briefcase,
   Star,
   Heart,
   RefreshCw,
@@ -15,16 +10,16 @@ import {
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppState } from "@/contexts/AppContext";
 import { AILoadingSpinner } from "@/components/loading/LoadingStates";
 import EmbeddedPreferenceSurvey from "@/components/survey/EmbeddedPreferenceSurvey";
 import ResumeSelector from "@/components/survey/ResumeSelector";
 import AlertModal from "@/components/modals/AlertModal";
-import icon104 from "@/assets/104-icon.png";
-import type { JobData } from "@/types/job";
+import RecommendationJobCard from "@/components/jobs/RecommendationJobCard";
+import { generateMockRecommendedJobs } from '@/mocks/jobs';
+import type { RecommendedJob } from "@/types/job";
 import { getJobRecommendationsAPI } from "@/services/api";
 import { useResumes } from "@/contexts/ResumeContext";
 
@@ -37,70 +32,18 @@ const JobCardSkeleton = () => (
           <Skeleton className="h-6 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
         </div>
-        <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
+        <Skeleton className="h-8 w-16 rounded-lg flex-shrink-0" />
       </div>
     </CardHeader>
     <CardContent className="space-y-4">
       <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
       <div className="flex flex-wrap gap-2">
         <Skeleton className="h-6 w-20 rounded-full" />
         <Skeleton className="h-6 w-24 rounded-full" />
-        <Skeleton className="h-6 w-16 rounded-full" />
       </div>
       <div className="flex gap-3 pt-2">
         <Skeleton className="h-9 w-24" />
-        <Skeleton className="h-9 w-24" />
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const JobCard = ({ job }: { job: JobData }) => (
-  <Card className="overflow-hidden hover:shadow-medium hover:-translate-y-1 transition-all duration-300 group border-border hover:border-primary/30 hover:shadow-[0_8px_30px_rgba(141,73,3,0.12)]">
-    <CardHeader className="pb-3">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-            {job.title}
-          </h3>
-          <div className="flex items-center gap-2 mt-1 text-muted-foreground">
-            <Building2 className="h-4 w-4 flex-shrink-0" />
-            <span className="text-sm truncate">{job.company}</span>
-          </div>
-        </div>
-        <div className="flex-shrink-0">
-          <img src={icon104} alt="104人力銀行" className="h-8 w-8 rounded-full shadow-sm" />
-        </div>
-      </div>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <p className="text-muted-foreground text-sm line-clamp-2">{job.description}</p>
-      <div className="flex flex-wrap gap-2">
-        <Badge variant="secondary" className="flex items-center gap-1">
-          <MapPin className="h-3 w-3" />
-          {job.city}
-        </Badge>
-        <Badge variant="secondary" className="flex items-center gap-1">
-          <Banknote className="h-3 w-3" />
-          {job.salary}
-        </Badge>
-        <Badge variant="outline" className="flex items-center gap-1">
-          <Briefcase className="h-3 w-3" />
-          {job.industry}
-        </Badge>
-      </div>
-      <div className="flex gap-3 pt-2">
-        <Link to={`/jobs/${job.id}`}>
-          <Button size="sm" className="gap-1">
-            查看詳細
-          </Button>
-        </Link>
-        <a href={job.externalUrl} target="_blank" rel="noopener noreferrer">
-          <Button size="sm" variant="outline" className="gap-1">
-            立即投遞
-            <ExternalLink className="h-3 w-3" />
-          </Button>
-        </a>
       </div>
     </CardContent>
   </Card>
@@ -129,26 +72,31 @@ const Recommendations = () => {
   const surveyPayload = savedData ? JSON.parse(savedData) : null;
 
   // 🌟 3. React Query 魔法陣！
+  // 🌟 修改後的 React Query 魔法陣
   const { data: allJobs = [], isLoading: isJobsLoading } = useQuery({
     queryKey: ['jobRecommendations', surveyPayload],
     queryFn: async () => {
-      console.log("🚀 真的打 API 囉！(如果有快取，你就不會看到這行)");
-      const response = await getJobRecommendationsAPI(surveyPayload);
-      const backendJobs = response.recommendations || [];
-      return backendJobs.map((bJob: any) => ({
-        id: bJob.id,
-        title: bJob.title,
-        company: bJob.company || "精選企業",
-        description: bJob.description,
-        city: bJob.location,
-        salary: bJob.salary_range,
-        industry: "資訊軟體業",
-        externalUrl: `https://www.104.com.tw/jobs/search/?keyword=${encodeURIComponent(bJob.title)}`
-      }));
+      try {
+        const response = await getJobRecommendationsAPI(surveyPayload);
+        const backendJobs = response.recommendations || [];
+
+        // 映射後端資料 (後端已標準化，前端只需補上 isMock 標註即可)
+        return backendJobs.map((bJob: any) => ({
+          ...bJob,
+          isMock: response.isFallback || false
+        }));
+      } catch (error) {
+        console.error("API 讀取失敗，啟動備援 Mocks:", error);
+        // 發生錯誤時，回傳第一頁的模擬資料並標註為 Mock
+        return generateMockRecommendedJobs(1).map(job => ({
+          ...job,
+          isMock: true
+        }));
+      }
     },
     enabled: stage === "results" && !!surveyPayload,
-    staleTime: 1000 * 60 * 30, // 30 分鐘保鮮期
   });
+
 
   // 4. 數學魔法 (必須放在 allJobs 宣告之後！)
   const calculatedTotalPages = Math.max(1, Math.ceil(allJobs.length / itemsPerPage));
@@ -321,12 +269,18 @@ const Recommendations = () => {
                     >
                       {displayJobs.map((job, index) => (
                         <motion.div
-                          key={job.id}
+                          key={`${job.job_id}-${index}`}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
                         >
-                          <JobCard job={job} />
+                          <RecommendationJobCard job={job} />
+                          {/* 🌟 如果是假資料，在下面多顯一行標註 (可選) */}
+                          {job.isMock && (
+                            <div className="text-[10px] text-rose-400 mt-1 px-1">
+                              ⚠️ 注意：此為 API 無法連線時的測試資料
+                            </div>
+                          )}
                         </motion.div>
                       ))}
                     </motion.div>

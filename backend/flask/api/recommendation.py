@@ -110,13 +110,26 @@ def recommend_jobs():
 def get_job_detail(job_id):
     print(f"DEBUG: 準備查詢單筆職缺，ID: {job_id}")
     try:
-        res = supabase.table('job_posting').select('*').eq('job_id', job_id).execute()
+        # Join job_posting with company_info to get the real company name
+        res = supabase.table('job_posting') \
+            .select('*, company_info(company_name)') \
+            .eq('job_id', job_id) \
+            .execute()
+            
         if not res.data:
             return jsonify({"status": "error", "message": "找不到該職缺"}), 404
             
+        job_data = res.data[0]
+        
+        # Flatten the company_name from the joined table
+        if job_data.get('company_info') and isinstance(job_data['company_info'], dict):
+            job_data['company_name'] = job_data['company_info'].get('company_name')
+        elif job_data.get('company_info') and isinstance(job_data['company_info'], list) and len(job_data['company_info']) > 0:
+            job_data['company_name'] = job_data['company_info'][0].get('company_name')
+            
         return jsonify({
             "status": "success",
-            "data": res.data[0]
+            "data": job_data
         }), 200
     except Exception as e:
         print(f"❌ 查詢單筆職缺發生錯誤: {str(e)}")

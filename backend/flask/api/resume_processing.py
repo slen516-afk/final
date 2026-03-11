@@ -173,14 +173,41 @@ def check_ocr_status(id):
     }), 200
 
 @resume_proc_bp.route('/list/<int:user_id>', methods=['GET'])
-def list_resumes(user_id):
+def get_user_resumes(user_id):
     try:
-        # 🌟 核心：去資料庫撈取特定 user_id 的履歷
-        res = supabase.table('resume').select('*').eq('user_id', user_id).order('created_at', desc=True).execute()
-        return jsonify({"status": "success", "data": res.data}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        from src.core.database.supabase_client import get_supabase_client
+        supabase = get_supabase_client()
 
+        # 1. 撈取「原版」履歷
+        resumes_resp = supabase.table("resume").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+        resumes = resumes_resp.data if hasattr(resumes_resp, 'data') else []
+
+        # 2. 撈取「優化版」履歷 (🔥 把 .eq("is_published", True) 這段拿掉了，不檢查了！)
+        opts_resp = supabase.table("resume_optimization").select("*").eq("user_id", user_id).execute()
+        opts = opts_resp.data if hasattr(opts_resp, 'data') else []
+
+        # 3. 將原版與優化版「組合」在同一個陣列中
+        combined_data = []
+        for r in resumes:
+            # 先把原版塞進陣列
+            combined_data.append(r)
+
+            # 找找看這份履歷有沒有對應的「優化版」
+            for opt in opts:
+                if opt.get("resume_id") == r.get("resume_id"):
+                    opt_item = r.copy()
+                    opt_item["resume_id"] = f"{r.get('resume_id')}_opt_{opt.get('optimization_version', 1)}" 
+                    opt_item["resume_name"] = f"{r.get('resume_name')} (✨ AI 優化版)"
+                    opt_item["structured_data"] = opt.get("optimized_data")
+                    opt_item["is_optimized"] = True 
+                    
+                    combined_data.append(opt_item)
+
+        return jsonify({"status": "success", "data": combined_data}), 200
+
+    except Exception as e:
+        print(f"🚨 /list API 發生錯誤: {e}") # 加這行讓終端機印出真正的死因
+        return jsonify({"status": "error", "message": str(e)}), 500
 @resume_proc_bp.route('/save', methods=['POST'])
 def save_processed_resume():
     try:
@@ -312,9 +339,8 @@ def generate_optimized_resume():
     except Exception as e:
         print(f"🚨 [Error] AI 履歷生成失敗: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
 # ==========================================
-# 🌟 儲存優化後的履歷到資料庫 (完美對齊 Schema)
+# 🌟 儲存/更新優化後的履歷到資料庫 (無 ID 報錯修復版)
 # ==========================================
 @resume_proc_bp.route('/optimize/save', methods=['POST'])
 def save_optimized_resume():
@@ -325,54 +351,89 @@ def save_optimized_resume():
         template_id = req_data.get('template_id')
         optimized_data = req_data.get('optimized_data', {})
 
-        if not user_id:
-            return jsonify({"status": "error", "message": "缺少 user_id"}), 400
+        if not user_id or not resume_id:
+            return jsonify({"status": "error", "message": "缺少 user_id 或 original_resume_id"}), 400
 
-        print(f"🚀 [API] 準備將 User {user_id} 的優化履歷存入 resume_optimization...")
+        print(f"🚀 [API] 準備更新 User {user_id} 的優化履歷...")
 
         from src.core.database.supabase_client import get_supabase_client
         supabase = get_supabase_client()
 
-        # 🔧 輔助函式：確保要存入 jsonb 的欄位絕對是 list 或 dict，防止 Supabase 報錯
+        # 🔧 輔助函式：確保要存入 jsonb 的欄位絕對是 list 或 dict
         def to_jsonb(val):
             if isinstance(val, list) or isinstance(val, dict):
                 return val
             if isinstance(val, str) and val.strip():
-                # 如果前端傳來的是換行字串，我們把它包成陣列
                 return [val]
             return []
 
-        # 🌟 完美對齊你截圖中的所有欄位
-        insert_data = {
-            "user_id": user_id,
-            "resume_id": resume_id,
-            # Text 欄位
+        # 🌟 準備要「更新」的資料
+        update_data = {
             "professional_summary": optimized_data.get("professional_summary", ""),
             "autobiography": optimized_data.get("autobiography", ""),
             "resume_name": f"{optimized_data.get('name', '未命名')} 的優化履歷",
-            "optimization_version": "v1.0",
-            "llm_model_used": "gpt-4o",
-            # JSONB 欄位 (使用輔助函式確保格式正確)
             "professional_experience": to_jsonb(optimized_data.get("professional_experience")),
             "core_skills": to_jsonb(optimized_data.get("core_skills")),
             "projects": to_jsonb(optimized_data.get("projects")),
             "education": to_jsonb(optimized_data.get("education")),
-            "template_color": {"template_id": template_id}, # 將樣板紀錄在 jsonb 裡
-            # 其他欄位
-            "is_embedded": False,
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "template_color": {"template_id": template_id},
+            "is_published": True
         }
 
-        # 寫入 Supabase
-        response = supabase.table('resume_optimization').insert(insert_data).execute()
+        # ==========================================
+        # 🌟 修正：不用找 'id' 欄位了，直接用 user_id 和 resume_id 雙重鎖定更新！
+        # ==========================================
+        
+        # 1. 先檢查背景 Worker 是不是已經幫我們自動存檔了
+        check_resp = supabase.table("resume_optimization") \
+            .select("resume_id") \
+            .eq("user_id", user_id) \
+            .eq("resume_id", resume_id) \
+            .execute()
 
-        print("✅ [API] 優化履歷已成功儲存！")
+        if hasattr(check_resp, 'data') and len(check_resp.data) > 0:
+            # 找到 Worker 存的資料了！執行覆蓋更新 (Update)
+            response = supabase.table('resume_optimization') \
+                .update(update_data) \
+                .eq("user_id", user_id) \
+                .eq("resume_id", resume_id) \
+                .execute()
+            print("✅ [API] 優化履歷已成功【更新】！")
+        else:
+            # 萬一 Worker 偷懶沒存，我們就自己 Insert
+            print("⚠️ [API] 找不到既有的優化紀錄，改為執行新增 (Insert)...")
+            update_data["user_id"] = user_id
+            update_data["resume_id"] = resume_id
+            update_data["optimization_version"] = "1"
+            update_data["llm_model_used"] = "gpt-4o"
+            update_data["is_embedded"] = False
+            response = supabase.table('resume_optimization').insert(update_data).execute()
+
         return jsonify({
             "status": "success",
-            "message": "優化履歷儲存成功",
+            "message": "優化履歷儲存/更新成功",
             "data": response.data
         }), 200
 
     except Exception as e:
-        print(f"🚨 [Error] 儲存優化履歷失敗: {e}")
+        print(f"🚨 [Error] 儲存/更新優化履歷失敗: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+@resume_proc_bp.route('/delete/<int:resume_id>', methods=['DELETE'])
+def delete_resume(resume_id):
+    try:
+        from src.core.database.supabase_client import get_supabase_client
+        supabase = get_supabase_client()
+
+        print(f"🗑️ 收到刪除請求，準備刪除履歷 ID: {resume_id}")
+
+        # 呼叫 Supabase 刪除該筆資料
+        # (如果你的資料庫有設定 Cascade Delete，關聯的 resume_optimization 也會自動被刪掉)
+        result = supabase.table("resume").delete().eq("resume_id", resume_id).execute()
+
+        print(f"✅ 履歷 ID: {resume_id} 刪除成功")
+        return jsonify({"status": "success", "message": "履歷刪除成功"}), 200
+
+    except Exception as e:
+        print(f"🚨 刪除履歷失敗: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+

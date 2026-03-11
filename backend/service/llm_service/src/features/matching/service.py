@@ -4,6 +4,8 @@ from qdrant_client import QdrantClient
 from typing import List, Dict, Any
 
 # 匯入本模組的其他組件
+from src.common.logger import setup_logger
+logger = setup_logger()
 from .qdrant_retriever import JobMatchRetriever, UserProfileRetriever
 from .matcher import JobMatcher
 from .advisor import CareerLLMAdvisor
@@ -36,7 +38,7 @@ class CareerMatchingService:
             # ==========================================
             # 🚀 Phase 0: 從 Supabase 提取最新六維分析報告
             # ==========================================
-            print(f"正在從 Supabase 取得 User {user_id} 的最新六維能力報告...")
+            logger.info(f"正在從 Supabase 取得 User {user_id} 的最新六維能力報告...")
             
             # 依據 generated_at 降冪排序，加上 limit(1) 取得最新的一份報告
             report_response = (
@@ -45,7 +47,7 @@ class CareerMatchingService:
                 .eq('user_id', user_id)
                 .execute()
             )
-
+            
             # 2. 在 Python 端進行安全排序與篩選 (避開 SQL 字串排序陷阱)
             # 將 report_version 轉為 float 比較 (例如 "2.0" -> 2.0, "10.0" -> 10.0)
             # 若某些舊資料沒有 report_version，預設給 "0.0"
@@ -56,13 +58,13 @@ class CareerMatchingService:
                 )
             except ValueError:
                 # 防呆：如果版本號出現 "v1.0" 這種無法直接轉 float 的字串，退回安全的字串比對
-                print("⚠️ 警告：報告版本號無法轉換為浮點數，將使用字串排序。")
+                logger.warning("警告：報告版本號無法轉換為浮點數，將使用字串排序。")
                 latest_report = max(
                     report_response.data, 
                     key=lambda x: str(x.get('report_version') or '0.0')
                 )
             
-            print(f"✅ 成功鎖定最新版本報告 (版本號: {latest_report.get('report_version')})")
+            logger.info(f"✅ 成功鎖定最新版本報告 (版本號: {latest_report.get('report_version')})")
 
             if not report_response.data:
                 raise ValueError(f"❌ 找不到 User {user_id} 的職涯分析報告！請使用者先完成問卷與報告生成。")
@@ -90,12 +92,12 @@ class CareerMatchingService:
                 if mapped_key:
                     user_6d_profile[mapped_key] = score
                     
-            print(f"✅ 成功載入六維能力分數: {user_6d_profile}")
+            logger.info(f"✅ 成功載入六維能力分數: {user_6d_profile}")
 
             # ==========================================
             # Phase 1: Qdrant 混合召回 (撈取 Top 50 候選名單)
             # ==========================================
-            print(f"正在提取 User {user_id} 的 {source_type} 履歷向量 (文件ID: {document_id})...")
+            logger.info(f"正在提取 User {user_id} 的 {source_type} 履歷向量 (文件ID: {document_id})...")
             # 修改點 3：將路由參數傳遞給 Retriever
             resume_vector = self.resume_retriever.get_user_resume_vector(
                 user_id=user_id,
@@ -103,7 +105,7 @@ class CareerMatchingService:
                 source_type=source_type
             )
 
-            print("正在進行第一階段：Qdrant 語意與硬條件檢索...")
+            logger.info("正在進行第一階段：Qdrant 語意與硬條件檢索...")
             primary_candidates = self.job_retriever.search_hybrid_jobs(
                 query_vector=resume_vector,
                 filters=filters,
@@ -111,13 +113,13 @@ class CareerMatchingService:
             )
 
             if not primary_candidates:
-                print("⚠️ 找不到任何符合篩選條件的職缺。")
+                logger.warning("找不到任何符合篩選條件的職缺。")
                 return []
 
             # ==========================================
             # Phase 1.5: Supabase 批量查詢 (Batch Query)
             # ==========================================
-            print("正在向 Supabase 提取職缺細節與能力要求...")
+            logger.info("正在向 Supabase 提取職缺細節與能力要求...")
             job_ids = [job['job_id'] for job in primary_candidates]
 
             # 1. 查詢職缺內容 (🌟 這裡補上了 city, salary_min, salary_max)
@@ -152,7 +154,7 @@ class CareerMatchingService:
             # ==========================================
             # Phase 2: 精確重排序 (Re-ranking)
             # ==========================================
-            print("正在進行第二階段：硬實力差距精算與重新計分...")
+            logger.info("正在進行第二階段：硬實力差距精算與重新計分...")
             final_candidates = []
             
             for job in primary_candidates:
@@ -180,7 +182,7 @@ class CareerMatchingService:
             # ==========================================
             # Phase 3: AI 分析與 JSON 格式化 (平行處理)
             # ==========================================
-            print("正在產出 Top 10 AI 分析報告 (10 股平行運算)...")
+            logger.info("正在產出 Top 10 AI 分析報告 (10 股平行運算)...")
             
             def format_and_analyze(job):
                 try:
@@ -232,7 +234,7 @@ class CareerMatchingService:
                         "interview_tips": ai_insights.get("interview_tips", "")
                     }
                 except Exception as e:
-                    print(f"⚠️ 單筆職缺分析失敗: {e}")
+                    logger.warning(f"單筆職缺分析失敗: {e}")
                     return None
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -241,5 +243,5 @@ class CareerMatchingService:
             return [j for j in final_json_list if j is not None]
 
         except Exception as e:
-            print(f"❌ CareerMatchingService 發生錯誤: {e}")
+            logger.error(f"CareerMatchingService 發生錯誤: {e}", exc_info=True)
             raise e

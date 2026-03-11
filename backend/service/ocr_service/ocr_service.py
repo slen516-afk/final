@@ -1,19 +1,19 @@
+# 🌟 基礎防護：關閉底層衝突
 import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+os.environ['OMP_NUM_THREADS'] = '1'
+
 import json
 import time
-import re
 import cv2
 import numpy as np
 from PIL import Image
 import fitz
 from dotenv import load_dotenv
+import multiprocessing # 🌟 終極殺手鐧：多進程隔離模組
 
-# 引入 PaddleOCR (苦力)
-from paddleocr import PaddleOCR
-# 引入 OpenAI (大腦)
 from openai import OpenAI
 
-# 嘗試引入 Supabase
 try:
     from supabase import create_client, Client
 except ImportError:
@@ -21,13 +21,31 @@ except ImportError:
 
 load_dotenv()
 
+# ==========================================
+# 🌟 隔離病房 (Isolated Process)：解決底層 C++ 崩潰的終極手段
+# ==========================================
+def _run_paddle_ocr_isolated(image_array, return_dict):
+    """
+    這個函式會在一個完全獨立的系統進程中執行。
+    跑完就強制銷毀，保證 C++ 底層記憶體 100% 釋放，永不衝突！
+    """
+    try:
+        # ⚠️ 注意：必須在進程內部才 import PaddleOCR
+        from paddleocr import PaddleOCR
+        
+        # 初始化並執行 (show_log=False 避免終端機洗頻)
+        ocr = PaddleOCR(use_angle_cls=True, lang="ch", use_gpu=False, use_mkldnn=False, show_log=False)
+        result = ocr.ocr(image_array, cls=True)
+        return_dict['result'] = result
+    except Exception as e:
+        return_dict['error'] = str(e)
+
+
 class ResumeOCRService:
     def __init__(self, supabase_client=None):
-        # 1. 初始化 PaddleOCR
-        print("[OCR Service] 正在初始化 PaddleOCR ...")
-        self.ocr = PaddleOCR(use_angle_cls=True, lang="ch", show_log=False)
+        # ⚠️ 注意：我們不再於這裡初始化 PaddleOCR 了，全部交給隔離病房！
         
-        # 2. 初始化 OpenAI API
+        # 初始化 OpenAI API
         api_key = os.getenv("OPENAI_API_KEY")
         if api_key:
             self.llm_client = OpenAI(api_key=api_key)
@@ -36,7 +54,7 @@ class ResumeOCRService:
             print("[OCR Service] ⚠️ 警告：找不到 OPENAI_API_KEY")
             self.llm_client = None
 
-        # 3. 初始化 Supabase
+        # 初始化 Supabase
         if supabase_client:
             self.sb = supabase_client
             print("[OCR Service] 使用外部傳入的 Supabase Client")
@@ -70,7 +88,7 @@ class ResumeOCRService:
             return None
 
     def _get_demo_fallback_data(self):
-        """🌟 上台 Demo 的終極保命符！完全對接前端 Textarea 的扁平格式"""
+        """🌟 上台 Demo 的終極保命符！"""
         return {
             "name": "陳小明",
             "bio": "擁有熱忱的軟體工程師，積極尋求技術突破與成長。",
@@ -95,9 +113,6 @@ class ResumeOCRService:
         print(f"\n[OCR Service] >>> 開始處理：{file_path}")
         start_time = time.time()
 
-        # ==========================================
-        # 步驟 1：讀取圖片 / PDF 轉圖片
-        # ==========================================
         file_ext = os.path.splitext(file_path)[1].lower()
         try:
             if file_ext == '.pdf':
@@ -109,11 +124,24 @@ class ResumeOCRService:
             open_cv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
             # ==========================================
-            # 步驟 2：PaddleOCR 快速萃取純文字
+            # 步驟 2：利用多進程 (Multiprocessing) 執行 OCR
             # ==========================================
-            print("[OCR Service] 執行 PaddleOCR 文字萃取...")
+            print("[OCR Service] 啟動隔離進程執行 PaddleOCR...")
             ocr_start = time.time()
-            result = self.ocr.ocr(open_cv_image, cls=True)
+            
+            # 使用 Manager 來接收隔離進程的回傳值
+            manager = multiprocessing.Manager()
+            return_dict = manager.dict()
+            
+            # 創建並啟動獨立進程
+            p = multiprocessing.Process(target=_run_paddle_ocr_isolated, args=(open_cv_image, return_dict))
+            p.start()
+            p.join() # 程式會停在這裡等它跑完
+            
+            if 'error' in return_dict:
+                raise RuntimeError(f"OCR 隔離進程崩潰: {return_dict['error']}")
+                
+            result = return_dict.get('result')
             
             extracted_lines = []
             if result and result[0]:
@@ -131,12 +159,11 @@ class ResumeOCRService:
                 raise ValueError("未設定 OpenAI API Key")
 
             # ==========================================
-            # 步驟 3：呼叫 OpenAI 轉換為 JSON (啟用 JSON Mode)
+            # 步驟 3：呼叫 OpenAI 轉換為 JSON
             # ==========================================
             print("[OCR Service] 呼叫 OpenAI 進行結構化解析...")
             llm_start = time.time()
 
-            # 專門為你的前端 Textarea 打造的扁平化 JSON 結構與要求
             system_prompt = """
             You are an expert ATS (Applicant Tracking System) resume parser. 
             Extract information from the provided OCR text and return a valid JSON object.
@@ -167,23 +194,19 @@ class ResumeOCRService:
             }
             """
 
-            # 呼叫 GPT-4o-mini (速度快、便宜、非常適合這種 JSON 萃取)
             response = self.llm_client.chat.completions.create(
-                model="gpt-4o-mini", # 如果你們預算夠，也可以改成 gpt-4o
-                response_format={ "type": "json_object" }, # 🔥 殺手鐧：強制 JSON 輸出
+                model="gpt-4o-mini", 
+                response_format={ "type": "json_object" },
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"【履歷純文字內容】:\n{raw_text}"}
                 ],
-                temperature=0.1 # 溫度調低，讓輸出更穩定、不亂作夢
+                temperature=0.1
             )
             
             raw_output = response.choices[0].message.content
             print(f"[OCR Service] OpenAI 解析完成，耗時: {time.time() - llm_start:.2f} 秒")
 
-            # ==========================================
-            # 步驟 4：因為使用了 JSON Mode，這裡可以直接轉成 Dict
-            # ==========================================
             parsed_data = json.loads(raw_output)
             
             print(f"[OCR Service] ✅ 總流程完成！總耗時: {time.time() - start_time:.2f} 秒")

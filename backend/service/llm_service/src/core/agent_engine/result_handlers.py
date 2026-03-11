@@ -255,6 +255,7 @@ class HandlerRegistry:
             TaskType.RESUME_ANALYSIS: ResumeAnalysisHandler(supabase_client),
             TaskType.PROJECT_REC: ProjectRecHandler(supabase_client),
             TaskType.COVER_LETTER: CoverLetterHandler(supabase_client)
+            # TaskType.COURSE_REC: CourseRecHandler(supabase_client)
             # 未來可在這裡擴充其他模組的 Handler
         }
 

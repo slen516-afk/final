@@ -1,62 +1,37 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getJobDetailAPI, fetchUserResumesAPI } from '@/services/api';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  ChevronLeft,
-  MapPin,
-  Banknote,
-  Building2,
-  Briefcase,
-  FileText,
-  ExternalLink,
-  Copy,
-  Download,
-  CheckCircle2,
-  Loader2,
-  ListFilter
-} from 'lucide-react';
-import RightDrawer from '@/components/panels/RightDrawer';
-import { AILoadingSpinner } from '@/components/loading/LoadingStates';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { useAppState } from '@/contexts/AppContext';
 import AuthModal from '@/components/auth/AuthModal';
-import { toast } from 'sonner';
-import icon104 from '@/assets/104-icon.png';
-import type { JobDetailData } from '@/types/job';
-import { mockCoverLetter } from '@/mocks/jobs';
-
-// --- Skeleton 元件保留不變 ---
-const JobDetailSkeleton = () => (
-  <div className="space-y-6">
-    <Card>
-      <CardHeader className="space-y-4">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 space-y-3">
-            <Skeleton className="h-8 w-3/4" />
-            <Skeleton className="h-5 w-1/2" />
-          </div>
-          <Skeleton className="h-12 w-12 rounded-full" />
-        </div>
-      </CardHeader>
-    </Card>
-    {/* ... 其他 Skeleton 內容 ... */}
-  </div>
-);
+import RightDrawer from '@/components/panels/RightDrawer';
+import { AILoadingSpinner } from '@/components/loading/LoadingStates';
+import JobDetailHeader from '@/components/jobs/detail/JobDetailHeader';
+import JobDetailContent from '@/components/jobs/detail/JobDetailContent';
+import JobDetailUserAnalysis from '@/components/jobs/detail/JobDetailUserAnalysis';
+import JobDetailSkeleton from '@/components/jobs/detail/JobDetailSkeleton';
+import type { RecommendedJobDetail } from '@/types/job';
+import { mockCoverLetter, getMockRecommendedJobDetail } from '@/mocks/jobs';
+import {
+  ChevronLeft,
+  Copy,
+  CheckCircle2,
+  ListFilter
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 🌟 1. 從全域狀態拿到你的真實 user 資料
-  const { isLoggedIn, user } = useAppState();
+  const { isLoggedIn, user, isMockMode } = useAppState();
   const realUserId = user?.user_id;
 
   const [isLoading, setIsLoading] = useState(true);
-  const [job, setJob] = useState<JobDetailData | null>(null);
+  const [job, setJob] = useState<RecommendedJobDetail | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // 🌟 2. 履歷選擇相關狀態 (新增 isFetching 用來顯示載入中)
@@ -71,52 +46,65 @@ const JobDetail = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  // Load job details (真實 API 版)
+  // Load job details
   useEffect(() => {
     const fetchJob = async () => {
       if (!id) return;
       setIsLoading(true);
       try {
+        // 如果是 Mock 模式，直接拿 Mock 資料
+        if (isMockMode && isMockMode()) {
+          console.log("🛠️ [JobDetail] Mock Mode 啟動，加載模擬職缺詳情");
+          await new Promise(resolve => setTimeout(resolve, 800));
+          setJob(getMockRecommendedJobDetail(id));
+          setIsLoading(false);
+          return;
+        }
+
         const res = await getJobDetailAPI(id);
         const rawData = res.data;
-        const formattedJob: JobDetailData = {
-          id: rawData.job_id,
-          title: rawData.job_title,
-          company: rawData.company_name || "精選企業",
-          description: rawData.job_description,
-          city: rawData.city,
-          salary: (rawData.salary_min && rawData.salary_max)
-            ? `${Math.floor(rawData.salary_min / 1000)}k - ${Math.floor(rawData.salary_max / 1000)}k`
-            : "依公司規定",
-          industry: "資訊軟體業",
-          skills: rawData.skills || ["專業技能"],
-          requirements: ["請參考上方職缺描述"],
-          benefits: ["勞健保", "年終獎金"],
-          externalUrl: `https://www.104.com.tw/job/${rawData.job_id}`
+        const stateJob = (location.state as any)?.job;
+
+        // 將後端原始資料對接成 RecommendedJobDetail (後端已標準化，此處僅做防呆)
+        const formattedJob: RecommendedJobDetail = {
+          ...rawData,
+          id: rawData.id || rawData.job_id || id,
+          title: rawData.title || rawData.job_name || rawData.job_title || "職缺詳情",
+          company: rawData.company || rawData.comp_name || rawData.company_name || "精選企業",
+          industry: rawData.industry || rawData.job_category || "產業未提供",
+          description: rawData.description || rawData.job_description || "",
+          location: rawData.full_address || rawData.location || rawData.city || "地區未提供",
+          externalUrl: rawData.externalUrl || rawData.source_url || `https://www.104.com.tw/job/${id}`,
+          salary_range: rawData.salary_range || "依公司規定",
+          requirements: Array.isArray(rawData.requirements) ? rawData.requirements : (rawData.requirements ? [rawData.requirements] : []),
+          // 以下 AI 欄位優先從 Router state (上頁點擊傳遞) 取得，若無則留空
+          strengths: stateJob?.strengths || "",
+          weaknesses: stateJob?.weaknesses || "",
+          interview_tips: stateJob?.interview_tips || ""
         };
         setJob(formattedJob);
       } catch (error) {
         console.error("無法取得職缺詳細資料:", error);
         toast.error('無法載入職缺資訊');
+
+        // 備援方案：出錯也給 Mock 資料
+        setJob(getMockRecommendedJobDetail(id));
       } finally {
         setIsLoading(false);
       }
     };
     fetchJob();
-  }, [id]);
+  }, [id, isMockMode]);
 
-  // 🌟 3. 當使用者打開側邊欄時，正式「讀取」API 抓取 60 幾號 ID 的履歷
+  // 🌟 3. 當使用者打開側邊欄時，獲取履歷清單
   useEffect(() => {
     const loadMyResumes = async () => {
       if (isLoggedIn && realUserId) {
         setIsFetchingResumes(true);
         try {
-          // 這裡解決了 "fetchUserResumesAPI is never read" 的問題
-          console.log("🚀 正使用真實 ID 請求履歷中:", realUserId);
           const data = await fetchUserResumesAPI(realUserId);
           setUserResumes(data);
 
-          // 如果有資料，預設選擇第一份
           if (data && data.length > 0) {
             setSelectedResumeId(data[0].resume_id.toString());
           }
@@ -143,7 +131,6 @@ const JobDetail = () => {
     setLetterContent(null);
     setIsCopied(false);
 
-    // TODO: 之後換成真實的 AI 生成 API
     await new Promise(resolve => setTimeout(resolve, 2500));
     setLetterContent(mockCoverLetter(job?.title, job?.company));
     setIsGenerating(false);
@@ -192,7 +179,7 @@ const JobDetail = () => {
           <div className="max-w-4xl mx-auto">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-6">
               <Button variant="ghost" onClick={handleBack} className="gap-2 text-muted-foreground hover:text-foreground">
-                <ChevronLeft className="h-4 w-4" /> 返回推薦職缺
+                <ChevronLeft className="h-4 w-4" /> 返回推薦職缺列表
               </Button>
             </motion.div>
 
@@ -201,34 +188,23 @@ const JobDetail = () => {
                 <JobDetailSkeleton />
               ) : job ? (
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                  {/* Job Header Card */}
-                  <Card className="overflow-hidden border-border shadow-soft">
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-2xl md:text-3xl mb-2">{job.title}</CardTitle>
-                          <div className="flex items-center gap-2 text-lg text-muted-foreground">
-                            <Building2 className="h-5 w-5 flex-shrink-0" />
-                            <span>{job.company}</span>
-                          </div>
-                        </div>
-                        <img src={icon104} alt="104" className="h-12 w-12 rounded-full shadow-sm flex-shrink-0" />
-                      </div>
-                      <div className="flex flex-wrap gap-3 mt-6">
-                        <Button onClick={handleGenerateLetterClick} variant="outline" className="gap-2">
-                          <FileText className="h-4 w-4" /> 生成推薦信
-                        </Button>
-                        <a href={job.externalUrl} target="_blank" rel="noopener noreferrer">
-                          <Button className="gap-2">立即應徵 <ExternalLink className="h-4 w-4" /></Button>
-                        </a>
-                      </div>
-                    </CardHeader>
-                  </Card>
-                  {/* ... 其他卡片內容 (Description, Skills, etc.) 保留 ... */}
-                  <Card className="border-border shadow-soft">
-                    <CardHeader><CardTitle className="text-lg">職缺描述</CardTitle></CardHeader>
-                    <CardContent><p className="text-muted-foreground whitespace-pre-line leading-relaxed">{job.description}</p></CardContent>
-                  </Card>
+                  {/* 使用新組件：Header */}
+                  <JobDetailHeader
+                    job={job}
+                    onGenerateLetter={handleGenerateLetterClick}
+                  />
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* 使用新組件：內容描述 (佔 2 欄) */}
+                    <div className="lg:col-span-2">
+                      <JobDetailContent job={job} />
+                    </div>
+
+                    {/* 使用新組件：AI 用戶分析 (佔 1 欄) */}
+                    <div className="space-y-6">
+                      <JobDetailUserAnalysis job={job} />
+                    </div>
+                  </div>
                 </motion.div>
               ) : (
                 <div className="text-center py-12"><p>找不到此職缺資訊</p></div>
@@ -238,7 +214,6 @@ const JobDetail = () => {
         </div>
       </div>
 
-      {/* --- 側邊欄：陳浩宇要在這裡消失 --- */}
       <RightDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -256,7 +231,7 @@ const JobDetail = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-primary font-medium">
                   <ListFilter className="h-4 w-4" />
-                  <span>第一步：選擇您的履歷 (ID: {realUserId})</span>
+                  <span>第一步：選擇您的履歷</span>
                 </div>
 
                 {userResumes.length > 0 ? (

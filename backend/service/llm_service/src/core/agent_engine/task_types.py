@@ -12,3 +12,4 @@ class TaskType(Enum):
     RESUME_OPT = "resume_opt"       # 履歷優化 
     PROJECT_REC = "project_rec" # 專案推薦
     COVER_LETTER = "cover_letter" # 求職信
+    COURSE_REC = "course_rec" # 課程推薦

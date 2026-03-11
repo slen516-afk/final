@@ -1,5 +1,8 @@
 from qdrant_client import QdrantClient, models
 from typing import List, Dict, Any
+from src.common.logger import setup_logger
+
+logger = setup_logger()
 
 class JobMatchRetriever:
     """
@@ -120,7 +123,7 @@ class UserProfileRetriever:
         else:
             raise ValueError(f"未知的 source_type: {source_type}")
 
-        print(f"🔍 準備前往 Qdrant 集合 [{collection_name}] 尋找 {doc_id_field}={document_id} 的向量...")
+        logger.info(f"準備前往 Qdrant 集合 [{collection_name}] 尋找 {doc_id_field}={document_id} 的向量...")
 
         """
         2. 建立 Qdrant Payload Filter (嚴格包含 user_id 防護)

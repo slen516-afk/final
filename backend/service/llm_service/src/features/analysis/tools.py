@@ -9,6 +9,9 @@ from crewai.tools import BaseTool
 from src.features.analysis.calculator import CareerAnalyzer
 from src.features.matching.matcher import JobMatcher
 from src.core.database.supabase_client import get_latest_resume
+from src.common.logger import setup_logger
+
+logger = setup_logger()
 
 def safe_parse_json(input_data: Union[str, Dict, Any]) -> Dict:
     """Safely parse input string or dict into dict"""
@@ -41,14 +44,15 @@ class FetchResumeFromDBTool(BaseTool):
         try:
             # 確保提取出乾淨的字串 ID
             clean_id = str(user_id).strip().strip("'").strip('"')
-            print(f"DEBUG: fetch_resume_from_db 提取 user_id: {clean_id}")
+            logger.info(f"開始從資料庫獲取履歷 (user_id: {clean_id})")
             return str(get_latest_resume(clean_id))
         except Exception as e:
+            logger.error(f"從資料庫獲取履歷發生錯誤: {str(e)}", exc_info=True)
             return f"Error fetching resume: {str(e)}"
 
 # 2. Calculate Technical Vectors Tool
 class CalculateTechVectorsInput(BaseModel):
-    user_json_str: str = Field(description="使用者的 ID")
+    user_id: str = Field(description="使用者的 ID")
 
 class CalculateTechVectorsTool(BaseTool):
     name: str = "Calculate Technical Vectors"
@@ -58,7 +62,8 @@ class CalculateTechVectorsTool(BaseTool):
     # [額外屬性] 預先注入的資料字串，LLM 不需提供
     survey_json_str: str = Field(default="")
 
-    def _run(self, user_json_str: str) -> str:
+    def _run(self, user_id: str) -> str:
+        logger.info(f"開始計算技術分數向量 (user_id: {user_id})")
         default_scores = {"D1": 0.5, "D2": 0.5, "D3": 0.5, "D4": 0.5, "D5": 1.0, "D6": 1.0}
         try:
             user_data_raw = safe_parse_json(self.survey_json_str)
@@ -80,6 +85,7 @@ class CalculateTechVectorsTool(BaseTool):
             else:
                 return str(default_scores)
         except Exception as e:
+            logger.error(f"計算技術分數向量發生錯誤: {str(e)}", exc_info=True)
             # 發生任何錯誤都回傳預設值
             return f"Error (using defaults): {str(default_scores)}. Details: {str(e)}"
 
@@ -94,6 +100,7 @@ class CalculateMatchScoreTool(BaseTool):
     args_schema: type[BaseModel] = CalculateMatchScoreInput
     
     def _run(self, vectors_str: str, target_role: str) -> str:
+        logger.info(f"開始計算目標職位匹配分數 (target_role: {target_role})")
         try:
             vectors = safe_parse_json(vectors_str)
             if not vectors:
@@ -102,4 +109,5 @@ class CalculateMatchScoreTool(BaseTool):
             score = JobMatcher.calculate_match_score(vectors, target_role)
             return str(score)
         except Exception as e:
+            logger.error(f"計算目標職位匹配分數發生錯誤: {str(e)}", exc_info=True)
             return f"Error calculating match score: {str(e)}"

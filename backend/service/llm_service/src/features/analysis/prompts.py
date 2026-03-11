@@ -53,14 +53,38 @@ def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional
                  - `role` 與 `actual_level` 等欄位，**必須完全匹配** Schema 描述中提供的標準清單。
             """,
             "agents": [
-                {"role": tech_lead.role, "goal": tech_lead.goal, "backstory": tech_lead.backstory, "tools": tech_lead.tools},
-                {"role": psychologist.role, "goal": psychologist.goal, "backstory": psychologist.backstory, "tools": []},
-                {"role": advisor.role, "goal": advisor.goal, "backstory": advisor.backstory, "tools": []}
+                {
+                    "role": tech_lead.role, "goal": tech_lead.goal, "backstory": tech_lead.backstory, 
+                    "tools": tech_lead.tools, "step_callback": getattr(tech_lead, "step_callback", None)
+                },
+                {
+                    "role": psychologist.role, "goal": psychologist.goal, "backstory": psychologist.backstory, 
+                    "tools": [], "step_callback": getattr(psychologist, "step_callback", None)
+                },
+                {
+                    "role": advisor.role, "goal": advisor.goal, "backstory": advisor.backstory, 
+                    "tools": [], "step_callback": getattr(advisor, "step_callback", None)
+                }
             ],
             "tasks": [
-                {"description": tech_task.description, "expected_output": tech_task.expected_output},
-                {"description": trait_task.description, "expected_output": trait_task.expected_output},
-                {"description": final_task.description, "expected_output": final_task.expected_output}
+                {
+                    "description": tech_task.description, 
+                    "expected_output": tech_task.expected_output,
+                    "callback": getattr(tech_task, "callback", None),
+                    "tools": getattr(tech_task, "tools", [])
+                },
+                {
+                    "description": trait_task.description, 
+                    "expected_output": trait_task.expected_output,
+                    "callback": getattr(trait_task, "callback", None),
+                    "tools": getattr(trait_task, "tools", [])
+                },
+                {
+                    "description": final_task.description, 
+                    "expected_output": final_task.expected_output,
+                    "callback": getattr(final_task, "callback", None),
+                    "tools": getattr(final_task, "tools", [])
+                }
             ]
         }
 
@@ -96,12 +120,28 @@ def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional
                  - `role` 與 `actual_level` 等欄位，**必須完全匹配** Schema 描述中提供的標準清單。
             """,
             "agents": [
-                {"role": mentor.role, "goal": mentor.goal, "backstory": mentor.backstory, "tools": []},
-                {"role": advisor.role, "goal": advisor.goal, "backstory": advisor.backstory, "tools": []}
+                {
+                    "role": mentor.role, "goal": mentor.goal, "backstory": mentor.backstory, 
+                    "tools": [], "step_callback": getattr(mentor, "step_callback", None)
+                },
+                {
+                    "role": advisor.role, "goal": advisor.goal, "backstory": advisor.backstory, 
+                    "tools": [], "step_callback": getattr(advisor, "step_callback", None)
+                }
             ],
             "tasks": [
-                {"description": transition_task.description, "expected_output": transition_task.expected_output},
-                {"description": final_entry_task.description, "expected_output": final_entry_task.expected_output}
+                {
+                    "description": transition_task.description, 
+                    "expected_output": transition_task.expected_output,
+                    "callback": getattr(transition_task, "callback", None),
+                    "tools": getattr(transition_task, "tools", [])
+                },
+                {
+                    "description": final_entry_task.description, 
+                    "expected_output": final_entry_task.expected_output,
+                    "callback": getattr(final_entry_task, "callback", None),
+                    "tools": getattr(final_entry_task, "tools", [])
+                }
             ]
         }
     

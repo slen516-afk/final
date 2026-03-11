@@ -42,7 +42,12 @@ def get_cover_letter_config(task_type: TaskType, inputs: Dict[str, Any]) -> Dict
             }
         ],
         "tasks": [
-            {"description": cl_task.description, "expected_output": cl_task.expected_output}
+            {
+                "description": cl_task.description, 
+                "expected_output": cl_task.expected_output,
+                "callback": getattr(cl_task, "callback", None),
+                "tools": cover_letter_tools
+            }
         ],
         "output_model": CoverLetter
     }

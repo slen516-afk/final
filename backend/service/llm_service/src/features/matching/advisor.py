@@ -1,6 +1,9 @@
 import json
 from openai import OpenAI
 from typing import Dict, Any
+from src.common.logger import setup_logger
+
+logger = setup_logger()
 
 class CareerLLMAdvisor:
     """
@@ -48,6 +51,24 @@ class CareerLLMAdvisor:
             )
             
             result_json = response.choices[0].message.content
+
+             # === [新增獨立的 JSON 稽核紀錄] ===
+            audit_folder = "logs/crewai_outputs"
+            import os
+            from datetime import datetime
+            if not os.path.exists(audit_folder):
+                os.makedirs(audit_folder)
+            
+            audit_data = {
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "agent_name": "CareerLLMAdvisor (OpenAI API)",
+                "task_description": f"產出職缺匹配洞察與建議 (目標職缺: {job_title})",
+                "final_output": result_json
+            }
+            with open(os.path.join(audit_folder, "task_audit_trail.log"), "a", encoding="utf-8") as f:
+                f.write(json.dumps(audit_data, ensure_ascii=False, indent=4) + "\n" + "="*50 + "\n")
+            # =================================
+
             return json.loads(result_json)
             
         except Exception as e:
