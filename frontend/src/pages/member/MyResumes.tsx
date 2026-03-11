@@ -75,30 +75,28 @@ const MyResumes = () => {
     setShowDeleteModal(true);
   };
 
-  // 🌟 在彈窗按下「確定刪除」時：執行防彈無敵版的刪除邏輯
+  // 🌟 在彈窗按下「確定刪除」時：
   const confirmDelete = async () => {
     if (!resumeToDelete) return;
     setIsDeleting(true);
 
     try {
-      // 智慧萃取 ID：把 "129_opt_1" 變回純數字 129
-      const realResumeId = String(resumeToDelete.resume_id).split('_')[0];
-      console.log(`🗑️ 準備刪除真實履歷 ID: ${realResumeId}`);
+      // 🛑 絕對不要在這裡 split！直接把原本的 ID (例如 129 或是 129_opt_1) 原封不動傳過去！
+      const targetId = resumeToDelete.resume_id;
+      console.log(`🚀 [前端] 準備發送刪除請求，送出的完整 ID 是: ${targetId}`);
 
-      const response = await apiClient.delete(`/resume_process/delete/${realResumeId}`);
+      // 呼叫 API
+      const response = await apiClient.delete(`/resume_process/delete/${targetId}`);
 
       const resData = response.data || response;
       if (response.status === 200 || resData.status === 'success') {
-        // 🌟 成功後：關閉彈窗 -> 重新跟資料庫拿最新資料 -> 畫面瞬間更新！
-        // (已經把原本這裡的 alert 拿掉了，享受絲滑的無干擾體驗！)
         setShowDeleteModal(false);
-        await loadResumes();
+        await loadResumes(); // 畫面重整
       } else {
         throw new Error(resData.message || '未知錯誤');
       }
     } catch (err) {
       console.error('❌ 刪除失敗詳細原因:', err);
-      // 失敗的警告還是留著比較好，這樣出錯時你才會知道
       alert('刪除失敗，請打開 F12 Console 查看原因！');
     } finally {
       setIsDeleting(false);

@@ -182,31 +182,54 @@ def get_user_resumes(user_id):
         resumes_resp = supabase.table("resume").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
         resumes = resumes_resp.data if hasattr(resumes_resp, 'data') else []
 
-        # 2. 撈取「優化版」履歷 (🔥 把 .eq("is_published", True) 這段拿掉了，不檢查了！)
+        # 2. 撈取「優化版」履歷
         opts_resp = supabase.table("resume_optimization").select("*").eq("user_id", user_id).execute()
         opts = opts_resp.data if hasattr(opts_resp, 'data') else []
 
-        # 3. 將原版與優化版「組合」在同一個陣列中
         combined_data = []
+        # 做一個字典，方便快速尋找原版還活不活著
+        alive_originals = {r.get("resume_id"): r for r in resumes}
+
+        # 先把所有存活的「原版」塞進陣列
         for r in resumes:
-            # 先把原版塞進陣列
             combined_data.append(r)
 
-            # 找找看這份履歷有沒有對應的「優化版」
-            for opt in opts:
-                if opt.get("resume_id") == r.get("resume_id"):
-                    opt_item = r.copy()
-                    opt_item["resume_id"] = f"{r.get('resume_id')}_opt_{opt.get('optimization_version', 1)}" 
-                    opt_item["resume_name"] = f"{r.get('resume_name')} (✨ AI 優化版)"
-                    opt_item["structured_data"] = opt.get("optimized_data")
-                    opt_item["is_optimized"] = True 
-                    
-                    combined_data.append(opt_item)
+        # 接著處理「優化版」
+        for opt in opts:
+            parent_id = opt.get("resume_id")
+            
+            # 情況 A：如果原版還活著，我們複製原版的外殼
+            if parent_id in alive_originals:
+                parent_resume = alive_originals[parent_id]
+                opt_item = parent_resume.copy()
+            # 情況 B：【孤兒救援】如果原版已經被砍了，我們自己幫它捏一個外殼！
+            else:
+                opt_item = {
+                    "resume_id": f"{parent_id}_opt_{opt.get('optimization_version', 1)}",
+                    "resume_type": "uploaded_pdf",
+                    "created_at": opt.get("created_at")
+                }
+
+            # 塞入優化版的專屬資料
+            opt_item["resume_id"] = f"{parent_id}_opt_{opt.get('optimization_version', 1)}" 
+            opt_item["resume_name"] = opt.get('resume_name', '✨ 獨立存在的 AI 優化版')
+            # 這裡對齊你資料庫的結構
+            opt_item["structured_data"] = {
+                "professional_summary": opt.get("professional_summary"),
+                "core_skills": opt.get("core_skills"),
+                "professional_experience": opt.get("professional_experience")
+            }
+            opt_item["is_optimized"] = True 
+            
+            combined_data.append(opt_item)
+
+        # 根據建立時間重新排序，確保最新的在最上面
+        combined_data.sort(key=lambda x: x.get('created_at', ''), reverse=True)
 
         return jsonify({"status": "success", "data": combined_data}), 200
 
     except Exception as e:
-        print(f"🚨 /list API 發生錯誤: {e}") # 加這行讓終端機印出真正的死因
+        print(f"🚨 /list API 發生錯誤: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 @resume_proc_bp.route('/save', methods=['POST'])
 def save_processed_resume():
@@ -418,22 +441,44 @@ def save_optimized_resume():
     except Exception as e:
         print(f"🚨 [Error] 儲存/更新優化履歷失敗: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
-@resume_proc_bp.route('/delete/<int:resume_id>', methods=['DELETE'])
+# 🌟 注意路由改成了 <string:resume_id> 才能接收 "129_opt_1" 這種字串
+# 🌟 注意路由是 <string:resume_id>
+@resume_proc_bp.route('/delete/<string:resume_id>', methods=['DELETE'])
 def delete_resume(resume_id):
     try:
         from src.core.database.supabase_client import get_supabase_client
         supabase = get_supabase_client()
 
-        print(f"🗑️ 收到刪除請求，準備刪除履歷 ID: {resume_id}")
+        print(f"\n===================================")
+        print(f"🗑️ [DELETE API] 收到刪除請求，前端傳來的 ID 是: '{resume_id}'")
 
-        # 呼叫 Supabase 刪除該筆資料
-        # (如果你的資料庫有設定 Cascade Delete，關聯的 resume_optimization 也會自動被刪掉)
-        result = supabase.table("resume").delete().eq("resume_id", resume_id).execute()
+        if "_opt_" in str(resume_id):
+            real_id_str = str(resume_id).split("_")[0]
+            
+            # 🎯 情況 A：這是被 Set Null 遺留下來的「孤兒優化版」
+            if real_id_str == "None":
+                print(f"🎯 判定為【獨立優化版】。正在清除沒有原版綁定的優化紀錄...")
+                # 透過找尋 resume_id 為 null 的資料來刪除它
+                result = supabase.table("resume_optimization").delete().is_("resume_id", "null").execute()
+                print(f"✅ 獨立優化版刪除成功！")
+                
+            # 🎯 情況 B：這是正常的優化版 (原版還活著)
+            else:
+                real_id = int(real_id_str)
+                print(f"🎯 判定為【優化版】。正在清除 resume_optimization (原版 ID: {real_id})...")
+                result = supabase.table("resume_optimization").delete().eq("resume_id", real_id).execute()
+                print(f"✅ 優化版刪除成功！(原版履歷安全存活)")
+                
+        else:
+            # 🎯 情況 C：刪除原版
+            real_id = int(resume_id)
+            print(f"🎯 判定為【原版】。正在清除 resume 表格中的資料 (ID: {real_id})...")
+            result = supabase.table("resume").delete().eq("resume_id", real_id).execute()
+            print(f"✅ 原版刪除成功！")
 
-        print(f"✅ 履歷 ID: {resume_id} 刪除成功")
+        print(f"===================================\n")
         return jsonify({"status": "success", "message": "履歷刪除成功"}), 200
 
     except Exception as e:
         print(f"🚨 刪除履歷失敗: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
