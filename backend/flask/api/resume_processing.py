@@ -376,3 +376,22 @@ def save_optimized_resume():
     except Exception as e:
         print(f"🚨 [Error] 儲存優化履歷失敗: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@resume_proc_bp.route('/delete/<int:resume_id>', methods=['DELETE'])
+def delete_resume(resume_id):
+    try:
+        from src.core.database.supabase_client import get_supabase_client
+        supabase = get_supabase_client()
+
+        print(f"🗑️ 收到刪除請求，準備刪除履歷 ID: {resume_id}")
+
+        # 呼叫 Supabase 刪除該筆資料
+        # (如果你的資料庫有設定 Cascade Delete，關聯的 resume_optimization 也會自動被刪掉)
+        result = supabase.table("resume").delete().eq("resume_id", resume_id).execute()
+
+        print(f"✅ 履歷 ID: {resume_id} 刪除成功")
+        return jsonify({"status": "success", "message": "履歷刪除成功"}), 200
+
+    except Exception as e:
+        print(f"🚨 刪除履歷失敗: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
