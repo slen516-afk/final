@@ -91,7 +91,7 @@ const RecommendationJobCard = ({ job }: { job: RecommendedJob }) => {
             size="sm"
             variant="outline"
             className="gap-1"
-            onClick={() => navigate(`/jobs/${job.id}`)}
+            onClick={() => navigate(`/jobs/${job.id}`, { state: { job } })}
           >
             <FileSearch className="h-3 w-3" />
             查看詳細
