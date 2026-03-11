@@ -26,8 +26,10 @@ class ResumeAnalysis(BaseModel):
 
 class ResumeOptimization(BaseModel):
     professional_summary: str = Field(description="精簡的專業總結，需包含核心價值與推薦職缺的關鍵字")
-    professional_experience: Optional[List[str]] = Field(default_factory=list, description="優化後的經歷列表。每筆包含 company, title, duration, 並以 STAR 原則重新撰寫的 description（條列式）")
+    #加入防造假指令，明確禁止捏造任何公司或職稱，要求完全照抄原履歷中的經歷資訊
+    professional_experience: Optional[List[str]] = Field(default_factory=list, description="優化後的經歷列表。每筆包含 company, title, duration, 並以 STAR 原則重新撰寫的 description（條列式）,優化後的經歷列表。若原履歷無工作經驗，請務必回傳空陣列 []，【絕對禁止】捏造任何公司或職稱！")
     core_skills: List[str] = Field(description="從履歷中萃取與推薦職缺相關的技術或軟實力關鍵字6個")
     projects: Optional[List[str]] = Field(default_factory=list, description="優化後的專案描述，強調技術棧與量化成果")
-    education: List[str] = Field(description="最高及次高學歷資訊列表，包含學校、學系、學位與畢業時間")
+    #加入防造假指令，明確禁止捏造學歷資訊，要求完全照抄原履歷中的學歷資訊
+    education: List[str] = Field(description="最高及次高學歷資訊列表，包含學校、學系、學位與畢業時間,最高及次高學歷資訊列表。必須 100% 照抄原履歷的學校、學系與年份，【絕對禁止】擅自修改為台灣大學或其他學校。")
     autobiography: str = Field(description="保留使用者原本風格、敘事順序與用詞習慣前提下的優化後完整自傳")
