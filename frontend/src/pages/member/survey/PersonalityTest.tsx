@@ -186,20 +186,20 @@ const PersonalityTest = () => {
                 </div>
 
                 {/* Questions */}
-                <div className="space-y-5">
+                <div className="space-y-8">
                   {currentModule?.questions.map((q, idx) => {
                     const globalIndex = currentStep * 2 + idx + 1;
                     return (
                       <Card
                         key={q.id}
-                        className={`rounded-2xl border-0 bg-white shadow-[0_4px_20px_rgba(150,105,73,0.08)] transition-all ${invalidIds.has(q.id)
-                            ? 'ring-2 ring-destructive/50 shadow-[0_4px_20px_rgba(150,105,73,0.08),0_0_8px_hsl(var(--destructive)/0.25)]'
-                            : ''
+                        className={`rounded-2xl border-2 border-border/80 bg-white shadow-[0_4px_20px_rgba(150,105,73,0.08)] transition-all ${invalidIds.has(q.id)
+                          ? 'ring-2 ring-destructive/50 shadow-[0_4px_20px_rgba(150,105,73,0.08),0_0_8px_hsl(var(--destructive)/0.25)]'
+                          : ''
                           }`}
                       >
                         <CardContent className="p-6 md:p-8">
-                          <div className="space-y-4">
-                            <p className="font-semibold text-sm md:text-base text-foreground">
+                          <div className="space-y-5">
+                            <p className="font-bold text-base md:text-lg text-foreground">
                               <span className="text-destructive mr-1">*</span>
                               {globalIndex}. {q.question}
                               <span className="text-xs text-muted-foreground ml-1.5 font-normal">(單選)</span>
@@ -213,8 +213,8 @@ const PersonalityTest = () => {
                                 <div
                                   key={opt.key}
                                   className={`flex items-start space-x-3 p-3.5 rounded-xl border transition-all cursor-pointer hover:bg-muted/40 ${answers[q.id] === opt.key
-                                      ? 'border-primary/60 bg-primary/5 shadow-[0_0_8px_hsl(var(--primary)/0.15)]'
-                                      : 'border-border/60'
+                                    ? 'border-primary/60 bg-primary/5 shadow-[0_0_8px_hsl(var(--primary)/0.15)]'
+                                    : 'border-border/60'
                                     }`}
                                 >
                                   <RadioGroupItem value={opt.key} id={`${q.id}-${opt.key}`} className="mt-0.5" />

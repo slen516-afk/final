@@ -19,7 +19,7 @@ const CheckboxQuestion = ({ question, value, onChange }: Props) => {
 
   return (
     <div className="space-y-3">
-      <p className="font-medium text-sm md:text-base">
+      <p className="font-bold text-base md:text-lg">
         {question.required && <span className="text-destructive mr-1">*</span>}
         {question.question}
       </p>
@@ -29,11 +29,10 @@ const CheckboxQuestion = ({ question, value, onChange }: Props) => {
           return (
             <div
               key={option.value}
-              className={`flex items-start space-x-3 p-3 rounded-lg border transition-all cursor-pointer hover:bg-muted/50 ${
-                checked
+              className={`flex items-start space-x-3 p-3 rounded-lg border transition-all cursor-pointer hover:bg-muted/50 ${checked
                   ? 'border-primary/60 bg-primary/5 shadow-[0_0_8px_hsl(var(--primary)/0.15)]'
                   : 'border-border'
-              }`}
+                }`}
               onClick={() => toggle(option.value)}
             >
               <Checkbox
