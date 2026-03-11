@@ -24,7 +24,7 @@ const Navbar = () => {
     { to: '/resume/optimize', label: '履歷優化', icon: FileText, description: '專業分析並優化您的履歷' },
     { to: '/jobs/recommendations', label: '推薦職缺', icon: Target, description: '根據您的條件推薦最佳職缺' },
     { to: '/analysis/skills', label: '職能圖譜', icon: BarChart3, description: '深度分析技能優勢與發展方向' },
-    { to: '/jobs/skill-search', label: '職缺核心技能查詢', icon: Search, description: '根據技能搜尋最適合的職缺' },
+    { to: '/jobs/skill-search', label: '職類核心技能查詢', icon: Search, description: '根據技能搜尋最適合的職缺' },
   ];
 
 
