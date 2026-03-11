@@ -125,5 +125,24 @@ export const resumeService = {
     process: (id: string) => apiClient.post(`/resume_process/${id}`),
 };
 
+// 🌟 同步生成推薦信 API (供 /api/cover_letter/generate 使用)
+export const generateCoverLetterAPI = async (jobId: string, resumeId: string, optimizationId: string) => {
+    try {
+        const response = await apiClient.post<any>('/cover_letter/generate', {
+            job_id: jobId,
+            resume_id: resumeId,
+            optimization_id: optimizationId
+        });
+        if (response && response.status === 'success') {
+            return response.data; // 這是後端回傳的原始 LLM 字串
+        } else {
+            throw new Error(response?.message || '生成失敗');
+        }
+    } catch (error) {
+        console.error("generateCoverLetterAPI 發生錯誤:", error);
+        throw error;
+    }
+};
+
 // 🌟 預設導出 apiClient
 export default apiClient;

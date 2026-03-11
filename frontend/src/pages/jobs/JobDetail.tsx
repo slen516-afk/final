@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { getJobDetailAPI, fetchUserResumesAPI } from '@/services/api';
+import { getJobDetailAPI, generateCoverLetterAPI } from '@/services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppState } from '@/contexts/AppContext';
+import { useResumes } from '@/contexts/ResumeContext';
 import AuthModal from '@/components/auth/AuthModal';
 import RightDrawer from '@/components/panels/RightDrawer';
 import { AILoadingSpinner } from '@/components/loading/LoadingStates';
@@ -13,38 +14,46 @@ import JobDetailUserAnalysis from '@/components/jobs/detail/JobDetailUserAnalysi
 import JobDetailSkeleton from '@/components/jobs/detail/JobDetailSkeleton';
 import type { RecommendedJobDetail } from '@/types/job';
 import { mockCoverLetter, getMockRecommendedJobDetail } from '@/mocks/jobs';
+import { parseCoverLetterContent } from '@/utils/coverLetterParser';
 import {
   ChevronLeft,
-  Copy,
-  CheckCircle2,
-  ListFilter
+  ListFilter,
+  Mail,
+  Link as LinkIcon,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+export interface CoverLetterResult {
+  subject: string;
+  content: string;
+}
 
 const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 🌟 1. 從全域狀態拿到你的真實 user 資料
+  // 1. 從全域狀態拿到你的真實 user 資料
   const { isLoggedIn, user, isMockMode } = useAppState();
-  const realUserId = user?.user_id;
+
+  // 從 Context 取得在推薦頁面選擇的履歷
+  const { selectedResumeId } = useResumes();
 
   const [isLoading, setIsLoading] = useState(true);
   const [job, setJob] = useState<RecommendedJobDetail | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // 🌟 2. 履歷選擇相關狀態 (新增 isFetching 用來顯示載入中)
-  const [userResumes, setUserResumes] = useState<any[]>([]);
-  const [selectedResumeId, setSelectedResumeId] = useState<string>("");
-  const [isFetchingResumes, setIsFetchingResumes] = useState(false);
-
   // Cover letter drawer states
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [letterContent, setLetterContent] = useState<{ subject: string; body: string } | null>(null);
+  const [letterContent, setLetterContent] = useState<CoverLetterResult | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
+
+  const parsed = useMemo(
+    () => letterContent ? parseCoverLetterContent(letterContent.content) : null,
+    [letterContent]
+  );
 
   // Load job details
   useEffect(() => {
@@ -94,71 +103,103 @@ const JobDetail = () => {
       }
     };
     fetchJob();
-  }, [id, isMockMode]);
+  }, [id, isMockMode, location.state]);
 
-  // 🌟 3. 當使用者打開側邊欄時，獲取履歷清單
-  useEffect(() => {
-    const loadMyResumes = async () => {
-      if (isLoggedIn && realUserId) {
-        setIsFetchingResumes(true);
-        try {
-          const data = await fetchUserResumesAPI(realUserId);
-          setUserResumes(data);
-
-          if (data && data.length > 0) {
-            setSelectedResumeId(data[0].resume_id.toString());
-          }
-        } catch (error) {
-          console.error("抓取個人履歷失敗:", error);
-          toast.error("無法載入您的履歷清單");
-        } finally {
-          setIsFetchingResumes(false);
-        }
-      }
-    };
-
-    if (drawerOpen) {
-      loadMyResumes();
-    }
-  }, [drawerOpen, isLoggedIn, realUserId]);
-
-  const handleStartGeneration = async () => {
-    if (!selectedResumeId) {
-      toast.error("請先選擇一份履歷");
-      return;
-    }
-    setIsGenerating(true);
-    setLetterContent(null);
-    setIsCopied(false);
-
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    setLetterContent(mockCoverLetter(job?.title, job?.company));
-    setIsGenerating(false);
-  };
-
-  const handleGenerateLetterClick = () => {
+  const handleGenerateLetter = async () => {
     if (!isLoggedIn) {
       setShowAuthModal(true);
       return;
     }
+
+    if (!selectedResumeId) {
+      toast.error("您尚未在推薦頁面選擇履歷");
+      return;
+    }
+
     setDrawerOpen(true);
-    setLetterContent(null); // 重置狀態
+    setIsGenerating(true);
+    setLetterContent(null);
+
+    if (isMockMode && isMockMode()) {
+      setTimeout(() => {
+        const mockData = mockCoverLetter(job?.title, job?.company);
+        setLetterContent({
+          subject: mockData.subject,
+          content: mockData.content as string
+        });
+        setIsGenerating(false);
+      }, 2000);
+      return;
+    }
+
+    try {
+      if (!id) throw new Error("缺少職缺 ID");
+
+      // 從 Recommendation 儲存的偏好設定抓出當時選擇的履歷種類
+      const savedData = localStorage.getItem('userJobSurvey');
+      const surveyPayload = savedData ? JSON.parse(savedData) : null;
+
+      const docId = surveyPayload?.resumeId || selectedResumeId;
+      const sourceType = surveyPayload?.sourceType || "RESUME";
+
+      if (!docId) {
+        toast.error("找不到原本選擇的履歷 ID，請返回推薦頁面重新選擇");
+        setIsGenerating(false);
+        return;
+      }
+
+      // 根據 sourceType 判斷傳哪個欄位給後端
+      const resId = sourceType === "RESUME" ? docId.toString() : "";
+      const optId = sourceType === "OPTIMIZATION" ? docId.toString() : "";
+
+      const coverLetterContent = await generateCoverLetterAPI(id, resId, optId);
+
+      let extractedSubject = "推薦信";
+      let mainContent = coverLetterContent;
+
+      const subjectMatch = coverLetterContent.match(/主旨[：:\s]+([^\n]+)/);
+      if (subjectMatch) {
+        extractedSubject = subjectMatch[1].trim();
+        mainContent = coverLetterContent.replace(subjectMatch[0], '').trim();
+      }
+
+      setLetterContent({
+        subject: extractedSubject,
+        content: mainContent
+      });
+      toast.success("推薦信生成成功！");
+    } catch (error: any) {
+      console.error("生成推薦信失敗:", error);
+      toast.error(error.message || "生成失敗，請稍後再試");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  // --- 複製與下載功能保留不變 ---
-  const handleCopyContent = async () => {
-    if (!letterContent) return;
-    const fullContent = `主旨：${letterContent.subject}\n\n${letterContent.body}`;
-    await navigator.clipboard.writeText(fullContent);
-    setIsCopied(true);
-    toast.success('已複製到剪貼簿');
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
+  // --- 下載功能保留不變 ---
   const handleDownload = async () => {
-    if (!letterContent) return;
+    if (!letterContent || !parsed) return;
     setIsDownloading(true);
-    const fullContent = `主旨：${letterContent.subject}\n\n${letterContent.body}`;
+
+    const date = new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric' });
+    const divider = '─'.repeat(40);
+
+    const lines = [
+      divider,
+      `主旨：${letterContent.subject}`,
+      `日期：${date}`,
+      divider,
+      '',
+      ...parsed.bodyParagraphs.map(p => p + '\n'),
+      '',
+      divider,
+      ...(parsed.author ? [`此致，${parsed.author}`] : []),
+      ...(parsed.email ? [`Email：${parsed.email}`] : []),
+      ...(parsed.portfolio ? [`Portfolio：${parsed.portfolio}`] : []),
+      divider,
+    ];
+
+    const fullContent = lines.join('\n');
     const blob = new Blob([fullContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -177,118 +218,141 @@ const JobDetail = () => {
       <div className="min-h-screen">
         <div className="container py-8 animate-fade-in">
           <div className="max-w-4xl mx-auto">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-6">
-              <Button variant="ghost" onClick={handleBack} className="gap-2 text-muted-foreground hover:text-foreground">
-                <ChevronLeft className="h-4 w-4" /> 返回推薦職缺列表
+            {/* Back navigation */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="mb-6"
+            >
+              <Button
+                variant="link"
+                onClick={() => navigate('/jobs/recommendations')}
+                className="gap-2 px-0 text-[#8d4903] hover:text-[#8d4903]/80"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                返回推薦職缺列表
               </Button>
             </motion.div>
 
             <AnimatePresence mode="wait">
               {isLoading ? (
-                <JobDetailSkeleton />
+                <motion.div
+                  key="skeleton"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
+                  <JobDetailSkeleton />
+                </motion.div>
               ) : job ? (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                  {/* 使用新組件：Header */}
-                  <JobDetailHeader
-                    job={job}
-                    onGenerateLetter={handleGenerateLetterClick}
-                  />
-
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* 使用新組件：內容描述 (佔 2 欄) */}
-                    <div className="lg:col-span-2">
-                      <JobDetailContent job={job} />
-                    </div>
-
-                    {/* 使用新組件：AI 用戶分析 (佔 1 欄) */}
-                    <div className="space-y-6">
-                      <JobDetailUserAnalysis job={job} />
-                    </div>
-                  </div>
+                <motion.div
+                  key="content"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-6"
+                >
+                  <JobDetailHeader job={job} onGenerateLetter={handleGenerateLetter} />
+                  <JobDetailContent job={job} />
+                  <JobDetailUserAnalysis job={job} />
                 </motion.div>
               ) : (
-                <div className="text-center py-12"><p>找不到此職缺資訊</p></div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center py-12"
+                >
+                  <p className="text-muted-foreground">找不到此職缺資訊</p>
+                  <Button onClick={() => navigate('/jobs/recommendations')} className="mt-4">
+                    返回推薦職缺列表
+                  </Button>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
         </div>
       </div>
 
+      {/* Cover Letter Right Drawer */}
       <RightDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        title="AI 推薦信生成"
-        subtitle={job?.title}
+        title="推薦信生成"
+        subtitle="根據職缺內容與您的履歷生成"
         showDownload={!!letterContent}
         onDownload={handleDownload}
         isDownloading={isDownloading}
       >
         <AnimatePresence mode="wait">
-          {isFetchingResumes ? (
-            <AILoadingSpinner message="正在從資料庫同步您的履歷清單..." />
-          ) : !letterContent && !isGenerating ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-primary font-medium">
-                  <ListFilter className="h-4 w-4" />
-                  <span>第一步：選擇您的履歷</span>
-                </div>
+          {isGenerating ? (
+            <AILoadingSpinner message="正在為您撰寫個人化推薦信..." />
+          ) : letterContent && parsed ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-5"
+            >
+              {/* Letter Header — Subject */}
+              <div className="rounded-xl p-5 border" style={{ backgroundColor: '#fbf1e8' }}>
+                <p className="text-xs text-muted-foreground mb-1 tracking-wider">主旨</p>
+                <p className="text-lg font-bold text-[#502D03] leading-snug tracking-tight">
+                  {letterContent.subject}
+                </p>
+              </div>
 
-                {userResumes.length > 0 ? (
-                  <div className="grid gap-3">
-                    {userResumes.map((resume) => (
-                      <div
-                        key={resume.resume_id}
-                        onClick={() => setSelectedResumeId(resume.resume_id.toString())}
-                        className={`p-4 rounded-xl border-2 transition-all cursor-pointer flex items-center gap-3 ${selectedResumeId === resume.resume_id.toString()
-                          ? "border-primary bg-primary/5 shadow-sm"
-                          : "border-border hover:border-primary/30"
-                          }`}
+              {/* Letter Body — Paragraphs */}
+              <div className="rounded-xl p-6 border bg-card space-y-4">
+                {parsed.bodyParagraphs.map((para, i) => (
+                  <p
+                    key={i}
+                    className="text-sm leading-[1.9] tracking-wide text-foreground/85"
+                    style={{ textIndent: '2em' }}
+                  >
+                    {para}
+                  </p>
+                ))}
+              </div>
+
+              {/* Signature Block */}
+              {(parsed.author || parsed.email || parsed.portfolio) && (
+                <div className="rounded-xl p-5 border bg-muted/30 space-y-3">
+                  {parsed.author && (
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <p className="text-sm font-semibold text-foreground">此致，{parsed.author}</p>
+                    </div>
+                  )}
+                  {parsed.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <a
+                        href={`mailto:${parsed.email}`}
+                        className="text-sm text-[#8d4903] hover:underline"
                       >
-                        <div className={`h-4 w-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${selectedResumeId === resume.resume_id.toString() ? "border-primary" : "border-muted-foreground/30"
-                          }`}>
-                          {selectedResumeId === resume.resume_id.toString() && <div className="h-2 w-2 rounded-full bg-primary" />}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          {/* 🌟 欄位名稱對齊資料庫 resume_name */}
-                          <p className="text-sm font-medium truncate">{resume.resume_name}</p>
-                          <p className="text-[10px] text-muted-foreground uppercase">{resume.resume_type}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
-                    您尚未上傳履歷，請先前往「我的履歷」上傳。
-                  </div>
-                )}
-              </div>
-              <Button onClick={handleStartGeneration} className="w-full gradient-primary" disabled={userResumes.length === 0}>
-                開始 AI 分析並撰寫
-              </Button>
-            </motion.div>
-          ) : isGenerating ? (
-            <AILoadingSpinner message="正在撰寫個人化推薦信..." />
-          ) : letterContent ? (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-              <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 text-[10px] text-primary flex items-center gap-2">
-                <CheckCircle2 className="h-3 w-3" /> 已結合您的真實履歷進行分析
-              </div>
-              <div className="bg-muted/50 rounded-lg p-4 border">
-                <label className="text-xs font-medium text-muted-foreground uppercase">主旨</label>
-                <p className="mt-1 font-medium">{letterContent.subject}</p>
-              </div>
-              <div className="bg-muted/30 rounded-lg p-4 border">
-                <label className="text-xs font-medium text-muted-foreground uppercase">內容</label>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{letterContent.body}</p>
-              </div>
-              <Button variant="outline" className="w-full gap-2" onClick={handleCopyContent}>
-                {isCopied ? <><CheckCircle2 className="h-4 w-4 text-primary" />已複製</> : <><Copy className="h-4 w-4" />複製內容</>}
-              </Button>
+                        {parsed.email}
+                      </a>
+                    </div>
+                  )}
+                  {parsed.portfolio && (
+                    <div className="flex items-center gap-2">
+                      <LinkIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      <a
+                        href={parsed.portfolio}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-[#8d4903] hover:underline break-all"
+                      >
+                        {parsed.portfolio}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
             </motion.div>
           ) : null}
         </AnimatePresence>
       </RightDrawer>
+
 
       <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} />
     </>

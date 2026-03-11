@@ -5,7 +5,7 @@ import json
 # 引入 agents, tasks, tools
 from service.llm_service.src.features.cover_letter.agents import get_cover_letter_strategist_agent
 from service.llm_service.src.features.cover_letter.tasks import get_cover_letter_task
-from service.llm_service.src.features.cover_letter.tools import RecommendJobSearchTool, FetchOptimizeResumeTool
+from service.llm_service.src.features.cover_letter.tools import RecommendJobSearchTool, FetchOptimizeResumeTool, FetchDesignatedResumeTool
 
 cover_letter_bp = Blueprint('cover_letter', __name__)
 
@@ -19,19 +19,21 @@ def generate_cover_letter():
     try:
         data = request.get_json() or {}
         job_id = data.get("job_id")
-        optimization_id = data.get("optimization_id")
+        optimization_id = data.get("optimization_id", "")
+        resume_id = data.get("resume_id", "")
         
         # 接收模型參數 (前端可傳入，預設給定 gpt-4o 與 temperature 0.7)
         model_name = data.get("model", "gpt-4o")
         temperature = data.get("temperature", 0.7)
 
-        if not job_id or not optimization_id:
-            return jsonify({"status": "error", "message": "缺少 job_id 或 optimization_id"}), 400
+        if not job_id or (not optimization_id and not resume_id):
+            return jsonify({"status": "error", "message": "缺少 job_id 或 (optimization_id / resume_id)"}), 400
 
         # 初始化 Tools
         job_tool = RecommendJobSearchTool()
-        resume_tool = FetchOptimizeResumeTool()
-        tools = [job_tool, resume_tool]
+        opt_resume_tool = FetchOptimizeResumeTool()
+        des_resume_tool = FetchDesignatedResumeTool()
+        tools = [job_tool, opt_resume_tool, des_resume_tool]
 
         # 初始化 Agent，並傳入模型參數
         agent = get_cover_letter_strategist_agent()
@@ -40,8 +42,10 @@ def generate_cover_letter():
         # 將工具傳遞給 Task
         task = get_cover_letter_task(agent, tools)
         
-        # 替換提示詞內變數 (因為 tasks.py 內格式為 '{job_id}')
-        task.description = task.description.replace('{job_id}', str(job_id)).replace('{optimization_id}', str(optimization_id))
+        # 替換提示詞內變數 (因為 tasks.py 內格式為 '{job_id}' 以及 '{optimization_id}' 與 '{resume_id}')
+        task.description = task.description.replace('{job_id}', str(job_id)) \
+                                           .replace('{optimization_id}', str(optimization_id)) \
+                                           .replace('{resume_id}', str(resume_id))
 
         crew = Crew(
             agents=[agent],
@@ -68,19 +72,24 @@ def generate_cover_letter():
 def preview_cover_letter_data():
     """
     第二支 API: 提供抓取預覽資料 (Preview)。
-    回傳工具抓取的推薦職缺與優化履歷結果給前端，不進入 LLM 生成，便於驗證與檢視。
+    回傳工具抓取的推薦職缺與履歷結果給前端，不進入 LLM 生成，便於驗證與檢視。
     """
     try:
         data = request.get_json() or {}
         job_id = data.get("job_id")
-        optimization_id = data.get("optimization_id")
+        optimization_id = data.get("optimization_id", "")
+        resume_id = data.get("resume_id", "")
 
-        if not job_id or not optimization_id:
-            return jsonify({"status": "error", "message": "缺少 job_id 或 optimization_id"}), 400
+        if not job_id or (not optimization_id and not resume_id):
+            return jsonify({"status": "error", "message": "缺少 job_id 或 (optimization_id / resume_id)"}), 400
 
         # 直接呼叫 Tool 的 run 來抓取資料
         job_info = RecommendJobSearchTool()._run(job_id=str(job_id))
-        resume_info = FetchOptimizeResumeTool()._run(optimization_id=str(optimization_id))
+        
+        if optimization_id:
+            resume_info = FetchOptimizeResumeTool()._run(optimization_id=str(optimization_id))
+        else:
+            resume_info = FetchDesignatedResumeTool()._run(resume_id=str(resume_id))
 
         return jsonify({
             "status": "success",
