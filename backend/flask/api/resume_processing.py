@@ -172,7 +172,7 @@ def check_ocr_status(id):
         "generated_at": time.strftime('%Y-%m-%d %H:%M:%S')
     }), 200
 
-@resume_proc_bp.route('/list/<int:user_id>', methods=['GET']) # 你的路由名稱可能略有不同
+@resume_proc_bp.route('/list/<int:user_id>', methods=['GET'])
 def get_user_resumes(user_id):
     try:
         from src.core.database.supabase_client import get_supabase_client
@@ -182,11 +182,11 @@ def get_user_resumes(user_id):
         resumes_resp = supabase.table("resume").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
         resumes = resumes_resp.data if hasattr(resumes_resp, 'data') else []
 
-        # 2. 撈取「優化版」履歷
+        # 2. 撈取「優化版」履歷 (🔥 把 .eq("is_published", True) 這段拿掉了，不檢查了！)
         opts_resp = supabase.table("resume_optimization").select("*").eq("user_id", user_id).execute()
         opts = opts_resp.data if hasattr(opts_resp, 'data') else []
 
-        # 3. 將原版與優化版「組合」在同一個陣列中，讓前端選單可以一起顯示
+        # 3. 將原版與優化版「組合」在同一個陣列中
         combined_data = []
         for r in resumes:
             # 先把原版塞進陣列
@@ -195,21 +195,19 @@ def get_user_resumes(user_id):
             # 找找看這份履歷有沒有對應的「優化版」
             for opt in opts:
                 if opt.get("resume_id") == r.get("resume_id"):
-                    # 複製一份原版的格式，但換成優化版的內容
                     opt_item = r.copy()
-                    # 給他一個特別的 ID (例如加個小數點或前綴) 避免跟原版衝突
                     opt_item["resume_id"] = f"{r.get('resume_id')}_opt_{opt.get('optimization_version', 1)}" 
                     opt_item["resume_name"] = f"{r.get('resume_name')} (✨ AI 優化版)"
                     opt_item["structured_data"] = opt.get("optimized_data")
-                    opt_item["is_optimized"] = True # 塞個標記給前端辨識
+                    opt_item["is_optimized"] = True 
                     
                     combined_data.append(opt_item)
 
         return jsonify({"status": "success", "data": combined_data}), 200
 
     except Exception as e:
+        print(f"🚨 /list API 發生錯誤: {e}") # 加這行讓終端機印出真正的死因
         return jsonify({"status": "error", "message": str(e)}), 500
-
 @resume_proc_bp.route('/save', methods=['POST'])
 def save_processed_resume():
     try:
@@ -378,7 +376,8 @@ def save_optimized_resume():
             "core_skills": to_jsonb(optimized_data.get("core_skills")),
             "projects": to_jsonb(optimized_data.get("projects")),
             "education": to_jsonb(optimized_data.get("education")),
-            "template_color": {"template_id": template_id}
+            "template_color": {"template_id": template_id},
+            "is_published": True
         }
 
         # ==========================================

@@ -576,7 +576,6 @@ const Optimize = () => {
                 </div></CardContent></Card>
                 <div className="flex gap-4">
                   <Button variant="outline" className="flex-1 h-12" onClick={() => setPhase('templates')}><Palette className="mr-2" />更換樣板</Button>
-                  <Button onClick={handleSaveOptimization} className="flex-[2] h-12 bg-green-600 hover:bg-green-700 text-white text-lg font-bold"><Save className="mr-2" /> 儲存至優化資料庫</Button>
                   <Button className="flex-[2] h-12 gradient-primary text-lg font-bold"><Download className="mr-2" /> 下載 PDF</Button>
                 </div>
               </div>
