@@ -1,20 +1,15 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Trash2, Eye, AlertCircle, Loader2 } from 'lucide-react';
+import { FileText, Download, Trash2, Eye, Loader2, AlertTriangle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import RightDrawer from '@/components/panels/RightDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import LoginRequired from '@/components/gatekeeper/LoginRequired';
-import { supabase } from '@/utils/supabaseClient';
-// 🌟 1. 引入 AppContext 拿到真實 user_id
 import { useAppState } from '@/contexts/AppContext';
-// 🌟 2. 改為引入真實的 API 函式 (稍後在下一步定義)
-import apiClient, { fetchUserResumesAPI } from '@/services/api';
+import apiClient from '@/services/api';
 
 const MyResumes = () => {
   const { user } = useAppState();
-  // 🌟 3. 取得目前登入者的真實 ID
   const realUserId = user?.user_id;
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -24,14 +19,14 @@ const MyResumes = () => {
   const [resumes, setResumes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 🌟 控制漂亮彈窗的 State
   const [resumeToDelete, setResumeToDelete] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // 🌟 4. 當 realUserId 變化時才抓資料
-  // 🌟 4. 當 realUserId 變化時才抓資料
   useEffect(() => {
     if (realUserId) {
-      setIsLoading(true); // 💡 確保每次抓取前，畫面一定會先轉圈圈
+      setIsLoading(true);
       loadResumes();
     } else {
       setIsLoading(false);
@@ -40,13 +35,8 @@ const MyResumes = () => {
 
   const loadResumes = async () => {
     try {
-      console.log(`🚀 [我的履歷] 開始向後端請求 ID: ${realUserId} 的資料...`);
-
-      // 💡 暴力破解法：直接用 apiClient 呼叫，不經過原本會亂丟資料的舊函式
       const response = await apiClient.get(`/resume_process/list/${realUserId}`);
-      console.log("📥 [我的履歷] 後端回傳的原始資料:", response.data);
 
-      // 💡 智慧拆包邏輯：不管 Flask 後端包裝成什麼樣子，我們都把它挖出來！
       let finalData: any[] = [];
       const rawData = response.data;
 
@@ -58,19 +48,16 @@ const MyResumes = () => {
         finalData = rawData.resumes;
       }
 
-      console.log("✅ [我的履歷] 最終要渲染在畫面的陣列:", finalData);
       setResumes(finalData);
-
     } catch (err) {
       console.error('❌ [我的履歷] 載入失敗:', err);
-      setResumes([]); // 失敗就給空陣列
+      setResumes([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handlePreview = (resume: any) => {
-    // 🌟 6. 預覽時直接顯示 structured_data 裡的內容
     const content = typeof resume.structured_data === 'string'
       ? resume.structured_data
       : JSON.stringify(resume.structured_data, null, 2);
@@ -82,30 +69,40 @@ const MyResumes = () => {
     setDrawerOpen(true);
   };
 
+  // 🌟 1. 點擊卡片上的垃圾桶時，只負責開啟漂亮彈窗
   const handleDeleteClick = (resume: any) => {
     setResumeToDelete(resume);
+    setShowDeleteModal(true);
   };
 
+  // 🌟 在彈窗按下「確定刪除」時：執行防彈無敵版的刪除邏輯
   const confirmDelete = async () => {
     if (!resumeToDelete) return;
-
     setIsDeleting(true);
+
     try {
-      // 🌟 7. 根據資料庫實體欄位刪除 (resume_id)
-      const { error } = await supabase
-        .from('resume')
-        .delete()
-        .eq('resume_id', resumeToDelete.resume_id);
+      // 智慧萃取 ID：把 "129_opt_1" 變回純數字 129
+      const realResumeId = String(resumeToDelete.resume_id).split('_')[0];
+      console.log(`🗑️ 準備刪除真實履歷 ID: ${realResumeId}`);
 
-      if (error) throw error;
+      const response = await apiClient.delete(`/resume_process/delete/${realResumeId}`);
 
-      setResumes((prev) => prev.filter((r) => r.resume_id !== resumeToDelete.resume_id));
-      setResumeToDelete(null);
+      const resData = response.data || response;
+      if (response.status === 200 || resData.status === 'success') {
+        // 🌟 成功後：關閉彈窗 -> 重新跟資料庫拿最新資料 -> 畫面瞬間更新！
+        // (已經把原本這裡的 alert 拿掉了，享受絲滑的無干擾體驗！)
+        setShowDeleteModal(false);
+        await loadResumes();
+      } else {
+        throw new Error(resData.message || '未知錯誤');
+      }
     } catch (err) {
-      console.error('刪除失敗:', err);
-      alert('刪除失敗！');
+      console.error('❌ 刪除失敗詳細原因:', err);
+      // 失敗的警告還是留著比較好，這樣出錯時你才會知道
+      alert('刪除失敗，請打開 F12 Console 查看原因！');
     } finally {
       setIsDeleting(false);
+      if (!showDeleteModal) setResumeToDelete(null);
     }
   };
 
@@ -151,31 +148,49 @@ const MyResumes = () => {
           ) : (
             <div className="space-y-3 md:space-y-4">
               <AnimatePresence>
-                {/* 找到 resumes.map 的地方，修改顯示欄位 */}
-                {resumes.map((resume, index) => (
-                  <motion.div key={resume.resume_id}>
+                {resumes.map((resume) => (
+                  <motion.div
+                    key={resume.resume_id}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <Card className="hover:shadow-md transition-shadow">
                       <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 md:py-4 gap-3">
+
                         <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
                           <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                             <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-sm md:text-base truncate">
-                              {/* 🌟 防呆：如果沒有 resume_name，就找 name，再沒有就顯示未命名 */}
-                              {resume.resume_name || resume.name || '未命名履歷'}
-
+                              {resume.is_optimized ? `${resume.resume_name}` : resume.resume_name || resume.name || '未命名履歷'}
                               <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded capitalize">
-                                {resume.resume_type || '一般'}
+                                {resume.resume_type === 'OPTIMIZATION' || resume.is_optimized ? '優化版' : '原版'}
                               </span>
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              {/* 🌟 防呆：確保有時間資料才轉換，不然就顯示剛剛 */}
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               建立於 {resume.created_at ? new Date(resume.created_at).toLocaleString('zh-TW') : '剛剛'}
                             </p>
                           </div>
                         </div>
-                        {/* ... 按鈕部分保持不變 ... */}
+
+                        <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto mt-3 sm:mt-0 justify-end sm:justify-start">
+                          <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-primary transition-colors" onClick={() => handlePreview(resume)}>
+                            <Eye className="h-4 w-4 md:mr-1.5" />
+                            <span className="hidden md:inline">預覽</span>
+                          </Button>
+
+                          <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-muted-foreground hover:text-primary transition-colors" onClick={() => { setSelectedResume(resume); setTimeout(handleDownload, 0); }} disabled={isDownloading && selectedResume?.resume_id === resume.resume_id}>
+                            {isDownloading && selectedResume?.resume_id === resume.resume_id ? <Loader2 className="h-4 w-4 animate-spin md:mr-1.5" /> : <Download className="h-4 w-4 md:mr-1.5" />}
+                            <span className="hidden md:inline">下載</span>
+                          </Button>
+
+                          <Button variant="ghost" size="sm" className="h-8 md:h-9 px-2 md:px-3 text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors" onClick={() => handleDeleteClick(resume)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -193,9 +208,44 @@ const MyResumes = () => {
             </div>
           )}
         </div>
-
-        {/* 預覽與彈窗邏輯維持不變... */}
       </div>
+
+      {/* 🌟 美型自訂刪除確認彈窗 */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden"
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-3 text-red-600 mb-4">
+                  <div className="p-2 bg-red-100 rounded-full">
+                    <AlertTriangle size={24} />
+                  </div>
+                  <h3 className="text-lg font-bold">確定要刪除履歷嗎？</h3>
+                </div>
+                <p className="text-gray-600 mb-2">
+                  您即將刪除 <span className="font-bold text-gray-900">{resumeToDelete?.resume_name || '此份履歷'}</span>。
+                </p>
+                <p className="text-sm text-gray-500">
+                  ⚠️ 刪除原版履歷將會一併清空與其相關的「AI 優化紀錄」，此動作無法復原。
+                </p>
+              </div>
+              <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setShowDeleteModal(false)} disabled={isDeleting}>
+                  取消
+                </Button>
+                <Button variant="destructive" onClick={confirmDelete} disabled={isDeleting}>
+                  {isDeleting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> 刪除中</> : '確定刪除'}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </LoginRequired>
   );
 };
