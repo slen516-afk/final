@@ -198,21 +198,7 @@
 
 ---
 
-### 6.3 USER_SKILL(使用者技能)⚪
-
-| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
-|---------|---------|-----|---------|------|---------|
-| user_skill_id | 使用者技能識別碼 | User Skill ID | INT | 使用者技能識別碼 | PRIMARY KEY |
-| user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
-| skill_id | 技能識別碼 | Skill ID | INT | 關聯技能 | FOREIGN KEY |
-| proficiency_level | 熟練度 | Proficiency Level | INT | 熟練度 (1-10) | - |
-| years_of_experience | 使用年資 | Years of Experience | FLOAT | 使用年資 | - |
-| verified | 驗證狀態 | Verified | BOOLEAN | 驗證狀態 | DEFAULT FALSE |
-| created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
-
----
-
-### 6.4 COURSE(課程主表)🟣
+### 6.3 COURSE(課程主表)🟣
 
 | 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
 |---------|---------|-----|---------|------|---------|
@@ -232,6 +218,7 @@
 | role_name | 職務名稱標籤 | Role Name | TEXT | 對應職類名稱（如前端工程師、後端工程師） | - |
 | source_platform | 來源平台 | Source Platform | VARCHAR(50) | 如 'Coursera' | DEFAULT 'Coursera' |
 | created_at | 建立時間 | Created At | TIMESTAMPTZ | 寫入時間 | DEFAULT now() |
+| is_active | 是否有效 | Is Active | BOOLEAN | 確認該課程資訊是否還有效、URL 是否仍可存取 | DEFAULT TRUE |
 
 ---
 

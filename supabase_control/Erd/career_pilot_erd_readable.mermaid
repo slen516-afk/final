@@ -7,7 +7,6 @@ erDiagram
     USER ||--o{ RESUME : creates
     USER ||--o{ UPLOAD_EVENT : triggers
     USER ||--o{ APPLICATION_RECORD : submits
-    USER ||--o{ USER_SKILL : has
     USER ||--o{ CAREER_ANALYSIS_REPORT : has
     USER ||--o{ RESUME_ANALYSIS : requests
     USER ||--o{ RESUME_OPTIMIZATION : requests
@@ -46,7 +45,6 @@ erDiagram
     JOB_MATCHING ||--|| MATCH_SCORE : has
 
     SKILL_MASTER ||--o{ JOB_SKILL_REQUIREMENT : defines
-    SKILL_MASTER ||--o{ USER_SKILL : defines
     SKILL_MASTER ||--o{ COURSE : "primary_skill"
 
     CAREER_ANALYSIS_REPORT ||--o{ SIDE_PROJECT_RECOMMENDATION : suggests
@@ -214,6 +212,7 @@ erDiagram
         text role_name "對應職類名稱"
         string source_platform "VARCHAR(50) DEFAULT 'Coursera'"
         datetime created_at "DEFAULT now()"
+        boolean is_active "確認課程資訊是否還有效、URL 是否仍可存取；DEFAULT TRUE"
     }
 
     JOB_SKILL_REQUIREMENT {
@@ -222,16 +221,6 @@ erDiagram
         int skill_id FK
         string importance "VARCHAR(50)"
         int proficiency_level
-    }
-
-    USER_SKILL {
-        int user_skill_id PK
-        int user_id FK
-        int skill_id FK
-        int proficiency_level
-        float years_of_experience
-        boolean verified
-        datetime created_at
     }
 
     JOB_MATCHING {

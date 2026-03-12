@@ -42,17 +42,16 @@
 | 9 | 職缺資訊 | JOB_POSTING | 🟢 職缺推薦 | 儲存職缺詳細資訊 |
 | 10 | 職缺技能需求 | JOB_SKILL_REQUIREMENT | 🟢 職缺推薦 | 定義職缺所需技能 |
 | 11 | 技能主檔 | SKILL_MASTER | ⚪ 共用 | 技能標準化字典 |
-| 12 | 使用者技能 | USER_SKILL | ⚪ 共用 | 記錄使用者擁有的技能 |
-| 13 | 職缺媒合記錄 | JOB_MATCHING | 🟢 職缺推薦 | 記錄履歷與職缺的配對 |
-| 14 | 媒合分數 | MATCH_SCORE | 🟢 職缺推薦 | 儲存配適度評分細節 |
-| 15 | 投遞記錄 | APPLICATION_RECORD | 🟢 職缺推薦 | 追蹤求職投遞狀態 |
-| 16 | 職涯分析報告 | CAREER_ANALYSIS_REPORT | 🟠 職能分析 | 儲存 AI 生成的分析報告 |
-| 17 | Side Project 推薦 | SIDE_PROJECT_RECOMMENDATION | 🟠 職能分析 | 推薦學習專案 |
-| 18 | 課程主表 | COURSE | 🟣 課程推薦 | 儲存推薦用課程（如 Coursera），依技能與職缺/職能落差分析匹配 |
-| 19 | 履歷分析報告 | RESUME_ANALYSIS | 🔵 履歷生成 | 儲存 AI 對履歷的完整診斷分析結果，含各區塊問題清單（critical_issues） |
-| 20 | 履歷優化結果 | RESUME_OPTIMIZATION | 🔵 履歷生成 | 儲存 AI 優化後的完整履歷內容 |
-| 21 | 求職信 | COVER_LETTER | 🟢 職缺推薦 | 儲存針對特定職缺 AI 生成的求職信 |
-| 22 | Agent 調用記錄 | AGENT_SESSION | ⚙️ 系統追蹤 | 記錄每次 Agent 調用的工具使用情況與效能指標 |
+| 12 | 職缺媒合記錄 | JOB_MATCHING | 🟢 職缺推薦 | 記錄履歷與職缺的配對 |
+| 13 | 媒合分數 | MATCH_SCORE | 🟢 職缺推薦 | 儲存配適度評分細節 |
+| 14 | 投遞記錄 | APPLICATION_RECORD | 🟢 職缺推薦 | 追蹤求職投遞狀態 |
+| 15 | 職涯分析報告 | CAREER_ANALYSIS_REPORT | 🟠 職能分析 | 儲存 AI 生成的分析報告 |
+| 16 | Side Project 推薦 | SIDE_PROJECT_RECOMMENDATION | 🟠 職能分析 | 推薦學習專案 |
+| 17 | 課程主表 | COURSE | 🟣 課程推薦 | 儲存推薦用課程（如 Coursera），依技能與職缺/職能落差分析匹配 |
+| 18 | 履歷分析報告 | RESUME_ANALYSIS | 🔵 履歷生成 | 儲存 AI 對履歷的完整診斷分析結果，含各區塊問題清單（critical_issues） |
+| 19 | 履歷優化結果 | RESUME_OPTIMIZATION | 🔵 履歷生成 | 儲存 AI 優化後的完整履歷內容 |
+| 20 | 求職信 | COVER_LETTER | 🟢 職缺推薦 | 儲存針對特定職缺 AI 生成的求職信 |
+| 21 | Agent 調用記錄 | AGENT_SESSION | ⚙️ 系統追蹤 | 記錄每次 Agent 調用的工具使用情況與效能指標 |
 
 ---
 
@@ -539,31 +538,7 @@ ADD COLUMN job_details JSONB;
 
 ---
 
-### 6.3 USER_SKILL(使用者技能)⚪
-
-**功能說明**:記錄使用者擁有的技能與熟練度
-
-| 欄位名稱 | 中文名稱 | 英文 | 資料型態 | 說明 | 約束條件 |
-|---------|---------|-----|---------|------|---------|
-| user_skill_id | 使用者技能識別碼 | User Skill ID | INT | 使用者技能識別碼 | PRIMARY KEY |
-| user_id | 使用者識別碼 | User ID | INT | 關聯使用者 | FOREIGN KEY |
-| skill_id | 技能識別碼 | Skill ID | INT | 關聯技能 | FOREIGN KEY |
-| proficiency_level | 熟練度 | Proficiency Level | INT | 熟練度 (1-10) | - |
-| years_of_experience | 使用年資 | Years of Experience | FLOAT | 使用年資 | - |
-| verified | 驗證狀態 | Verified | BOOLEAN | 驗證狀態 | DEFAULT FALSE |
-| created_at | 建立時間 | Created At | DATETIME | 建立時間 | - |
-
-**設計說明**:
-- 從 CAREER_SURVEY 或 OCR_RESULT 自動提取技能
-- **verified**:未來可整合 LinkedIn 或考試認證驗證技能真實性
-- **proficiency_level 來源**:
-  - 使用者自評(CAREER_SURVEY.skill_self_assessment)
-  - 履歷推算(根據使用年資)
-  - AI 評估(根據專案經驗)
-
----
-
-### 6.4 COURSE(課程主表)🟣
+### 6.3 COURSE(課程主表)🟣
 
 **功能說明**:儲存推薦用課程（如 Coursera），供「依職缺技能需求」或「依技能落差」推薦課程。以 **url** 為唯一鍵，寫入時 upsert 避免重複；第一次寫入即依 skill_master 帶入 primary_skill_id。
 
@@ -585,9 +560,11 @@ ADD COLUMN job_details JSONB;
 | role_name | 職務名稱標籤 | Role Name | TEXT | 對應職類名稱（如前端工程師、後端工程師） | - |
 | source_platform | 來源平台 | Source Platform | VARCHAR(50) | 如 'Coursera' | DEFAULT 'Coursera' |
 | created_at | 建立時間 | Created At | TIMESTAMPTZ | 寫入時間 | DEFAULT now() |
+| is_active | 是否有效 | Is Active | BOOLEAN | 確認該課程資訊是否還有效、URL 是否仍可存取；定期檢查或爬蟲可更新此欄位 | DEFAULT TRUE |
 
 **設計說明**:
 - **來源與寫入**: 由 `course_clean_and_upload.ipynb` 清洗 Coursera 等來源 CSV，以 url 為唯一鍵 upsert 寫入；新資料重跑即可覆寫同 URL，不重複插入。
+- **is_active**: 用於標記課程資訊與連結是否仍有效；可透過定期檢查或爬蟲更新，推薦/查詢時可篩選 `is_active = TRUE`。
 - **與 skill_master 關聯**: primary_skill_id 指向 skill_master(skill_id)，寫入時依 primary_skill_name（含同義詞）對照帶入。
 - **course_type 說明**（由來源 Metadata 拆出）：`Course` 單一課程、`Specialization` 專項課程、`Professional Certificate` 專業認證、`Guided Project` 導引專案；供篩選或顯示課程類型。
 - **與其他表之邏輯關聯（無直接 FK）**:
@@ -898,9 +875,9 @@ ADD COLUMN job_details JSONB;
 | 表 A | 表 A 英文 | 中介表 | 中介表英文 | 表 B | 表 B 英文 | 說明 |
 |------|----------|-------|-----------|------|----------|------|
 | JOB_POSTING | Job Posting | JOB_SKILL_REQUIREMENT | Job Skill Requirement | SKILL_MASTER | Skill Master | 職缺可要求多種技能 |
-| USER_PROFILE | User Profile | USER_SKILL | User Skill | SKILL_MASTER | Skill Master | 使用者可擁有多種技能 |
 
 **邏輯關聯（無中介表，依欄位匹配）**:
+- **使用者技能**：已改由 CAREER_SURVEY（問卷）的 `skill_self_assessment` / `questionnaire_response` 儲存，不再使用獨立 user_skill 表。
 - **COURSE** 與 **JOB_SKILL_REQUIREMENT** / **CAREER_ANALYSIS_REPORT.gap_analysis**：透過 COURSE.primary_skill_id、COURSE.skills(JSONB) 與技能主檔對應，供「依職缺所需技能」或「依職能落差分析結果」推薦課程；實作時由應用層依 skill_id 或技能名稱匹配。
 
 ---
@@ -977,7 +954,7 @@ ADD COLUMN job_details JSONB;
 
 | 服務 | 服務英文 | 功能 | 相關資料表 |
 |------|---------|------|----------|
-| **使用者資料服務** | User Profile Service | 使用者資料管理 | USER, USER_PROFILE, USER_SKILL |
+| **使用者資料服務** | User Profile Service | 使用者資料管理 | USER, USER_PROFILE |
 | **履歷資料服務** | Resume Data Service | 履歷資料處理 | RESUME, RESUME_VERSION, OCR_RESULT |
 | **認證服務** | Auth Service | 身份認證 | USER |
 | **職缺爬蟲** | Job Scraper Worker | 職缺爬蟲 | JOB_POSTING, COMPANY_INFO |
