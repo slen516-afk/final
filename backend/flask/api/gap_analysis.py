@@ -1,6 +1,7 @@
 import json
 import uuid
 from datetime import datetime, timezone
+import re
 from flask import Blueprint, request, jsonify, g
 from api.auth import login_required
 from core.redis_client import redis_client, STREAM_NAME
@@ -110,7 +111,45 @@ def poll_gap_analysis_job(job_id):
         }
 
         if job["status"] == "done":
-            resp["result"] = json.loads(job["result"]) if job.get("result") else None
+            result = json.loads(job["result"]) if job.get("result") else None
+            if result:
+                # 1. 處理核心洞察與個人總結的拆分
+                pre_summary = result.get("preliminary_summary", {})
+                core_insight = pre_summary.get("core_insight", "")
+                
+                industry_match = re.search(r'【產業洞察】[：:]?\s*(.*?)(?=【|$)', core_insight, re.S)
+                personal_match = re.search(r'【個人總結】[：:]?\s*(.*)', core_insight, re.S)
+                
+                if industry_match:
+                    pre_summary["industry_insight"] = industry_match.group(1).strip()
+                else:
+                    pre_summary["industry_insight"] = core_insight
+                    
+                if personal_match:
+                    pre_summary["personal_summary"] = personal_match.group(1).strip()
+                else:
+                    pre_summary["personal_summary"] = ""
+                
+                result["preliminary_summary"] = pre_summary
+
+                # 2. 處理匹配度百分比符號移除
+                gap_analysis = result.get("gap_analysis", {})
+                target_pos = gap_analysis.get("target_position", {})
+                match_score = target_pos.get("match_score", "0")
+                
+                if isinstance(match_score, str):
+                    clean_score = re.sub(r'[^\d]', '', match_score)
+                    try:
+                        target_pos["match_score"] = int(clean_score)
+                    except ValueError:
+                        target_pos["match_score"] = 0
+                
+                gap_analysis["target_position"] = target_pos
+                result["gap_analysis"] = gap_analysis
+                
+                resp["result"] = result
+            else:
+                resp["result"] = None
         elif job["status"] == "failed" or job["status"] == "dlq":
             resp["error"] = job.get("error", "")
 
