@@ -25,24 +25,43 @@ export const uploadResumeAPI = async (file: File) => {
 // 🌟 修正 saveResumeAPI 的 axios 呼叫 (使用底下的 api 實例)
 export const saveResumeAPI = async (payload: any) => {
     // 🌟 網址改成 /resume_process/save，跟你的 Flask 完全對齊！
-    const response = await apiClient.post('/resume_process/save', payload, {
+    const response = await apiClient.post<any>('/resume_process/save', payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
     });
-    return response.data;
+    return response;
 };
 
 // 🌟 獲取特定使用者的履歷清單 (解決陳浩宇問題的核心)
-export const fetchUserResumesAPI = async (userId: number) => {
+export const fetchUserResumesAPI = async (userId: number | string) => {
     try {
-        // 使用 apiClient 確保帶上攔截器
-        const response = await apiClient.get(`${RESUME_PREFIX}/list/${userId}`);
-        if (response.data && response.data.status === "success") {
+        console.log(`🚀 [API] 正在請求使用者 ${userId} 的履歷清單...`);
+        const response = await apiClient.get<any>(`${RESUME_PREFIX}/list/${userId}`);
+        console.log("📦 [API] 原始回應內容:", response);
+
+        // 🌟 超級容錯解析
+        if (!response) return [];
+
+        // 格式 A: { status: 'success', data: [...] } - 您分享的格式
+        if (response.status === "success" && Array.isArray(response.data)) {
+            return response.data;
+        }
+
+        // 格式 B: 直接是陣列 [...]
+        if (Array.isArray(response)) return response;
+
+        // 格式 C: Axios 風格 { data: { status: 'success', data: [...] } }
+        if (response.data && response.data.status === "success" && Array.isArray(response.data.data)) {
             return response.data.data;
         }
+
+        // 格式 D: { data: [...] } 但沒有 status
+        if (Array.isArray(response.data)) return response.data;
+
+        console.warn("⚠️ [API] 無法辨識的履歷資料格式:", response);
         return [];
     } catch (error) {
-        console.error("fetchUserResumesAPI 發生錯誤:", error);
-        throw error;
+        console.error("❌ [API] fetchUserResumesAPI 失敗:", error);
+        return [];
     }
 };
 
@@ -81,6 +100,29 @@ export const getJobDetailAPI = async (jobId: string) => {
     const response = await fetch(`/api/jobs/${jobId}`);
     if (!response.ok) throw new Error('取得職缺詳細資料失敗');
     return await response.json();
+};
+
+// --- Cover Letter 相關 API ---
+export const generateCoverLetterAPI = async (payload: { job_id: string; resume_id?: string; optimization_id?: string }) => {
+    try {
+        // 使用 apiClient 自動帶入 /api 前綴與 Token
+        const response = await apiClient.post<any>('/cover_letter/generate', payload);
+        return response;
+    } catch (error) {
+        console.error("generateCoverLetterAPI 發生錯誤:", error);
+        throw error;
+    }
+};
+
+// --- 問卷與人格特質相關 API ---
+export const saveQuestionnaireAPI = async (payload: any) => {
+    const response = await apiClient.post('/questionnaire-response', payload);
+    return response;
+};
+
+export const savePersonalityAPI = async (payload: any) => {
+    const response = await apiClient.post('/personality', payload);
+    return response;
 };
 
 // --- Axios 實例與攔截器設定 (合併重複定義) ---
@@ -122,7 +164,7 @@ export const taskService = {
 
 export const resumeService = {
     getAll: () => apiClient.get('/resumes'),
-    process: (id: string) => apiClient.post(`/resume_process/${id}`),
+    process: (id: string) => apiClient.post(`/resume_process/${id}`, {}),
 };
 
 // 🌟 預設導出 apiClient

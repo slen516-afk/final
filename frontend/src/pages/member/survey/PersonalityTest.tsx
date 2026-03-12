@@ -13,6 +13,7 @@ import { motion } from 'framer-motion';
 import LoginRequired from '@/components/gatekeeper/LoginRequired';
 import { personalityTestModules, type PTModule } from '@/data/personalityTestQuestions';
 import { computePersonalityResult, type PersonalityResult } from '@/data/personalityScoring';
+import { savePersonalityAPI } from '@/services/api';
 
 import PersonalityTestResult from '@/components/personality/PersonalityTestResult';
 
@@ -72,6 +73,7 @@ const PersonalityTest = () => {
   }, [progress]);
 
 
+
   const updateProgress = useCallback((partial: Partial<TestProgress>) => {
     setProgress((prev) => ({ ...prev, ...partial }));
   }, []);
@@ -122,15 +124,33 @@ const PersonalityTest = () => {
       setShowIncompleteAlert(true);
       return;
     }
+    
     setIsAnalyzing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
     const computed = computePersonalityResult(answers);
-    setResult(computed);
-    localStorage.setItem(RESULT_KEY, JSON.stringify(computed));
-    setIsAnalyzing(false);
-    setShowResult(true);
-    setIsPersonalityTestDone(true);
-    clearProgress();
+    
+    try {
+      const payload = {
+        trait_calculation_debug: computed.rawScores,
+        trait_normalized_scores: computed.scaledScores,
+        primary_archetype: computed.archetypes[0]?.id || '',
+        secondary_archetypes: computed.archetypes.slice(1).map((a) => a.id),
+        trait_created_at: new Date().toISOString(),
+        trait_raw_responses: answers,
+      };
+
+      await savePersonalityAPI(payload);
+
+      setResult(computed);
+      localStorage.setItem(RESULT_KEY, JSON.stringify(computed));
+      setIsAnalyzing(false);
+      setShowResult(true);
+      setIsPersonalityTestDone(true);
+      clearProgress();
+    } catch (error) {
+      console.error('Failed to save personality test:', error);
+      setIsAnalyzing(false);
+      alert('人格特質儲存失敗，請檢查網路連線或稍後再試。');
+    }
   };
 
   const handleReset = () => {

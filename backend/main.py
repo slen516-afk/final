@@ -60,7 +60,7 @@ if __name__ == "__main__":
     print("Career Pilot API啟動中")
     # print("目前 Flask 註冊的所有網址：", app.url_map)
     print("=" * 60)
-    app.run(host='0.0.0.0', port=8000, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=8000, debug=True, use_reloader=True)
 
 """   
     # 印出所有所有可用的路由資訊，便於debug和測試

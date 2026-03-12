@@ -33,9 +33,12 @@ async function request<T>(
     ? BASE_URL
     : `${window.location.origin}${BASE_URL.startsWith('/') ? '' : '/'}${BASE_URL}`;
 
-  // 確保 endpoint 不會重複包含 base 資料，且路徑格式正確
+  // 確保 base 以斜線結尾，避免 new URL 替換掉最後一段路徑
+  const baseWithSlash = absoluteBase.endsWith('/') ? absoluteBase : `${absoluteBase}/`;
+  
+  // 確保 endpoint 不會重複包含 base 資料，且路徑格式正確 (移除開頭斜線)
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  const url = new URL(cleanEndpoint, absoluteBase.endsWith('/') ? absoluteBase : `${absoluteBase}/`);
+  const url = new URL(cleanEndpoint, baseWithSlash);
 
   if (params) {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
@@ -48,21 +51,32 @@ async function request<T>(
   const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
   const authHeader = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-  const res = await fetch(url.toString(), {
-    ...init,
-    headers: {
-      ...contentTypeHeader,
-      ...authHeader,
-      ...headers,
-    },
-    body: isFormData ? (body as FormData) : (body ? JSON.stringify(body) : undefined),
-  });
+  try {
+    const res = await fetch(url.toString(), {
+      ...init,
+      headers: {
+        ...contentTypeHeader,
+        ...authHeader,
+        ...headers,
+      },
+      body: isFormData ? (body as FormData) : (body ? JSON.stringify(body) : undefined),
+    });
 
-  if (!res.ok) {
-    throw new Error(`API ${res.status}: ${res.statusText}`);
+    if (!res.ok) {
+      if (res.status === 401) {
+        console.warn("Detected 401 Unauthorized - clearing session token");
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('token');
+        // 可加強：如果是 401 且需要強迫重新整理
+        // window.location.reload(); 
+      }
+      throw new Error(`API ${res.status}: ${res.statusText}`);
+    }
+
+    return await res.json() as T;
+  } catch (err) {
+    throw err;
   }
-
-  return res.json() as Promise<T>;
 }
 
 export const apiClient = {

@@ -1,0 +1,19 @@
+[Warning] 無法引入 async_tasks Blueprint: No module named 'cv2'
+🚨 [Fatal Error] OCR 服務檔案 (ocr_service.py) 引入失敗：No module named 'cv2'
+👇👇👇 詳細錯誤追蹤 👇👇👇
+👆👆👆 詳細錯誤追蹤 👆👆👆
+------------------------------------------------
+[System] 正在初始化 Flask 伺服器...
+❌ [Worker] 無法與 Broker 通訊或檢查失敗: Error 11001 connecting to redis:6379. getaddrinfo failed.
+🚨 [Fatal Error] 找不到任何 OCR 模組！請檢查最上方的錯誤追蹤。
+[Warning] 找不到任何 OCR 服務，已略過載入。
+Endpoint                                 | URL Rule
+--------------------------------------------------------------------------------
+resume_proc.upload_resume                | /api/resume_process/upload
+resume_proc.check_ocr_status             | /api/resume_process/<id>/status
+resume_proc.get_user_resumes             | /api/resume_process/list/<int:user_id>
+resume_proc.save_processed_resume        | /api/resume_process/save
+resume_proc.analyze_resume_with_ai       | /api/resume_process/analyze
+resume_proc.generate_optimized_resume    | /api/resume_process/optimize/generate
+resume_proc.save_optimized_resume        | /api/resume_process/optimize/save
+resume_proc.delete_resume                | /api/resume_process/delete/<string:resume_id>

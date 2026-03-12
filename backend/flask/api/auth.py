@@ -175,6 +175,13 @@ def login_required(f):
 
         token = auth_header.replace("Bearer ", "")
 
+        # 🚀 支援開發模式下的 Mock Token
+        is_mock_mode = os.environ.get("MOCK_MODE", "False").lower() == "true"
+        if is_mock_mode and token == "mock-token":
+            g.user_id = "mock-uuid-11"
+            g.db_user_id = 11
+            return f(*args, **kwargs)
+
         try:
             # 使用 Supabase SDK 驗證用戶資訊
             user_info = supabase.auth.get_user(token)
@@ -204,8 +211,8 @@ def login_required(f):
 
         except Exception as e:
             # token 驗證失敗或其他錯誤
-            pass
-            return jsonify({"message": "Token 無效 / 逾期"}), 401
+            print(f"[Auth] Token verification failed: {type(e).__name__}: {e}")
+            return jsonify({"message": "Token 無效 / 逾期", "error": str(e)}), 401
 
         return f(*args, **kwargs)
 

@@ -232,13 +232,14 @@ def get_user_resumes(user_id):
         print(f"🚨 /list API 發生錯誤: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 @resume_proc_bp.route('/save', methods=['POST'])
+@resume_proc_bp.route('/optimize/save_to_resume', methods=['POST']) # 🌟 保險起見，增加別名以相容舊版前端
 def save_processed_resume():
     try:
         req_data = request.json
         
         # 1. 接收前端傳來的資料
         resume_name = req_data.get('resume_name')
-        resume_data = req_data.get('resume_data')
+        resume_data = req_data.get('resume_data') or req_data.get('optimized_data')
         
         # 2. 🛡️ 【超級保命防護罩】：強制把 user_id 轉成數字！
         # 就算前端硬傳 '5F82A' 這種字串來，我們也會把它攔截並強制變成 1
@@ -256,7 +257,7 @@ def save_processed_resume():
         insert_data = {
             "user_id": user_id,
             "resume_name": resume_name,
-            "resume_type": "uploaded_pdf",
+            "resume_type": req_data.get('resume_type', "uploaded_pdf"),
             "structured_data": resume_data,
             "normalized_data": {},
             "is_primary": False,
@@ -361,7 +362,29 @@ def generate_optimized_resume():
 
         print(f"\n🚀 [API] 收到使用者 {user_id} 的 AI 全文履歷優化請求！")
 
-        # 🌟 直接呼叫 Manager (不用再寫 import 了，因為最上面已經 import 過了)
+        # 🌟 【新需求】避免每次測試消耗 Token - 預先定義備份路徑
+        from pathlib import Path
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        test_dir = project_root / "frontend" / "src" / "test"
+        backup_file = test_dir / "optimized_resume_output.json"
+        
+        # 檢查是否啟用 Mock 模式 (透過環境變數或請求參數)
+        is_mock = os.environ.get("MOCK_MODE", "").lower() == "true" or req_data.get("mock") == True
+        
+        if is_mock and backup_file.exists():
+            print(f"♻️ [System] 偵測到 Mock 模式，直接讀取備份檔回傳: {backup_file}")
+            try:
+                with open(backup_file, "r", encoding="utf-8") as f:
+                    cached_result = json.load(f)
+                return jsonify({
+                    "status": "success",
+                    "data": cached_result,
+                    "is_mock": True
+                }), 200
+            except Exception as e:
+                print(f"⚠️ [System] 讀取備份檔失敗，將繼續執行 AI 生成: {e}")
+
+        # 🌟 直接呼叫 Manager
         manager = CareerAgentManager(mock_mode=False) 
 
         # 準備給 CrewAI 的輸入資料
@@ -378,6 +401,16 @@ def generate_optimized_resume():
              return jsonify({"status": "error", "message": result.get("message")}), 500
 
         print("✅ [CrewAI] 履歷生成完成，準備渲染至前端樣板！")
+
+        # 🌟 【新需求】將輸出寫成檔案，供測試與節省 Token 使用
+        try:
+            os.makedirs(test_dir, exist_ok=True)
+            with open(backup_file, "w", encoding="utf-8") as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+            print(f"💾 [System] 已將最新優化結果備份至: {backup_file}")
+        except Exception as file_e:
+            print(f"⚠️ [System] 備份優化結果失敗 (但也許是因為 Docker 路徑限制): {file_e}")
+
         return jsonify({
             "status": "success",
             "data": result  
@@ -414,11 +447,20 @@ def save_optimized_resume():
                 return [val]
             return []
 
+        # 🌟 優先取得「原版履歷名稱」
+        orig_name = "未命名履歷"
+        try:
+            orig_resp = supabase.table("resume").select("resume_name").eq("resume_id", resume_id).execute()
+            if hasattr(orig_resp, 'data') and len(orig_resp.data) > 0:
+                orig_name = orig_resp.data[0].get("resume_name", "未命名履歷")
+        except Exception as e:
+            print(f"⚠️ [API] 讀取原版履歷名稱時發生錯誤: {e}")
+
         # 🌟 準備要「更新」的資料
         update_data = {
             "professional_summary": optimized_data.get("professional_summary", ""),
             "autobiography": optimized_data.get("autobiography", ""),
-            "resume_name": f"{optimized_data.get('name', '未命名')} 的優化履歷",
+            "resume_name": f"{orig_name}_優化",
             "professional_experience": to_jsonb(optimized_data.get("professional_experience")),
             "core_skills": to_jsonb(optimized_data.get("core_skills")),
             "projects": to_jsonb(optimized_data.get("projects")),
@@ -465,8 +507,18 @@ def save_optimized_resume():
     except Exception as e:
         print(f"🚨 [Error] 儲存/更新優化履歷失敗: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+        return jsonify({
+            "status": "success",
+            "message": "優化履歷儲存/更新成功",
+            "data": response.data
+        }), 200
+
+    except Exception as e:
+        print(f"🚨 [Error] 儲存/更新優化履歷失敗: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 # 🌟 注意路由改成了 <string:resume_id> 才能接收 "129_opt_1" 這種字串
-# 🌟 注意路由是 <string:resume_id>
+
 @resume_proc_bp.route('/delete/<string:resume_id>', methods=['DELETE'])
 def delete_resume(resume_id):
     try:

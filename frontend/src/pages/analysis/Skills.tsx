@@ -40,6 +40,7 @@ import {
   Radar as RechartsRadar,
 } from "recharts";
 import { useResumes } from "@/contexts/ResumeContext";
+import { useAppState } from "@/contexts/AppContext";
 import { getMyUserId } from "@/services/memberService";
 import { generateAnalysis } from "@/services/analysisService";
 import type { AnalysisResult } from "@/types/analysis";
@@ -92,6 +93,7 @@ function getMascotForRole(role: string): string {
 const Skills = () => {
   const navigate = useNavigate();
   const { resumes } = useResumes();
+  const { user, setIsLoggedIn } = useAppState();
 
   const [phase, setPhase] = useState<AnalysisPhase>(() =>
     localStorage.getItem(ANALYSIS_DONE_KEY) === "true" ? "done" : "idle",
@@ -165,24 +167,44 @@ const Skills = () => {
 
   const startAnalysis = useCallback(async () => {
     setPhase("loading");
-    const userId = await getMyUserId();
-    const resumeId = latestResumeId;
-
-    const animationPromise = (async () => {
-      for (let i = 0; i < loadingMessages.length; i++) {
-        setLoadingMsg(loadingMessages[i]);
-        await new Promise((r) => setTimeout(r, 1200));
+    try {
+      // 優先從 AppContext 拿，如果沒有才去後端拿 (備援)
+      let userId = user?.user_id?.toString();
+      if (!userId) {
+        console.log("⚠️ AppContext 中無 userId，嘗試從 API 取得...");
+        userId = await getMyUserId();
       }
-    })();
+      
+      const resumeId = latestResumeId;
 
-    const apiPromise = generateAnalysis({ user_id: userId, resume_id: resumeId ?? 0 });
-    const [, result] = await Promise.all([animationPromise, apiPromise]);
+      const animationPromise = (async () => {
+        for (let i = 0; i < loadingMessages.length; i++) {
+          setLoadingMsg(loadingMessages[i]);
+          await new Promise((r) => setTimeout(r, 1200));
+        }
+      })();
 
-    setAnalysisResult(result);
-    localStorage.setItem(ANALYSIS_RESULT_KEY, JSON.stringify(result));
-    localStorage.setItem(ANALYSIS_DONE_KEY, "true");
-    setPhase("done");
-  }, [latestResumeId]);
+      const apiPromise = generateAnalysis({ user_id: userId, resume_id: resumeId ?? 0 });
+      const [, result] = await Promise.all([animationPromise, apiPromise]);
+
+      setAnalysisResult(result);
+      localStorage.setItem(ANALYSIS_RESULT_KEY, JSON.stringify(result));
+      localStorage.setItem(ANALYSIS_DONE_KEY, "true");
+      setPhase("done");
+    } catch (err: any) {
+      console.error("❌ 分析失敗:", err);
+      // 如果是 401 代表 Token 已經過期或無效
+      if (err.message && err.message.includes("401")) {
+        setIsLoggedIn(false);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        alert("您的登入偏好已過期，請重新登入以繼續。");
+      } else {
+        alert("分析過程發生錯誤，請稍後再試。");
+      }
+      setPhase("idle");
+    }
+  }, [user, latestResumeId, setIsLoggedIn]);
 
   const handleReAnalyse = useCallback(() => {
     localStorage.removeItem(ANALYSIS_DONE_KEY);
@@ -267,12 +289,18 @@ const Skills = () => {
           localStorage.setItem(SKILLS_LEARNING_IS_DEFAULT_KEY, "true");
         }
 
-      } catch (error) {
+      } catch (error: any) {
         console.error("❌ 無法載入學習資源，使用預設資料", error);
-        setIsDefaultLearningData(true);
-        setDynamicLearningResources(learningResources || []);
-        setDynamicLearningStrategy((analysisResult as any)?.learningStrategy || null);
-        localStorage.setItem(SKILLS_LEARNING_IS_DEFAULT_KEY, "true");
+        if (error.message?.includes("401")) {
+          setIsLoggedIn(false);
+          alert("登入已逾期，請重新登入");
+          setSubView("main");
+        } else {
+          setIsDefaultLearningData(true);
+          setDynamicLearningResources(learningResources || []);
+          setDynamicLearningStrategy((analysisResult as any)?.learningStrategy || null);
+          localStorage.setItem(SKILLS_LEARNING_IS_DEFAULT_KEY, "true");
+        }
       }
     } else if (view === "sideproject") {
       // 1. Check Cache
@@ -295,9 +323,15 @@ const Skills = () => {
         } else {
           setDynamicSideProjects(sideProjects || []);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("❌ 無法載入 Side Project，使用預設資料", error);
-        setDynamicSideProjects(sideProjects || []);
+        if (error.message?.includes("401")) {
+          setIsLoggedIn(false);
+          alert("登入已逾期，請重新登入");
+          setSubView("main");
+        } else {
+          setDynamicSideProjects(sideProjects || []);
+        }
       }
     } else {
       await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -466,7 +500,7 @@ const Skills = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {visibleResources.map((resource, index) => (
                       <motion.div
-                        key={resource.title}
+                        key={`${resource.title}-${index}`}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 + index * 0.08 }}
@@ -525,7 +559,7 @@ const Skills = () => {
                             {/* Tags + link */}
                             <div className="flex items-center justify-between pt-2 border-t">
                               <div className="flex flex-wrap gap-1">
-                                {resource.tags.map((tag) => (
+                                {resource.tags?.map((tag) => (
                                   <Badge key={tag} variant="secondary" className="text-xs">
                                     {tag}
                                   </Badge>
@@ -580,9 +614,9 @@ const Skills = () => {
                 根據您的職能落差，為您量身規劃的 Side Project，透過階段式開發逐步補足技術缺口。
               </p>
 
-              {sideProjects.map((project, pIdx) => (
+              {(dynamicSideProjects || []).map((project, pIdx) => (
                 <motion.div
-                  key={project.name}
+                  key={`${project.name}-${pIdx}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: pIdx * 0.15 }}
@@ -623,7 +657,7 @@ const Skills = () => {
                           <Target className="h-4 w-4 text-[#8d4903]" /> 能力缺口
                         </h4>
                         <div className="flex flex-wrap gap-1.5">
-                          {project.capability_gaps.map((gap) => (
+                          {project.capability_gaps?.map((gap) => (
                             <Badge key={gap} className="bg-[#8d4903]/10 text-[#502D03] border border-[#8d4903]/20 text-xs">
                               {gap}
                             </Badge>
@@ -637,7 +671,7 @@ const Skills = () => {
                           <Lightbulb className="h-4 w-4 text-primary" /> 技術棧
                         </h4>
                         <div className="flex flex-wrap gap-1.5">
-                          {project.technologies.map((tech) => (
+                          {project.technologies?.map((tech) => (
                             <Badge key={tech} variant="outline" className="text-xs">
                               {tech}
                             </Badge>
@@ -656,9 +690,9 @@ const Skills = () => {
                     <div className="relative pl-6 space-y-0">
                       {/* vertical line */}
                       <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-[#8d4903]/20" />
-                      {project.phases.map((phase, phaseIdx) => (
+                      {project.phases?.map((phase, phaseIdx) => (
                         <motion.div
-                          key={phase.phase_name}
+                          key={`${phase.phase_name}-${phaseIdx}`}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: 0.2 + phaseIdx * 0.1 }}
@@ -673,14 +707,14 @@ const Skills = () => {
                               <h3 className="font-semibold text-foreground tracking-tight">{phase.phase_name}</h3>
                               <div className="text-sm text-muted-foreground leading-[1.8] space-y-1.5">
                                 <span className="font-medium text-foreground">目標：</span>
-                                {splitIntoParagraphs(phase.goal).map((p, i) => (
+                                {splitIntoParagraphs(phase.goal || "").map((p, i) => (
                                   <p key={i}>{p}</p>
                                 ))}
                               </div>
                               <div>
                                 <span className="text-sm font-medium text-foreground">任務：</span>
                                 <ul className="mt-1.5 space-y-1.5">
-                                  {phase.tasks.map((task, i) => (
+                                  {phase.tasks?.map((task, i) => (
                                     <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground leading-[1.75]">
                                       <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#8d4903] shrink-0" />
                                       {task}

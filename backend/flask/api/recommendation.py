@@ -51,8 +51,8 @@ def get_user_resumes(user_id):
             
         for r in opt_resumes:
             combined_list.append({
-                "id": r.get("id"), # 👈 如果 optimization 表的欄位叫別的 (例如 opt_id)，記得這裡也要改！
-                "title": r.get("resume_name") or f"AI 優化版履歷 {r.get('id')}",
+                "id": r.get("resume_id"), # 👈 修正：這裡應該用 resume_id 或 optimization_id
+                "title": r.get("resume_name") or f"AI 優化版履歷 {r.get('resume_id')}",
                 "type": "OPTIMIZATION",
                 "created_at": r.get("created_at", "")
             })
@@ -143,20 +143,37 @@ def get_job_detail(job_id):
 def suggest_projects():
     mock_projects = [
         {
-            "id": "proj_001",
-            "title": "電商 API 系統實作",
-            "difficulty": "Intermediate",
-            "tech_stack": ["Flask", "SQLAlchemy", "JWT"],
-            "reason": "這個專案可以幫助你加強對 RESTful API 和資料庫設計的理解。",
-            "estimated_hours": 20
-        },
-        {
-            "id": "proj_002",
-            "title": "個人履歷分析儀表板",
-            "difficulty": "Advanced",
-            "tech_stack": ["Python", "Pandas", "Streamlit"],
-            "reason": "結合資料分析與前端展示，適合展示你的全方位能力。",
-            "estimated_hours": 30
+            "name": "電商企業級 API 系統實作",
+            "name_en": "Enterprise E-commerce API System",
+            "capability_gaps": ["RESTful API 設計", "資料庫效能優化", "JWT 認證機制"],
+            "technologies": ["Python", "Flask", "PostgreSQL", "Redis", "Docker"],
+            "overall_resume_impact": "展示了從零構建高併發後端系統的能力，並展現了對核心安全機制與快取策略的掌握。",
+            "difficulty": 4,
+            "difficulty_label": "中高難度",
+            "estimated_duration": "4-6 週",
+            "difficulty_note": "核心挑戰在於處理高併發下的資料一致性與安全性。",
+            "phases": [
+                {
+                    "phase_name": "Phase 1: 核心架構與資料庫設計",
+                    "goal": "建立穩定且可擴展的資料模型與基礎 API 框架。",
+                    "tasks": [
+                        "設計電商核心 Schema (Orders, Products, Users)",
+                        "實作基礎 RESTful CRUD endpoints",
+                        "建構全域錯誤處理與日誌系統"
+                    ],
+                    "resume_value": "主導了高擴展性電商資料庫設計，確保系統在初期即具備處理萬級資料的能力。"
+                },
+                {
+                    "phase_name": "Phase 2: 安全認證與會員系統",
+                    "goal": "確保系統安全性並實作細粒度的權限控管。",
+                    "tasks": [
+                        "整合 JWT 與 Refresh Token 機制",
+                        "實作 RBAC (Role-Based Access Control) 權限控制",
+                        "加密敏感性資料與密碼保護"
+                    ],
+                    "resume_value": "實作了符合工業標準的 JWT 認證機制，顯著提升了系統的安全性與資料防禦力。"
+                }
+            ]
         }
     ]
     return jsonify({

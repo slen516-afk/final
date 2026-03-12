@@ -11,6 +11,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import logoCat from '@/assets/logocat.png';
 import { templateThumbnailComponents } from '@/components/resume/TemplateThumbnails';
 import { mockResumeData } from '@/mocks/resumes';
+import { exportResumeToPdf } from '@/utils/pdfExport';
+import { toast } from 'sonner';
 
 type Phase = 'initial' | 'analyzing' | 'suggestions' | 'templates' | 'generating' | 'result';
 
@@ -121,6 +123,7 @@ const Optimize = () => {
 
   useEffect(() => {
     const fetchRealDatabaseResume = async () => {
+      console.log("🚀 Optimize 頁面載入中 (版本 1.1) - 使用 /save 介面");
       if (!realUserId) {
         setAccessAlertMessage('找不到使用者 ID，請重新登入');
         setShowAccessAlert(true);
@@ -186,14 +189,21 @@ const Optimize = () => {
 
   const handleSaveOptimization = async () => {
     try {
+      if (!realLatestResume?.resume_id) {
+        toast.error('找不到原始履歷 ID，無法儲存優化結果');
+        return;
+      }
+
       const payload = {
         user_id: realUserId,
-        original_resume_id: realLatestResume?.resume_id || realLatestResume?.id,
+        original_resume_id: realLatestResume.resume_id,
         template_id: selectedTemplate,
-        optimized_data: resumeData,
+        optimized_data: {
+          ...resumeData,
+        },
       };
 
-      console.log("🚀 準備存入 resume_optimization 的資料:", payload);
+      console.log("🚀 準備存入 resume_optimization 表格的資料:", payload);
 
       const response = await fetch('/api/resume_process/optimize/save', {
         method: 'POST',
@@ -203,19 +213,32 @@ const Optimize = () => {
 
       const result = await response.json();
       if (response.ok) {
-        // 🌟 成功時：顯示精美的成功視窗
-        setSaveModalConfig({ type: 'success', title: '儲存成功', message: '🎉 優化版履歷已成功儲存至資料庫！' });
+        setSaveModalConfig({ type: 'success', title: '儲存成功', message: '🎉 優化版履歷已成功儲存至「我的履歷」！' });
         setShowSaveModal(true);
       } else {
-        // 🌟 失敗時：顯示警告視窗
         setSaveModalConfig({ type: 'warning', title: '儲存失敗', message: result.message || result.error });
         setShowSaveModal(true);
       }
     } catch (error) {
       console.error("儲存優化履歷失敗:", error);
-      // 🌟 網路錯誤時：顯示警告視窗
       setSaveModalConfig({ type: 'warning', title: '網路錯誤', message: '網路連線錯誤，儲存失敗！' });
       setShowSaveModal(true);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!resumeRef.current) return;
+    
+    try {
+      toast.info('正在生成 PDF，請稍候...');
+      await exportResumeToPdf({
+        element: resumeRef.current,
+        filename: `${resumeData.name}_優化履歷_${new Date().getTime()}.pdf`
+      });
+      toast.success('PDF 下載成功！');
+    } catch (error) {
+      console.error('下載 PDF 失敗:', error);
+      toast.error('下載 PDF 失敗，請重試');
     }
   };
 
@@ -569,14 +592,15 @@ const Optimize = () => {
                       </div>
                     </div>
                     <div className="space-y-8">
-                      <section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>工作經歷</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.professional_experience}</p></section>
-                      <section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>教育背景</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.education}</p></section>
+                      <section data-pdf-section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>工作經歷</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.professional_experience}</p></section>
+                      <section data-pdf-section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>教育背景</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.education}</p></section>
                     </div>
                   </div>
                 </div></CardContent></Card>
                 <div className="flex gap-4">
                   <Button variant="outline" className="flex-1 h-12" onClick={() => setPhase('templates')}><Palette className="mr-2" />更換樣板</Button>
-                  <Button className="flex-[2] h-12 gradient-primary text-lg font-bold"><Download className="mr-2" /> 下載 PDF</Button>
+                  <Button variant="outline" className="flex-1 h-12" onClick={handleSaveOptimization}><Save className="mr-2" /> 儲存優化後履歷</Button>
+                  <Button className="flex-[2] h-12 gradient-primary text-lg font-bold" onClick={handleDownloadPDF}><Download className="mr-2" /> 下載為 PDF</Button>
                 </div>
               </div>
             )}

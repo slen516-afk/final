@@ -159,6 +159,7 @@ def create_app():
         return jsonify({
             "status": "healthy",
             "service": "Career Pilot API",
+            "mock_mode": os.environ.get("MOCK_MODE", "").lower() == "true",
             "ocr_loaded": "ready" if app.config.get("OCR_HANDLER") else "offline",
             "worker": {
                 "status": "online" if worker_ok else "offline",

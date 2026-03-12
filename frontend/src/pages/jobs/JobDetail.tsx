@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { getJobDetailAPI, fetchUserResumesAPI } from '@/services/api';
+import { getJobDetailAPI, fetchUserResumesAPI, generateCoverLetterAPI } from '@/services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppState } from '@/contexts/AppContext';
@@ -28,7 +28,8 @@ const JobDetail = () => {
 
   // 🌟 1. 從全域狀態拿到你的真實 user 資料
   const { isLoggedIn, user, isMockMode } = useAppState();
-  const realUserId = user?.user_id;
+  // 🛡️ 防護：相容不同開發人員定義的欄位名 (user_id 或 id)
+  const realUserId = user?.user_id || user?.id;
 
   const [isLoading, setIsLoading] = useState(true);
   const [job, setJob] = useState<RecommendedJobDetail | null>(null);
@@ -99,21 +100,30 @@ const JobDetail = () => {
   // 🌟 3. 當使用者打開側邊欄時，獲取履歷清單
   useEffect(() => {
     const loadMyResumes = async () => {
+      console.log("🔍 [JobDetail] loadMyResumes triggered", { isLoggedIn, realUserId, drawerOpen });
       if (isLoggedIn && realUserId) {
         setIsFetchingResumes(true);
         try {
           const data = await fetchUserResumesAPI(realUserId);
-          setUserResumes(data);
-
-          if (data && data.length > 0) {
-            setSelectedResumeId(data[0].resume_id.toString());
+          console.log("✅ [JobDetail] Fetched resumes:", data);
+          if (Array.isArray(data)) {
+            setUserResumes(data);
+            if (data.length > 0) {
+              const firstId = data[0].resume_id?.toString() || "";
+              setSelectedResumeId(firstId);
+              console.log("🎯 [JobDetail] Default selected ID:", firstId);
+            }
+          } else {
+            setUserResumes([]);
           }
         } catch (error) {
-          console.error("抓取個人履歷失敗:", error);
+          console.error("❌ [JobDetail] Fetch resumes failed:", error);
           toast.error("無法載入您的履歷清單");
         } finally {
           setIsFetchingResumes(false);
         }
+      } else {
+        console.warn("⚠️ [JobDetail] No logged in user or missing ID", { isLoggedIn, realUserId });
       }
     };
 
@@ -131,9 +141,57 @@ const JobDetail = () => {
     setLetterContent(null);
     setIsCopied(false);
 
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    setLetterContent(mockCoverLetter(job?.title, job?.company));
-    setIsGenerating(false);
+    try {
+      // 🌟 依照是否為 mock 模式切換
+      if (isMockMode && isMockMode()) {
+        console.log("🛠️ [JobDetail] Mock 模式：產生模擬推薦信");
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setLetterContent(mockCoverLetter(job?.title, job?.company));
+      } else {
+        console.log("🚀 [JobDetail] 真實模式：呼叫後端 AI 生成推薦信", { 
+          job_id: id, 
+          resume_id: selectedResumeId 
+        });
+
+        // 構建 Payload
+        // 依照先前 tools.py 的邏輯，如果 id 帶有 _opt_ 則是優化履歷
+        const payload: any = { job_id: id };
+        if (selectedResumeId.includes("_opt_")) {
+          payload.optimization_id = selectedResumeId;
+        } else {
+          payload.resume_id = selectedResumeId;
+        }
+
+        const res = await generateCoverLetterAPI(payload);
+        
+        if (res && res.status === "success" && res.data) {
+          // 解析內容，後端回傳的是 Markdown 或純文字
+          // 嘗試分割主旨與內容 (假設後端回傳格式包含 "主旨：" 或 "Subject:")
+          const rawText = res.data;
+          let subject = `應徵 ${job?.company} - ${job?.title}`;
+          let body = rawText;
+
+          // 簡單的分割邏輯
+          if (rawText.includes("主旨：")) {
+            const parts = rawText.split(/\n/);
+            subject = parts[0].replace("主旨：", "").trim();
+            body = parts.slice(1).join("\n").trim();
+          }
+
+          setLetterContent({ subject, body });
+          toast.success("推薦信生成完成！");
+        } else {
+          throw new Error(res?.message || "生成失敗");
+        }
+      }
+    } catch (error: any) {
+      console.error("生成推薦信失敗:", error);
+      toast.error(`生成失敗: ${error.message || "未知錯誤"}`);
+      // 失敗時給予 Mock 作為保險 (選用，或是保持錯誤狀態)
+      // setLetterContent(mockCoverLetter(job?.title, job?.company));
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleGenerateLetterClick = () => {

@@ -117,23 +117,35 @@ def poll_gap_analysis_job(job_id):
                 pre_summary = result.get("preliminary_summary", {})
                 core_insight = pre_summary.get("core_insight", "")
                 
+                # 嘗試使用標籤拆分
                 industry_match = re.search(r'【產業洞察】[：:]?\s*(.*?)(?=【|$)', core_insight, re.S)
                 personal_match = re.search(r'【個人總結】[：:]?\s*(.*)', core_insight, re.S)
                 
                 if industry_match:
                     pre_summary["industry_insight"] = industry_match.group(1).strip()
+                    if personal_match:
+                        pre_summary["personal_summary"] = personal_match.group(1).strip()
+                    else:
+                        pre_summary["personal_summary"] = ""
                 else:
-                    pre_summary["industry_insight"] = core_insight
-                    
-                if personal_match:
-                    pre_summary["personal_summary"] = personal_match.group(1).strip()
-                else:
-                    pre_summary["personal_summary"] = ""
+                    # 備援方案：如果沒有標籤，嘗試在 "您" 或 "你" 處拆分
+                    split_match = re.search(r'(.*?[。！？](?=\s*[您你]))(.*)', core_insight, re.S)
+                    if split_match:
+                        pre_summary["industry_insight"] = split_match.group(1).strip()
+                        pre_summary["personal_summary"] = split_match.group(2).strip()
+                    else:
+                        pre_summary["industry_insight"] = core_insight
+                        pre_summary["personal_summary"] = ""
                 
                 result["preliminary_summary"] = pre_summary
 
-                # 2. 處理匹配度百分比符號移除
+                # 2. 處理匹配度百分比符號移除與 Action Plan 欄位搬移
                 gap_analysis = result.get("gap_analysis", {})
+                
+                # 將 action_plan 放入 gap_analysis 中，以符合前端 Skills.tsx 預期 (gap_analysis?.action_plan)
+                if "action_plan" in result:
+                    gap_analysis["action_plan"] = result["action_plan"]
+
                 target_pos = gap_analysis.get("target_position", {})
                 match_score = target_pos.get("match_score", "0")
                 
