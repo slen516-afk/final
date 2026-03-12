@@ -13,6 +13,7 @@ from api.recommendation import rec_bp
 from api.ocr import ocr_bp
 from api.questionnaire import questionnaire_bp
 from api.cover_letter import cover_letter_bp
+from api.gap_analysis import gap_analysis_bp
 
 try:
     from api.async_tasks import api_bp as async_tasks_bp
@@ -20,6 +21,39 @@ try:
 except ImportError as e:
     print(f"[Warning] 無法引入 async_tasks Blueprint: {e}")
     _has_async_tasks = False
+
+
+# ====== 2. Worker 狀態檢查器 ======
+def check_worker_health():
+    """
+    檢查是否有任何活躍的 Celery Worker。
+    此函數需要由 Flask Context 或已有正確 sys.path 的環境呼叫。
+    """
+    try:
+        import sys
+        import os
+        
+        # 嘗試動態補足路徑以防引入失敗 (Worker 任務依賴 llm_service/src)
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        llm_src = os.path.join(backend_dir, "service", "llm_service", "src")
+        if os.path.exists(llm_src) and llm_src not in sys.path:
+            sys.path.insert(0, llm_src)
+
+        from worker.celery_app import celery_app
+        # 嘗試獲取所有活躍節點的狀態 (改用 ping 較輕量且快，timeout 也調高一點)
+        insp = celery_app.control.inspect(timeout=2.0)
+        pings = insp.ping()
+        
+        if pings:
+            nodes = list(pings.keys())
+            print(f"✅ [Worker] 偵測到 {len(pings)} 個活躍節點: {nodes}")
+            return True, nodes
+        else:
+            print("🚨 [Worker] 警告：目前沒有任何活躍的 Celery Worker 在線！非同步任務將無法執行。")
+            return False, []
+    except Exception as e:
+        print(f"❌ [Worker] 無法與 Broker 通訊或檢查失敗: {e}")
+        return False, []
 
 # ====== 3. OCR Service 引入 (防彈版) ==========================
 # 🌟 1. 先宣告所有變數，徹底消滅 NameError！
@@ -52,6 +86,10 @@ def create_app():
 # ====== 5. OCR 模型初始化 =======================================
     print("------------------------------------------------")
     print("[System] 正在初始化 Flask 伺服器...")
+    
+    # 檢查 Worker 狀態
+    worker_ok, _ = check_worker_health()
+    app.config["WORKER_ONLINE"] = worker_ok
 
     try:
         # ✅ 優先使用新版：ResumeOCRService
@@ -99,6 +137,7 @@ def create_app():
 
 # 4. 分析報告
     app.register_blueprint(analysis_bp, url_prefix='/api/analysis')
+    app.register_blueprint(gap_analysis_bp, url_prefix='/api')
     app.register_blueprint(ocr_bp, url_prefix='/api/ocr')
     app.register_blueprint(cover_letter_bp, url_prefix="/api/cover_letter")
 
@@ -116,10 +155,15 @@ def create_app():
 # ====== 7. 系統健康檢查 ================================================
     @app.route("/health", methods=["GET"])
     def health_check():
+        worker_ok, nodes = check_worker_health()
         return jsonify({
             "status": "healthy",
             "service": "Career Pilot API",
             "ocr_loaded": "ready" if app.config.get("OCR_HANDLER") else "offline",
+            "worker": {
+                "status": "online" if worker_ok else "offline",
+                "nodes": nodes
+            }
         }), 200
 
     return app

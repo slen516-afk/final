@@ -6,7 +6,10 @@ from worker.tasks import (
     process_course_recommendation,
     analyze_resume_async,
     test_connection,
-    process_cover_letter
+    process_cover_letter,
+    process_resume_analysis,
+    process_resume_optimization,
+    process_project_recommendation
 )
 from celery.result import AsyncResult
 
@@ -15,6 +18,9 @@ api_bp = Blueprint('api', __name__)
 # 任務map，如需擴充由此添加
 TASK_MAP = {
     "career_analysis": process_career_analysis,
+    "resume_analysis": process_resume_analysis,
+    "resume_opt": process_resume_optimization,
+    "project_rec": process_project_recommendation,
     "job_matching": process_job_matching,
     "course_recommendation": process_course_recommendation,
     "resume_ocr": analyze_resume_async,  
@@ -41,7 +47,11 @@ def submit_task():
         
         if task_type == "career_analysis":
             # 參數: user_id: str, survey_json: str
-            task = task_func.delay(user_id, payload.get('survey_json'))
+            task = task_func.delay(str(user_id), payload.get('survey_json'))
+            
+        elif task_type in ["resume_analysis", "resume_opt", "project_rec"]:
+            # 外部 LLM 分析模型任務參數: user_id: str
+            task = task_func.delay(str(user_id))
             
         elif task_type == "job_matching":
             # 參數: user_id: int, filters: dict, document_id: int, source_type: str
