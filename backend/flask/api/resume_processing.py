@@ -267,30 +267,6 @@ def save_processed_resume():
         response = supabase.table('resume').insert(insert_data).execute()
         print(f"✅ [System] 履歷 '{resume_name}' 已成功存入 Supabase!")
 
-        # 6. 順便更新 user_profile 資料
-        try:
-            location_parts = [
-                resume_data.get('addressCity', ''),
-                resume_data.get('addressDistrict', ''),
-                resume_data.get('addressDetail', '')
-            ]
-            location = "".join([p for p in location_parts if p])
-            
-            profile_update_data = {}
-            if resume_data.get('name'):
-                profile_update_data['full_name'] = resume_data['name']
-            if location:
-                profile_update_data['location'] = location
-            if resume_data.get('education'):
-                profile_update_data['education_background'] = resume_data['education']
-            
-            if profile_update_data:
-                profile_update_data['updated_at'] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S+00")
-                supabase.table('user_profile').update(profile_update_data).eq("user_id", user_id).execute()
-                print(f"✅ [System] User {user_id} 的 user_profile 已同步更新!")
-        except Exception as profile_e:
-            print(f"⚠️ [System] 同步更新 user_profile 發生錯誤: {profile_e}")
-
         # ⚠️ 這裡一定要有 return！
         return jsonify({
             "status": "success", 

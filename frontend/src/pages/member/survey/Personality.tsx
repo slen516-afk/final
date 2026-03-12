@@ -43,7 +43,7 @@ const clearProgress = () => {
 const RESULT_KEY = 'career-survey-done';
 
 const Personality = () => {
-  const { isPersonalityQuizDone, setIsPersonalityQuizDone, isPersonalityTestDone, isResumeUploaded } = useAppState();
+  const { isPersonalityQuizDone, setIsPersonalityQuizDonee, isPersonalityTestDone, isResumeUploaded } = useAppState();
   const navigate = useNavigate();
 
   const [progress, setProgress] = useState<SurveyProgress>(loadProgress);
