@@ -52,7 +52,7 @@ class TargetPosition(BaseModel):
         "前端工程師", "後端工程師", "全端工程師", 
         "資料科學家/數據分析師", "AI 工程師", "DevOps/SRE 工程師"
     ] = Field(description=f"""
-    使用者的目標職位名稱。
+    使用者的目標職位名稱，必須與使用者[問卷資料] "q17_target_role" 一致，並正確轉換為{STANDARD_ROLES}清單中的字串。
     1. **標準化命名**：
         - [職位名稱] 必須嚴格從此清單選取：{STANDARD_ROLES}。
         - 不可以使用 "後端軟體工程師" (多了軟體二字) 或 "Backend Engineer" (英文)。
