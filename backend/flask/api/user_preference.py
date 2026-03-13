@@ -14,28 +14,29 @@ from core.supabase_client import supabase
 user_preference_bp = Blueprint('user_preference', __name__)
 
 
-def _create_survey_job(user_id: str, survey_data: dict) -> str:
+def _submit_survey_to_celery(user_id: str, survey_data: dict) -> str:
+    """
+    將問卷資料提交給 Celery 進行非同步分析。
+    """
+    import uuid
+    from datetime import datetime, timezone
+    from worker.tasks import process_career_analysis
+    
     job_id = f"job_{uuid.uuid4().hex[:12]}"
     now = datetime.now(timezone.utc).isoformat()
 
-    # 存狀態到 Redis Hash
+    # 1. 在 Redis 紀錄 Job 初始狀態 (為了讓 poll_survey_job 能抓到)
     redis_client.hset(f"job:{job_id}", mapping={
-        "status": "queued",
+        "status": "processing",
         "user_id": user_id,
-        "survey_data": json.dumps(survey_data, ensure_ascii=False),
         "result": "",
         "error": "",
-        "retry_count": "0",
         "created_at": now,
         "updated_at": now,
     })
 
-    # XADD 到 cv_jobs stream
-    redis_client.xadd(STREAM_NAME, {
-        "job_id": job_id,
-        "task_type": "survey_analysis",
-        "retry_count": "0",
-    })
+    # 2. 觸發 Celery 任務
+    process_career_analysis.delay(user_id, json.dumps(survey_data), job_id)
 
     return job_id
 
@@ -80,11 +81,11 @@ def create_career_survey():
                 return jsonify({'error': f'Missing module in DB: {module}'}), 400
 
         # 將 DB 取得的 data 放進 job
-        job_id = _create_survey_job(db_user_id, data)
+        job_id = _submit_survey_to_celery(db_user_id, data)
 
         return jsonify({
             'job_id': job_id,
-            'status': 'queued',
+            'status': 'processing',
         }), 202
 
     except Exception as e:

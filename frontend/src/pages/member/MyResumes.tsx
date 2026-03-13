@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Download, Trash2, Eye, Loader2, AlertTriangle } from 'lucide-react';
+import { FileText, Download, Trash2, Eye, Loader2, AlertTriangle, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -158,15 +158,25 @@ const MyResumes = () => {
                       <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 md:py-4 gap-3">
 
                         <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
-                          <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                          <div className={`h-9 w-9 md:h-10 md:w-10 rounded-lg flex items-center justify-center shrink-0 ${resume.is_optimized ? 'bg-amber-100' : 'bg-primary/10'}`}>
+                            {resume.is_optimized ? (
+                              <Sparkles className="h-4 w-4 md:h-5 md:w-5 text-amber-600" />
+                            ) : (
+                              <FileText className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm md:text-base truncate">
-                              {resume.is_optimized ? `${resume.resume_name}` : resume.resume_name || resume.name || '未命名履歷'}
-                              <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-primary/10 text-primary rounded capitalize">
-                                {resume.resume_type === 'OPTIMIZATION' || resume.is_optimized ? '優化版' : '原版'}
-                              </span>
+                            <p className="font-medium text-sm md:text-base truncate flex items-center gap-2">
+                              {resume.resume_name || resume.name || '未命名履歷'}
+                              {resume.is_optimized ? (
+                                <span className="text-[10px] px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-bold shadow-sm">
+                                  優化版
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-500 rounded font-medium">
+                                  原版
+                                </span>
+                              )}
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
                               建立於 {resume.created_at ? new Date(resume.created_at).toLocaleString('zh-TW') : '剛剛'}

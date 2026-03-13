@@ -84,6 +84,41 @@ class ActionPlan(BaseModel):
 class PreliminarySummary(BaseModel):
     core_insight: str = Field(description="高階職涯顧問的深度洞察（約150-200字）。請採用結構化敘述：1. 【產業洞察】：簡單描繪目標職位的市場趨勢與技術演進。2. 【個人總結】：精闢點出使用者的核心潛力與潛在隱憂。")
 
+class LearningResource(BaseModel):
+    title: str = Field(description="課程或資源名稱")
+    description: str = Field(description="資源摘要說明")
+    tags: List[str] = Field(description="標籤 (如: 'React', '進階')")
+    link: str = Field(description="資源連結 URL")
+    rating: float = Field(description="評分 (0-5.0)")
+    review_count: int = Field(description="評價人數")
+    level: str = Field(description="難度等級 (Beginner, Intermediate, Advanced)")
+    course_type: str = Field(description="類型 (Course, Specialization, Project)")
+    duration: str = Field(description="預計時長")
+    priority: int = Field(description="建議權重 (1-5)")
+    strategy_reason: str = Field(description="推薦此資源的理由")
+
+class SideProjectPhase(BaseModel):
+    phase_name: str = Field(description="階段名稱")
+    goal: str = Field(description="階段目標")
+    tasks: List[str] = Field(description="具體任務清單")
+    resume_value: str = Field(description="此階段完成後，可寫入履歷的價值描述")
+
+class SideProject(BaseModel):
+    name: str = Field(description="專案名稱")
+    name_en: str = Field(description="英文名稱 (選填)", default="")
+    capability_gaps: List[str] = Field(description="補強的能力缺口")
+    technologies: List[str] = Field(description="使用的技術棧")
+    phases: List[SideProjectPhase] = Field(description="專案分階段規劃")
+    overall_resume_impact: str = Field(description="對履歷的整體影響")
+    difficulty: int = Field(description="難度 (1-5)")
+    difficulty_label: str = Field(description="難度標籤 (如: 中等)")
+    estimated_duration: str = Field(description="預計週期 (如: 12 週)")
+    difficulty_note: str = Field(description="難度說明")
+
+class LearningStrategy(BaseModel):
+    overall_strategy: str = Field(description="整體學習策略建議")
+    milestones: List[str] = Field(description="關鍵里程碑")
+
 # 最終輸出的完整報告結構
 class CareerReport(BaseModel):
     report_metadata: ReportMetadata = Field(description="報告的元數據")
@@ -91,3 +126,6 @@ class CareerReport(BaseModel):
     radar_chart: RadarChart
     gap_analysis: GapAnalysis
     action_plan: ActionPlan
+    learningStrategy: Optional[LearningStrategy] = None
+    learningResources: Optional[List[LearningResource]] = None
+    sideProjects: Optional[List[SideProject]] = None

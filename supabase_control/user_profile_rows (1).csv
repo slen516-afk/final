@@ -1,0 +1,51 @@
+profile_id,user_id,github_repo,full_name,location,years_of_experience,current_position,education_background,privacy_settings,updated_at,avatar_url
+1,1,https://github.com/chen-hao-dev,陳浩宇 (Hao-Yu Chen),Taipei,5,Senior Backend Engineer,國立台灣大學 資工系 學士,,2026-01-28 14:20:05+00,
+2,2,https://github.com/linda-lin-tech,林雅婷 (Linda Lin),Hsinchu,3,Frontend Developer,國立陽明交通大學 軟體工程 碩士,,2026-01-30 09:12:33+00,
+3,3,https://github.com/wang-tech-pro,王俊傑 (Jason Wang),New Taipei,8,System Architect,國立成功大學 電機工程 博士,,2026-01-15 11:45:10+00,
+4,4,https://github.com/sarah-lee-code,李曉雯 (Sarah Lee),Taichung,2,Junior Fullstack Developer,淡江大學 資訊管理系 學士,,2026-01-29 22:10:15+00,
+5,5,https://github.com/mike-hung-dev,洪明德 (Michael Hung),Taipei,10,DevOps Lead,國立臺灣科技大學 電子工程 碩士,,2026-01-27 18:30:45+00,
+6,6,https://github.com/chia-ling-dev,張嘉玲 (Chia-Ling Chang),Kaohsiung,4,Mobile App Developer,AppWorks School 培訓班,,2026-01-20 07:05:22+00,
+7,7,https://github.com/kevin-wu-tech,吳冠宇 (Kevin Wu),Taipei,6,Technical Lead,國立清華大學 資工 碩士,,2026-01-25 13:14:12+00,
+8,8,https://github.com/nina-chen-tw,陳怡君 (Nina Chen),Tainan,1,Intern Software Engineer,國立中山大學 資工系 在學,,2026-01-30 00:45:55+00,
+9,9,https://github.com/alex-tsai-tech,蔡志強 (Alex Tsai),Hsinchu,7,Cloud Solutions Architect,元智大學 資訊工程 碩士,,2026-01-10 15:20:30+00,
+10,10,https://github.com/david-liu-remote,劉家豪 (David Liu),Taoyuan,12,Principal Engineer,國立台灣大學 資工系 碩士,,2026-01-29 19:05:11+00,
+11,11,https://github.com/alex-tsai-tech,"蔡志強 (Alex Tsai) ",Hsinchu,4,Cloud Solutions Architect,元智大學 資訊工程 碩士,,2026-02-20 12:27:19+00,
+12,12,https://github.com/wang-tech-pro,王俊傑 (Jason Wang),New Taipei,4,Senior Software Engineer,"國立成功大學, 電機工程, 博士",,2026-02-20 12:38:30+00,
+13,13,https://github.com/nina-chen-tw,陳怡君(Nina Chen),Tainan,0,Intern Software Engineer,"國立中山大學, 資訊工程學系, 在學 (預計 2025 畢業)",,2026-02-20 12:47:05+00,
+14,14,https://github.com/mike-hung-dev,洪明德 (Michael Hung),Taipei,10,DevOps Lead,"國立臺灣科技大學, 電子工程, 碩士, 2013",,2026-02-20 13:02:56+00,
+15,15,https://github.com/sarah-lee-dev,李曉雯 (Sarah Lee),Taiwan,2,Junior Fullstack Developer," 逢甲大學, 資訊工程學系, 學士",,2026-02-20 13:13:22+00,
+16,16,https://github.com/jason-data-eng,吳建宏 (Jason Wu),Taipei,0,Data Engineer,"國立中央大學, 資訊管理學系, 碩士, 2020 畢業","{""privacy"":""private""}",2026-02-20 13:35:03+00,
+17,17,https://github.com/chris-ios-dev,林克里斯 (Chris Lin),Kaohsiung,2,iOS Developer,"國立高雄科技大學, 資訊工程學系, 學士, 2021 畢業","{""privacy"":""public""}",2026-02-20 13:43:14+00,
+18,18,https://github.com/ethan-golang,鄭宇軒 (Ethan Cheng),Taipei,4,Senior Backend Engineer,"國立陽明交通大學, 資訊工程學系, 碩士, 2019","{""privacy"":""public""}",2026-02-20 13:53:12+00,
+19,19,https://github.com/joanne-chao-qa,趙佳穎 (Joanne Chao),"Taipei, Taiwan",3,QA Automation Engineer,"國立中央大學, 資訊管理學系, 學士, 2020 畢業","{""privacy"":""public""}",2026-02-20 14:01:39+00,
+20,20,https://github.com/dlin-backend-demo,林大衛 (David Lin),"Taipei, Taiwan",0,Backend Engineer,"國立臺灣科技大學, 資訊管理系, 學士, 2024 畢業","{""privacy"":""public""}",2026-02-20 14:09:05+00,
+26,37,,林雅婷,台北市,0,應屆畢業生,國立台灣大學 生物醫學研究所 學士，主修生物統計與基因體學，畢業論文：以 R 語言分析 GWAS 資料之方法比較,,2026-03-04 09:00:00+00,
+27,38,,陳怡君,新北市,2,數位行銷企劃,輔仁大學 行銷管理學系 學士，工作 2 年，現職數位行銷企劃，自學 HTML/CSS 約 3 個月,,2026-03-04 09:00:00+00,
+28,39,,王志豪,桃園市,0,Bootcamp 學員,私立大學 體育休閒系 學士，服完兵役後參加為期 3 個月軟體工程師 Bootcamp，目前學習 Python 與 Flask 基礎,,2026-03-04 09:00:00+00,
+29,40,,李佳穎,台中市,1,財務助理,逢甲大學 會計學系 學士，畢業後任職財務助理 1 年，熟悉 Excel 進階操作與樞紐分析表，無程式語言開發經驗,,2026-03-04 09:00:00+00,
+30,41,https://github.com/test-designer-wu,吳宜蓁,台北市,1,UI 設計師,實踐大學 視覺傳達設計系 學士，現任 UI 設計師 1 年，熟悉 Figma，對 CSS 與 JavaScript 有入門概念，無完整開發經驗,,2026-03-04 09:00:00+00,
+31,42,https://github.com/kiki,歐琪琪(Kiki),新北市,0,麵包店員工,"國立中興大學, 森林學系, 學士",,2026-03-04 13:52:24.608545+00,https://nyslsqlgsavvfwiducdu.supabase.co/storage/v1/object/public/avatars/1d3220ef-9f49-4ce7-98fe-bbafdccf29fa_518837a58367459e9a32905955b5ca97.jpg
+32,43,,bot_460124b5,,,,,,2026-03-04 11:34:13.050101+00,
+33,44,,bot_8566978c,,,,,,2026-03-04 11:35:26.110618+00,
+34,45,,bot_af028c4b,,,,,,2026-03-04 11:36:08.571462+00,
+35,46,,bot_7b2b94f0,,,,,,2026-03-04 11:37:05.576714+00,
+36,47,,bot_8acc3caf,,,,,,2026-03-04 11:37:44.148123+00,
+37,48,,bot_5ac8335e,,,,,,2026-03-04 11:38:59.23792+00,
+38,49,,bot_abe2cade,,,,,,2026-03-04 11:40:44.948055+00,
+39,50,,bot_9d7623fe,,,,,,2026-03-04 11:41:25.694476+00,
+40,51,,bot_8cc546fd,,,,,,2026-03-04 11:42:18.599411+00,
+41,52,,bot_d7eb2e72,,,,,,2026-03-04 11:57:10.578931+00,
+42,53,,bot_61d3143f,,,,,,2026-03-04 11:58:02.354792+00,
+43,54,,bot_ecbf74bc,,,,,,2026-03-04 11:58:34.378545+00,
+44,55,,bot_6011aad2,,,,,,2026-03-04 12:00:00.726234+00,https://nyslsqlgsavvfwiducdu.supabase.co/storage/v1/object/public/avatars/47df8d09-eaa0-4713-a5e4-61887097aeb7_1189174cd3704c789036e831daea32c1.png
+45,56,,bot_1acc33d6,,,,,,2026-03-04 12:47:40.700729+00,https://nyslsqlgsavvfwiducdu.supabase.co/storage/v1/object/public/avatars/fc344e6c-d973-4af8-8224-8d547390e3e0_88bc26a1b4c64a86882676ac16280426.png
+46,57,,bot_34c06446,,,,,,2026-03-04 12:49:40.235482+00,https://nyslsqlgsavvfwiducdu.supabase.co/storage/v1/object/public/avatars/0aa6c88a-94ed-4749-9064-4403f88801d4_5fefd7094de9472f9f75df173469de5d.png
+47,58,,bot_56bed655,,,,,,2026-03-04 12:52:16.845673+00,https://nyslsqlgsavvfwiducdu.supabase.co/storage/v1/object/public/avatars/e3e2bc80-8a37-4f13-a2ad-0c43418fcebc_bf195e13439a42ed97b86ec6d996e1c7.png
+48,59,,ab c,,,,,,2026-03-05 02:25:48.556699+00,
+49,60,,bot_00bc111b,,,,,,2026-03-06 02:59:38.914757+00,https://nyslsqlgsavvfwiducdu.supabase.co/storage/v1/object/public/avatars/6cfa39da-e94f-47bf-9584-cce95949829e_99f4f44c990945589a797b72ac4dd2a0.png
+50,61,,bot_6b2bb3e4,,,,,,2026-03-06 03:00:52.438308+00,https://nyslsqlgsavvfwiducdu.supabase.co/storage/v1/object/public/avatars/af0f37e7-c2ad-4391-8853-04678b622925_9a060f61af7e4080bdfd82e24814725e.png
+51,62,,bot_8b89af82,,,,,,2026-03-06 03:02:17.536689+00,https://nyslsqlgsavvfwiducdu.supabase.co/storage/v1/object/public/avatars/496eb53f-0f12-44c9-ad7c-4dac759bcd96_6b963b78d3564805a0be0bb2312a9166.png
+52,63,,Ryan,,,,,,2026-03-07 02:43:00.652104+00,
+53,67,,gap_bot_f3ed33f3,,,,,,2026-03-10 08:40:18.349489+00,
+54,68,,gap_bot_681070ef,,,,,,2026-03-10 08:41:29.36111+00,
+55,69,,gap_bot_1a08913c,,,,,,2026-03-10 08:43:07.492831+00,

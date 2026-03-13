@@ -62,6 +62,8 @@ const AuthModal = ({ open, onOpenChange }: AuthModalProps) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     setIsLoggedIn(true);
+    localStorage.setItem('accessToken', 'mock-token');
+    localStorage.setItem('token', 'mock-token');
 
     // 🌟 4. Google 模擬登入也要存 user！
     setUser({

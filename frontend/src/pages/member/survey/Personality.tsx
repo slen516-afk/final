@@ -15,6 +15,7 @@ import CheckboxQuestion from '@/components/survey/questions/CheckboxQuestion';
 import RankQuestion from '@/components/survey/questions/RankQuestion';
 import TextQuestion from '@/components/survey/questions/TextQuestion';
 import CategorizedSkillSelector from '@/components/survey/questions/CategorizedSkillSelector';
+import { saveQuestionnaireAPI } from '@/services/api';
 
 const STORAGE_KEY = 'career-survey-progress';
 
@@ -43,7 +44,7 @@ const clearProgress = () => {
 const RESULT_KEY = 'career-survey-done';
 
 const Personality = () => {
-  const { isPersonalityQuizDone, setIsPersonalityQuizDonee, isPersonalityTestDone, isResumeUploaded } = useAppState();
+  const { isPersonalityQuizDone, setIsPersonalityQuizDone, isPersonalityTestDone, isResumeUploaded } = useAppState();
   const navigate = useNavigate();
 
   const [progress, setProgress] = useState<SurveyProgress>(loadProgress);
@@ -157,13 +158,33 @@ const Personality = () => {
       if (!finalAnswers['Q8']) finalAnswers['Q8'] = '';
     }
 
-    // Simulate analysis
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const payload: any = {
+        module_a: {},
+        module_b: {},
+        module_c: {},
+        module_d: {},
+      };
 
-    setIsAnalyzing(false);
-    setShowResult(true);
-    setIsPersonalityQuizDone(true);
-    localStorage.setItem(RESULT_KEY, 'true');
+      surveyModules.forEach((m) => {
+        const modKey = m.id.toLowerCase();
+        m.questions.forEach((q) => {
+          const val = finalAnswers[q.id];
+          payload[modKey][q.id] = (val === undefined || val === null) ? '' : val;
+        });
+      });
+
+      await saveQuestionnaireAPI(payload);
+      
+      setIsAnalyzing(false);
+      setShowResult(true);
+      setIsPersonalityQuizDone(true);
+      localStorage.setItem(RESULT_KEY, 'true');
+    } catch (error) {
+      console.error('Failed to save questionnaire:', error);
+      setIsAnalyzing(false);
+      alert('問卷儲存失敗，請檢查網路連線或稍後再試。');
+    }
   };
 
   const handleReset = () => {

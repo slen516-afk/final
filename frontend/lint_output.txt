@@ -1,0 +1,164 @@
+
+> vite_react_shadcn_ts@0.0.0 lint
+> eslint .
+
+
+D:\AIPE\FP\Code\final\frontend\src\components\auth\AuthModal.tsx
+  49:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\components\resume\TemplateThumbnails.tsx
+  246:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\components\survey\EmbeddedPreferenceSurvey.tsx
+  23:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  30:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:47  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\components\ui\badge.tsx
+  29:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\components\ui\button.tsx
+  47:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\components\ui\command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+D:\AIPE\FP\Code\final\frontend\src\components\ui\form.tsx
+  129:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\components\ui\navigation-menu.tsx
+  111:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\components\ui\sidebar.tsx
+  636:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\components\ui\sonner.tsx
+  27:19  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\components\ui\textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+D:\AIPE\FP\Code\final\frontend\src\components\ui\toggle.tsx
+  37:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\contexts\AppContext.tsx
+    8:18  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   45:11  error    Empty block statement                                                                                                           no-empty
+  108:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\contexts\ResumeContext.tsx
+  52:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\AIPE\FP\Code\final\frontend\src\mocks\resumes.ts
+  67:82  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  76:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\pages\analysis\Skills.tsx
+  126:13  error  Empty block statement                     no-empty
+  133:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  134:76  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  135:74  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  232:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  252:84  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  253:76  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  266:57  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  274:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\pages\auth\RegisterForm.tsx
+  34:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\pages\jobs\JobDetail.tsx
+  38:50  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  66:45  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  97:6   warning  React Hook useEffect has a missing dependency: 'location.state'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\AIPE\FP\Code\final\frontend\src\pages\jobs\Recommendations.tsx
+   84:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\pages\jobs\SkillSearch.tsx
+  70:9  warning  The 'subcategories' logical expression could make the dependencies of useCallback Hook (at line 92) change on every render. To fix this, wrap the initialization of 'subcategories' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+D:\AIPE\FP\Code\final\frontend\src\pages\member\MemberCenter.tsx
+   53:21  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+   69:6   warning  React Hook useEffect has a missing dependency: 'setIsLoggedIn'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   99:21  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  114:37  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\pages\member\MyResumes.tsx
+  16:56  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  19:42  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  23:56  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  34:6   warning  React Hook useEffect has a missing dependency: 'loadResumes'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  40:22  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  60:34  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  73:38  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\pages\member\UploadResume.tsx
+  131:35  error  Expected an assignment or function call and instead saw an expression  @typescript-eslint/no-unused-expressions
+  620:21  error  Unexpected any. Specify a different type                               @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\pages\member\survey\Personality.tsx
+   23:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:11  error  Empty block statement                     no-empty
+   87:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:73  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\pages\member\survey\PersonalityTest.tsx
+  31:11  error  Empty block statement  no-empty
+  57:13  error  Empty block statement  no-empty
+
+D:\AIPE\FP\Code\final\frontend\src\pages\resume\Optimize.tsx
+   18:39  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   52:41  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  108:60  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  109:52  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  110:48  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  111:60  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  135:47  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  135:55  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  145:15  error  'flat' is never reassigned. Use 'const' instead  prefer-const
+  145:21  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  149:31  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  288:30  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  335:41  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  416:68  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  416:76  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  427:69  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  427:77  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  444:69  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  444:77  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  470:79  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  470:87  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  499:75  error  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\services\api.ts
+   26:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   50:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   60:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   70:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  111:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\services\memberService.ts
+  18:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\test\gap_analysis_connection.test.ts
+  34:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\AIPE\FP\Code\final\frontend\src\utils\textFormat.ts
+  52:22  error  Unnecessary escape character: \/  no-useless-escape
+  52:34  error  Unnecessary escape character: \/  no-useless-escape
+
+D:\AIPE\FP\Code\final\frontend\tailwind.config.ts
+  119:13  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+✖ 94 problems (80 errors, 14 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { getJobDetailAPI, fetchUserResumesAPI } from '@/services/api';
+import { getJobDetailAPI, fetchUserResumesAPI, generateCoverLetterAPI } from '@/services/api';
+import { useAsyncTask } from '@/hooks/useAsyncTask';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppState } from '@/contexts/AppContext';
@@ -28,7 +29,8 @@ const JobDetail = () => {
 
   // 🌟 1. 從全域狀態拿到你的真實 user 資料
   const { isLoggedIn, user, isMockMode } = useAppState();
-  const realUserId = user?.user_id;
+  // 🛡️ 防護：相容不同開發人員定義的欄位名 (user_id 或 id)
+  const realUserId = user?.user_id || user?.id;
 
   const [isLoading, setIsLoading] = useState(true);
   const [job, setJob] = useState<RecommendedJobDetail | null>(null);
@@ -99,21 +101,30 @@ const JobDetail = () => {
   // 🌟 3. 當使用者打開側邊欄時，獲取履歷清單
   useEffect(() => {
     const loadMyResumes = async () => {
+      console.log("🔍 [JobDetail] loadMyResumes triggered", { isLoggedIn, realUserId, drawerOpen });
       if (isLoggedIn && realUserId) {
         setIsFetchingResumes(true);
         try {
           const data = await fetchUserResumesAPI(realUserId);
-          setUserResumes(data);
-
-          if (data && data.length > 0) {
-            setSelectedResumeId(data[0].resume_id.toString());
+          console.log("✅ [JobDetail] Fetched resumes:", data);
+          if (Array.isArray(data)) {
+            setUserResumes(data);
+            if (data.length > 0) {
+              const firstId = data[0].resume_id?.toString() || "";
+              setSelectedResumeId(firstId);
+              console.log("🎯 [JobDetail] Default selected ID:", firstId);
+            }
+          } else {
+            setUserResumes([]);
           }
         } catch (error) {
-          console.error("抓取個人履歷失敗:", error);
+          console.error("❌ [JobDetail] Fetch resumes failed:", error);
           toast.error("無法載入您的履歷清單");
         } finally {
           setIsFetchingResumes(false);
         }
+      } else {
+        console.warn("⚠️ [JobDetail] No logged in user or missing ID", { isLoggedIn, realUserId });
       }
     };
 
@@ -121,19 +132,73 @@ const JobDetail = () => {
       loadMyResumes();
     }
   }, [drawerOpen, isLoggedIn, realUserId]);
+  // 🌟 AI Cover Letter 任務監聽
+  const { runTask: runGenerateCoverLetter, status: genStatus, result: genResult, progress: genProgress } = useAsyncTask();
+
+  useEffect(() => {
+     if (genStatus === 'SUCCESS' && genResult) {
+          // 解析內容，後端可能回傳物件 (結構化) 或純文字
+          let subject = `應徵 ${job?.company} - ${job?.title}`;
+          let body = "";
+
+          if (typeof genResult === 'object' && genResult !== null) {
+            // 如果是物件，直接取值
+            subject = genResult.subject || subject;
+            body = genResult.content || genResult.body || "";
+          } else if (typeof genResult === 'string') {
+            // 如果是純文字，嘗試解析
+            body = genResult;
+            if (genResult.includes("主旨：") || genResult.includes("Subject:")) {
+              const parts = genResult.split(/\n/);
+              subject = parts[0].replace(/主旨：|Subject:/, "").trim();
+              body = parts.slice(1).join("\n").trim();
+            }
+          }
+
+          setLetterContent({ subject, body });
+          toast.success("推薦信生成完成！");
+          setIsGenerating(false);
+     } else if (genStatus === 'FAILURE') {
+          toast.error("推薦信生成失敗，請重試");
+          setIsGenerating(false);
+     }
+  }, [genStatus, genResult, job]);
 
   const handleStartGeneration = async () => {
     if (!selectedResumeId) {
       toast.error("請先選擇一份履歷");
       return;
     }
+    
+    // 🌟 依照是否為 mock 模式切換
+    if (isMockMode && isMockMode()) {
+        console.log("🛠️ [JobDetail] Mock 模式：產生模擬推薦信");
+        setIsGenerating(true);
+        setLetterContent(null);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setLetterContent(mockCoverLetter(job?.title, job?.company));
+        setIsGenerating(false);
+        return;
+    }
+
     setIsGenerating(true);
     setLetterContent(null);
     setIsCopied(false);
 
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    setLetterContent(mockCoverLetter(job?.title, job?.company));
-    setIsGenerating(false);
+    console.log("🚀 [JobDetail] 真實模式：呼叫後端 AI 生成推薦信", { 
+        job_id: id, 
+        resume_id: selectedResumeId 
+    });
+
+    // 構建 Payload
+    const payload: any = { job_id: id };
+    if (selectedResumeId.includes("_opt_")) {
+        payload.optimization_id = selectedResumeId;
+    } else {
+        payload.resume_id = selectedResumeId;
+    }
+
+    runGenerateCoverLetter('cover_letter', payload);
   };
 
   const handleGenerateLetterClick = () => {
@@ -268,7 +333,12 @@ const JobDetail = () => {
               </Button>
             </motion.div>
           ) : isGenerating ? (
-            <AILoadingSpinner message="正在撰寫個人化推薦信..." />
+            <div className="space-y-4">
+               <AILoadingSpinner message={`正在撰寫個人化推薦信... ${genProgress}%`} />
+               <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                   <motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${genProgress}%` }} />
+               </div>
+            </div>
           ) : letterContent ? (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
               <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 text-[10px] text-primary flex items-center gap-2">

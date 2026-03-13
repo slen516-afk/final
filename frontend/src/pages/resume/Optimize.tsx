@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAsyncTask } from '@/hooks/useAsyncTask';
 import { FileText, Download, Save, Palette, Briefcase, GraduationCap, Mail, Phone, User, Star, Sparkles, ChevronLeft, Target, Check, CheckCircle, AlertTriangle, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import logoCat from '@/assets/logocat.png';
 import { templateThumbnailComponents } from '@/components/resume/TemplateThumbnails';
 import { mockResumeData } from '@/mocks/resumes';
+import { exportResumeToPdf } from '@/utils/pdfExport';
+import { toast } from 'sonner';
 
 type Phase = 'initial' | 'analyzing' | 'suggestions' | 'templates' | 'generating' | 'result';
 
@@ -121,6 +124,7 @@ const Optimize = () => {
 
   useEffect(() => {
     const fetchRealDatabaseResume = async () => {
+      console.log("🚀 Optimize 頁面載入中 (版本 1.1) - 使用 /save 介面");
       if (!realUserId) {
         setAccessAlertMessage('找不到使用者 ID，請重新登入');
         setShowAccessAlert(true);
@@ -184,16 +188,74 @@ const Optimize = () => {
     fetchRealDatabaseResume();
   }, [realUserId]);
 
+  const { runTask: runAnalyze, status: analyzeStatus, result: analyzeResult, progress: analyzeProgress } = useAsyncTask();
+  const { runTask: runOptimize, status: optimizeStatus, result: optimizeResult, progress: optimizeProgress } = useAsyncTask();
+
+  // 🌟 AI 評估結果監聽
+  useEffect(() => {
+    if (analyzeStatus === 'SUCCESS' && analyzeResult) {
+      console.log("✅ CrewAI 評估完成，收到真實報告:", analyzeResult);
+      setDiagnosticResult(analyzeResult);
+      setPhase('suggestions');
+    } else if (analyzeStatus === 'FAILURE') {
+       alert("AI 分析失敗，嘗試重試或稍後再試");
+       const fallbackReport = generateDynamicDiagnosis(originalData);
+       setDiagnosticResult(fallbackReport);
+       setPhase('suggestions');
+    }
+  }, [analyzeStatus, analyzeResult, originalData]); // Added originalData to dependencies
+
+  // 🌟 AI 優化結果監聽 (調整：支援提早觸發與條件跳轉)
+  useEffect(() => {
+    if (optimizeStatus === 'SUCCESS' && optimizeResult) {
+        console.log("✅ AI 全文優化完成，收到全新履歷:", optimizeResult);
+        setResumeData((prev: any) => ({
+          ...prev,
+          professional_summary: optimizeResult.professional_summary || '',
+          professional_experience: Array.isArray(optimizeResult.professional_experience)
+            ? optimizeResult.professional_experience.join('\n\n')
+            : optimizeResult.professional_experience || prev.professional_experience,
+          core_skills: Array.isArray(optimizeResult.core_skills)
+            ? optimizeResult.core_skills.join(', ')
+            : optimizeResult.core_skills || prev.core_skills,
+          projects: Array.isArray(optimizeResult.projects)
+            ? optimizeResult.projects.join('\n\n')
+            : optimizeResult.projects || prev.projects,
+          education: Array.isArray(optimizeResult.education)
+            ? optimizeResult.education.join('\n\n')
+            : optimizeResult.education || prev.education,
+          autobiography: optimizeResult.autobiography || prev.autobiography
+        }));
+        
+        // 🌟 只有正在「生成中」畫面等待的人，才自動推送到結果頁
+        if (phase === 'generating') {
+          setPhase('result');
+        }
+    } else if (optimizeStatus === 'FAILURE') {
+         if (phase === 'generating') {
+           alert("AI 生成失敗，將使用原始資料渲染樣板！");
+           setPhase('result');
+         }
+    }
+  }, [optimizeStatus, optimizeResult, phase]);
+
   const handleSaveOptimization = async () => {
     try {
+      if (!realLatestResume?.resume_id) {
+        toast.error('找不到原始履歷 ID，無法儲存優化結果');
+        return;
+      }
+
       const payload = {
         user_id: realUserId,
-        original_resume_id: realLatestResume?.resume_id || realLatestResume?.id,
+        original_resume_id: realLatestResume.resume_id,
         template_id: selectedTemplate,
-        optimized_data: resumeData,
+        optimized_data: {
+          ...resumeData,
+        },
       };
 
-      console.log("🚀 準備存入 resume_optimization 的資料:", payload);
+      console.log("🚀 準備存入 resume_optimization 表格的資料:", payload);
 
       const response = await fetch('/api/resume_process/optimize/save', {
         method: 'POST',
@@ -203,19 +265,32 @@ const Optimize = () => {
 
       const result = await response.json();
       if (response.ok) {
-        // 🌟 成功時：顯示精美的成功視窗
-        setSaveModalConfig({ type: 'success', title: '儲存成功', message: '🎉 優化版履歷已成功儲存至資料庫！' });
+        setSaveModalConfig({ type: 'success', title: '儲存成功', message: '🎉 優化版履歷已成功儲存至「我的履歷」！' });
         setShowSaveModal(true);
       } else {
-        // 🌟 失敗時：顯示警告視窗
         setSaveModalConfig({ type: 'warning', title: '儲存失敗', message: result.message || result.error });
         setShowSaveModal(true);
       }
     } catch (error) {
       console.error("儲存優化履歷失敗:", error);
-      // 🌟 網路錯誤時：顯示警告視窗
       setSaveModalConfig({ type: 'warning', title: '網路錯誤', message: '網路連線錯誤，儲存失敗！' });
       setShowSaveModal(true);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!resumeRef.current) return;
+    
+    try {
+      toast.info('正在生成 PDF，請稍候...');
+      await exportResumeToPdf({
+        element: resumeRef.current,
+        filename: `${resumeData.name}_優化履歷_${new Date().getTime()}.pdf`
+      });
+      toast.success('PDF 下載成功！');
+    } catch (error) {
+      console.error('下載 PDF 失敗:', error);
+      toast.error('下載 PDF 失敗，請重試');
     }
   };
 
@@ -224,93 +299,44 @@ const Optimize = () => {
   // ==========================================
   const handleStartOptimize = async () => {
     setPhase('analyzing');
-
-    try {
-      const payload = {
+    // 使用通用任務中心介面
+    runAnalyze('resume_analysis', {
         user_id: realUserId,
         resume_data: originalData
-      };
-
-      console.log("🚀 準備發送給 CrewAI 評估的資料:", payload);
-
-      const response = await fetch('/api/resume_process/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.data) {
-        console.log("✅ CrewAI 評估完成，收到真實報告:", result.data);
-        setDiagnosticResult(result.data);
-      } else {
-        throw new Error(result.error || result.message || "AI 分析回傳格式錯誤");
-      }
-
-    } catch (error) {
-      console.error("🚨 AI 評估 API 呼叫失敗:", error);
-      alert("⚠️ 後端 AI 連線失敗，啟用本地動態備援模式！(請檢查終端機報錯)");
-
-      const fallbackReport = generateDynamicDiagnosis(originalData);
-      setDiagnosticResult(fallbackReport);
-    }
-
-    setPhase('suggestions');
+    });
   };
 
   // ==========================================
-  // 🌟 真・AI 履歷優化生成串接 (呼叫 resume_opt)
+  // 🌟 進入樣板選擇階段 (調整：提早觸發優化生成)
   // ==========================================
-  const handleGenerateOptimizedResume = async (templateId: string) => {
-    setSelectedTemplate(templateId);
-    setPhase('generating');
-
-    try {
-      const payload = {
+  const handleEnterTemplatesPhase = () => {
+    setPhase('templates');
+    
+    // 如果優化任務還沒開始跑 (或是上次失敗了)，就主動觸發它
+    // 這樣在使用者挑選樣板的同時，後端就已經在忙碌了！
+    if (optimizeStatus === 'IDLE' || optimizeStatus === 'FAILURE') {
+      console.log("🚀 [提早觸發] 開始 AI 全文優化任務...");
+      runOptimize('resume_opt', { 
         user_id: realUserId,
-        resume_data: originalData
-      };
-
-      console.log("🚀 準備發送給 AI 進行全文優化的資料:", payload);
-
-      const response = await fetch('/api/resume_process/optimize/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        resume_data: originalData 
       });
-
-      const result = await response.json();
-
-      if (response.ok && result.data) {
-        console.log("✅ AI 全文優化完成，收到全新履歷:", result.data);
-
-        setResumeData((prev: any) => ({
-          ...prev,
-          professional_summary: result.data.professional_summary || '',
-          professional_experience: Array.isArray(result.data.professional_experience)
-            ? result.data.professional_experience.join('\n\n')
-            : result.data.professional_experience || prev.professional_experience,
-          core_skills: Array.isArray(result.data.core_skills)
-            ? result.data.core_skills.join(', ')
-            : result.data.core_skills || prev.core_skills,
-          projects: Array.isArray(result.data.projects)
-            ? result.data.projects.join('\n\n')
-            : result.data.projects || prev.projects,
-          education: Array.isArray(result.data.education)
-            ? result.data.education.join('\n\n')
-            : result.data.education || prev.education,
-          autobiography: result.data.autobiography || prev.autobiography
-        }));
-      } else {
-        throw new Error(result.error || "AI 優化生成失敗");
-      }
-    } catch (error) {
-      console.error("🚨 AI 生成履歷 API 呼叫失敗:", error);
-      alert("AI 生成失敗，將使用原始資料渲染樣板！");
     }
+  };
 
-    setPhase('result');
+  // ==========================================
+  // 🌟 選擇樣板邏輯 (調整：檢查優化結果是否已存在)
+  // ==========================================
+  const handleGenerateOptimizedResume = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    
+    // 🌟 檢查優化資料是否已經由背景任務跑完了
+    if (optimizeStatus === 'SUCCESS') {
+      console.log("✨ 檢查到優化資料已就緒，直接套用樣板！");
+      setPhase('result');
+    } else {
+      console.log("⏳ 優化資料還在生成中，顯示讀取動畫...");
+      setPhase('generating');
+    }
   };
 
   if (isLoadingDB) {
@@ -379,7 +405,11 @@ const Optimize = () => {
             {/* 階段 2：分析中動畫 */}
             {phase === 'analyzing' && (
               <motion.div key="analyzing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-10">
-                <AILoadingSpinner message="AI 正在深度診斷您的履歷中..." /><AnalysisSkeleton />
+                <AILoadingSpinner message={`AI 正在深度診斷您的履歷中... ${analyzeProgress}%`} />
+                <div className="max-w-md mx-auto mt-4 h-2 bg-muted rounded-full overflow-hidden">
+                   <motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${analyzeProgress}%` }} />
+                </div>
+                <AnalysisSkeleton />
               </motion.div>
             )}
 
@@ -479,7 +509,7 @@ const Optimize = () => {
 
                 <div className="flex gap-4 pt-4">
                   <Button variant="outline" className="flex-1 h-12"><Download className="mr-2 h-4 w-4" /> 下載建議報告</Button>
-                  <Button className="flex-[2] h-12 gradient-primary text-lg" onClick={() => setPhase('templates')}><Palette className="mr-2 h-5 w-5" /> 選擇樣板並生成優化履歷</Button>
+                  <Button className="flex-[2] h-12 gradient-primary text-lg" onClick={handleEnterTemplatesPhase}><Palette className="mr-2 h-5 w-5" /> 選擇樣板並生成優化履歷</Button>
                 </div>
               </motion.div>
             )}
@@ -552,7 +582,11 @@ const Optimize = () => {
             {/* 階段 5：優化結果與儲存 */}
             {phase === 'generating' && (
               <motion.div key="generating" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-10">
-                <AILoadingSpinner message="AI 正在將您的履歷套用至全新樣板中..." /><AnalysisSkeleton />
+                <AILoadingSpinner message={`AI 正在將您的履歷套用至全新樣板中... ${optimizeProgress}%`} />
+                 <div className="max-w-md mx-auto mt-4 h-2 bg-muted rounded-full overflow-hidden">
+                   <motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${optimizeProgress}%` }} />
+                </div>
+                <AnalysisSkeleton />
               </motion.div>
             )}
 
@@ -569,14 +603,15 @@ const Optimize = () => {
                       </div>
                     </div>
                     <div className="space-y-8">
-                      <section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>工作經歷</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.professional_experience}</p></section>
-                      <section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>教育背景</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.education}</p></section>
+                      <section data-pdf-section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>工作經歷</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.professional_experience}</p></section>
+                      <section data-pdf-section><h3 className="text-lg font-bold border-b-2 mb-4" style={{ color: TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000', borderColor: `${TEMPLATE_THEMES[selectedTemplate]?.[0]?.main || '#000'}30` }}>教育背景</h3><p className="text-sm whitespace-pre-line leading-relaxed text-gray-700">{resumeData.education}</p></section>
                     </div>
                   </div>
                 </div></CardContent></Card>
                 <div className="flex gap-4">
                   <Button variant="outline" className="flex-1 h-12" onClick={() => setPhase('templates')}><Palette className="mr-2" />更換樣板</Button>
-                  <Button className="flex-[2] h-12 gradient-primary text-lg font-bold"><Download className="mr-2" /> 下載 PDF</Button>
+                  <Button variant="outline" className="flex-1 h-12" onClick={handleSaveOptimization}><Save className="mr-2" /> 儲存優化後履歷</Button>
+                  <Button className="flex-[2] h-12 gradient-primary text-lg font-bold" onClick={handleDownloadPDF}><Download className="mr-2" /> 下載為 PDF</Button>
                 </div>
               </div>
             )}

@@ -242,7 +242,7 @@ export function buildSkillsReportHtml(data: {
     ).join('');
   };
 
-  const resourceCards = data.learningResources.map((r, i) => {
+  const resourceCards = (data.learningResources || []).map((r, i) => {
     const metaParts: string[] = [];
     if (r.rating != null) metaParts.push(starRating(r.rating));
     if (r.review_count != null) metaParts.push(`${r.review_count.toLocaleString()} 則評論`);
@@ -279,7 +279,7 @@ export function buildSkillsReportHtml(data: {
       ${sectionTitle('二、職能雷達圖')}
       <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px;">
         <tr style="background:#f5f0eb;"><th style="text-align:left;padding:8px 12px;">維度</th><th style="text-align:center;padding:8px 12px;">您的分數</th>${data.targetRadarDimensions ? '<th style="text-align:center;padding:8px 12px;">目標基準</th>' : ''}</tr>
-        ${data.radarDimensions.map((d, i) => `<tr style="border-bottom:1px solid #eee;"><td style="padding:8px 12px;">${d.axis}</td><td style="text-align:center;padding:8px 12px;">${d.score} / 5</td>${data.targetRadarDimensions ? `<td style="text-align:center;padding:8px 12px;">${data.targetRadarDimensions[i]?.score ?? '-'} / 5</td>` : ''}</tr>`).join('')}
+        ${(data.radarDimensions || []).map((d, i) => `<tr style="border-bottom:1px solid #eee;"><td style="padding:8px 12px;">${d.axis}</td><td style="text-align:center;padding:8px 12px;">${d.score} / 5</td>${data.targetRadarDimensions ? `<td style="text-align:center;padding:8px 12px;">${data.targetRadarDimensions[i]?.score ?? '-'} / 5</td>` : ''}</tr>`).join('')}
       </table>
 
       ${sectionTitle('三、領航員分析職類')}
@@ -320,7 +320,7 @@ export function buildLearningResourcesReportHtml(data: {
   milestones?: string[];
   learningResources: { title: string; tags?: string[]; rating?: number; review_count?: number; level?: string; course_type?: string; duration?: string; priority?: number; strategy_reason?: string; link?: string }[];
 }): string {
-  const resourceCards = data.learningResources.map((r) => {
+  const resourceCards = (data.learningResources || []).map((r) => {
     const metaParts: string[] = [];
     if (r.rating != null) {
       const full = Math.floor(r.rating);
@@ -415,13 +415,13 @@ export function buildSideProjectsReportHtml(projects: {
   estimated_duration?: string;
   difficulty_note?: string;
 }[]): string {
-  const projectBlocks = projects.map((p) => {
-    const phasesHtml = p.phases.map((ph) => `
+  const projectBlocks = (projects || []).map((p) => {
+    const phasesHtml = (p.phases || []).map((ph) => `
       <div style="margin-bottom:18px;page-break-inside:avoid;padding-left:18px;border-left:3px solid #8d4903;">
         <strong style="font-size:14px;color:#1F3A5F;display:block;margin-bottom:6px;">${ph.phase_name}</strong>
         <p style="margin:0 0 6px;font-size:13px;line-height:1.85;color:#444;"><strong>目標：</strong>${ph.goal}</p>
         <ul style="padding-left:18px;margin:0 0 10px;">
-          ${ph.tasks.map(t => `<li style="font-size:13px;color:#555;line-height:1.85;margin-bottom:5px;">${t}</li>`).join('')}
+          ${(ph.tasks || []).map(t => `<li style="font-size:13px;color:#555;line-height:1.85;margin-bottom:5px;">${t}</li>`).join('')}
         </ul>
         <div style="background:#fbf1e8;padding:10px 14px;border-radius:6px;">
           <p style="margin:0;font-size:12px;color:#502D03;line-height:1.8;"><strong>履歷價值：</strong>${ph.resume_value}</p>
@@ -429,8 +429,8 @@ export function buildSideProjectsReportHtml(projects: {
       </div>
     `).join('');
 
-    const gapTags = p.capability_gaps.map(g => `<span style="display:inline-block;background:#8d490310;border:1px solid #8d490330;color:#502D03;padding:4px 12px;border-radius:10px;font-size:12px;margin-right:6px;margin-bottom:5px;">${g}</span>`).join('');
-    const techTags = p.technologies.map(t => `<span style="display:inline-block;border:1px solid #ccc;color:#555;padding:4px 12px;border-radius:10px;font-size:12px;margin-right:6px;margin-bottom:5px;">${t}</span>`).join('');
+    const gapTags = (p.capability_gaps || []).map(g => `<span style="display:inline-block;background:#8d490310;border:1px solid #8d490330;color:#502D03;padding:4px 12px;border-radius:10px;font-size:12px;margin-right:6px;margin-bottom:5px;">${g}</span>`).join('');
+    const techTags = (p.technologies || []).map(t => `<span style="display:inline-block;border:1px solid #ccc;color:#555;padding:4px 12px;border-radius:10px;font-size:12px;margin-right:6px;margin-bottom:5px;">${t}</span>`).join('');
 
     return `
       <div style="margin-bottom:36px;page-break-inside:avoid;">

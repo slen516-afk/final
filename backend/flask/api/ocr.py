@@ -120,13 +120,19 @@ def run_ocr_api():
                 "event_id", inserted_event_id
             ).execute()
 
+            # 容錯處理：如果 extracted_data 是平坦結構 (沒有 structured_data 鍵)
+            # 就把整個 extracted_data 當作資源
+            res_struct = extracted_data.get("structured_data", extracted_data)
+            norm_data = extracted_data.get("normalized_data", extracted_data)
+            contact_info = norm_data.get("contact", res_struct.get("contact", extracted_data))
+
             # 寫入第一張表： resume
             insert_resume_payload = {
                 "user_id": int(dynamic_user_id),
                 "template_id": int(template_id),
                 "resume_type": "uploaded",
-                "structured_data": extracted_data.get("structured_data", {}),
-                "normalized_data": extracted_data.get("normalized_data", {}),
+                "structured_data": res_struct,
+                "normalized_data": norm_data,
                 "vector_id": str(uuid.uuid4()),
                 "is_embedded": False,
                 "is_primary": True,
@@ -157,20 +163,10 @@ def run_ocr_api():
 
             # 寫入第三張表： user_profile
             try:
-                # 1. 改去 normalized_data 裡面的 contact 找名字
-                contact_info = extracted_data.get("normalized_data", {}).get(
-                    "contact", {}
-                )
-
-                experiences = extracted_data.get("structured_data", {}).get(
-                    "experience", []
-                )
-                educations = extracted_data.get("structured_data", {}).get(
-                    "education", []
-                )
-                work_history = extracted_data.get("normalized_data", {}).get(
-                    "work_history", []
-                )
+                # 1. 使用剛才提取的 contact_info
+                experiences = res_struct.get("experience", [])
+                educations = res_struct.get("education", [])
+                work_history = norm_data.get("work_history", [])
 
                 total_years = 0
                 for job in work_history:

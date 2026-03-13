@@ -123,33 +123,65 @@ const UploadResume = () => {
 
     try {
       const response = await uploadResumeAPI(file);
-      setAnalysisProgress(80);
-
-      console.log("🕵️‍♂️ 原始 Response:", response);
-      let realData = response.data || response;
-      if (realData && realData.data) {
-        realData = realData.data; t
+      const jobId = response.job_id || response.task_id;
+      
+      if (!jobId) {
+        throw new Error("未取得任務 ID");
       }
-      console.log("✅ 拆解後的真實資料:", realData);
+
+      setAnalysisProgress(30);
+      console.log("🕵️‍♂️ 任務啟動，Job ID:", jobId);
+
+      // 🔄 開始輪詢狀態
+      let isDone = false;
+      let pollCount = 0;
+      const maxPolls = 150; // 最多等 300 秒 (OCR 有時很慢)
+      let finalData = null;
+
+      while (!isDone && pollCount < maxPolls) {
+        pollCount++;
+        // 這裡直接用 fetch 呼叫目前的 status API
+        const statusRes = await fetch(`/api/resume_process/${jobId}/status`);
+        const statusData = await statusRes.json();
+        
+        console.log(`📡 輪詢中 (${pollCount}):`, statusData.status);
+
+        if (statusData.status === 'done') {
+          isDone = true;
+          finalData = statusData.ocr_result;
+        } else if (statusData.status === 'failed') {
+          throw new Error(statusData.error || "OCR 解析失敗");
+        } else {
+          // 模擬進度增加
+          setAnalysisProgress(prev => Math.min(prev + 1, 95));
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+
+      if (!isDone) {
+        throw new Error("分析逾時，請稍後在履歷列表查看結果。");
+      }
+
+      console.log("✅ 取得真實解析資料:", finalData);
 
       setResultData({
         avatar: '',
-        name: realData.name || '未辨識',
-        bio: realData.bio || '',
-        phone: realData.phone || '',
-        email: realData.email || '',
-        addressCity: realData.addressCity || '',
-        addressDistrict: realData.addressDistrict || '',
-        addressDetail: realData.addressDetail || '',
-        education: realData.education || '',
-        experience: realData.experience || '',
-        skills: realData.skills || '',
-        languages: Array.isArray(realData.languages) && realData.languages.length > 0
-          ? realData.languages
+        name: finalData.name || '未辨識',
+        bio: finalData.bio || finalData.autobiography || '',
+        phone: finalData.phone || '',
+        email: finalData.email || '',
+        addressCity: finalData.addressCity || (finalData.address && finalData.address.substring(0, 3)) || '',
+        addressDistrict: finalData.addressDistrict || '',
+        addressDetail: finalData.addressDetail || (finalData.address && finalData.address.substring(3)) || '',
+        education: finalData.education || '',
+        experience: finalData.experience || '',
+        skills: finalData.skills || '',
+        languages: Array.isArray(finalData.languages) && finalData.languages.length > 0
+          ? finalData.languages
           : [{ language: '中文', proficiency: '3' }],
-        certifications: realData.certifications || '',
-        projects: realData.projects || '',
-        other: realData.other || '',
+        certifications: finalData.certifications || '',
+        projects: finalData.projects || finalData.portfolio || '',
+        other: finalData.other || '',
       });
 
       setAnalysisProgress(100);
@@ -158,10 +190,10 @@ const UploadResume = () => {
       setShowResult(true);
       setIsResumeUploaded(true);
 
-    } catch (error) {
-      console.error("履歷上傳失敗:", error);
+    } catch (error: any) {
+      console.error("履歷上傳或分析失敗:", error);
       setIsAnalyzing(false);
-      setValidationMessage('後端 AI 分析失敗，請檢查終端機的錯誤訊息。');
+      setValidationMessage(error.message || '後端 AI 分析失敗，請檢查網路連線或稍後再試。');
       setShowValidationError(true);
     }
   };

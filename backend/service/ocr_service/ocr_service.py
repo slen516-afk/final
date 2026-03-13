@@ -10,7 +10,7 @@ import numpy as np
 from PIL import Image
 import fitz
 from dotenv import load_dotenv
-import multiprocessing # 🌟 終極殺手鐧：多進程隔離模組
+import billiard as multiprocessing # 🌟 終極殺手鐧：使用 billiard 代替 multiprocessing，支援在 Celery Worker 中啟動子進程
 
 from openai import OpenAI
 
@@ -213,11 +213,20 @@ class ResumeOCRService:
             return parsed_data
 
         except json.JSONDecodeError as e:
-            print(f"[OCR Service] ❌ OpenAI 回傳的 JSON 格式有誤: {e}")
-            print(f"[OCR Service] 🛡️ 啟動備援機制 (Fallback Data)")
-            return self._get_demo_fallback_data()
+            msg = f"OpenAI 回傳的 JSON 格式有誤: {e}"
+            print(f"[OCR Service] ❌ {msg}")
+            print(f"[OCR Service] 原始輸出: {raw_output}")
+            if os.getenv("MOCK_MODE", "false").lower() == "true":
+                print(f"[OCR Service] 🛡️ 啟動備援機制 (Fallback Data)")
+                return self._get_demo_fallback_data()
+            raise ValueError(msg)
             
         except Exception as e:
-            print(f"[OCR Service] ❌ 發生錯誤: {e}")
-            print(f"[OCR Service] 🛡️ 啟動備援機制 (Fallback Data)")
-            return self._get_demo_fallback_data()
+            import traceback
+            print(f"[OCR Service] ❌ 發生錯誤 Type: {type(e).__name__}")
+            print(f"[OCR Service] 錯誤內容: {str(e)}")
+            traceback.print_exc()
+            if os.getenv("MOCK_MODE", "false").lower() == "true":
+                print(f"[OCR Service] 🛡️ 啟動備援機制 (Fallback Data)")
+                return self._get_demo_fallback_data()
+            raise e
