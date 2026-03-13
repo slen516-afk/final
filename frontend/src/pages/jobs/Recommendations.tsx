@@ -129,7 +129,9 @@ const Recommendations = () => {
 
   const handleSurveyComplete = (surveyData: any) => {
     const finalPayload = {
-      resumeId: selectedResumeId,
+      resumeId: surveyData.document_id || selectedResumeId,
+      sourceType: surveyData.source_type || "RESUME",
+      userId: surveyData.user_id,
       city: surveyData.city || surveyData.location || "不限地區",
       workMode: surveyData.workMode || "不限",
       minSalary: surveyData.minSalary || 30000,

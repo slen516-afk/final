@@ -209,9 +209,24 @@ class ProjectRecHandler(BaseResultHandler):
     def process(self, pydantic_result: any, **kwargs):
         user_id = kwargs.get("user_id")
 
+        # 1. 從 career_analysis_report 表撈出該用戶最新缺口分析報告的 report_id
+        resume_info = self.supabase.table("career_analysis_report") \
+            .select("report_id") \
+            .eq("user_id", user_id) \
+            .order("generated_at", desc=True) \
+            .limit(1) \
+            .single() \
+            .execute()
+
+        if not resume_info.data:
+            raise ValueError(f"找不到用戶 {user_id} 的缺口分析報告，無法存儲優化結果")
+
+        target_report_id = resume_info.data['report_id']
+
         payload = {
             "user_id": user_id,
             **pydantic_result,
+            "report_id": target_report_id,
             # "created_at": "now()"
         }
         return self.supabase.table("side_project_recommendation").insert(payload).execute()

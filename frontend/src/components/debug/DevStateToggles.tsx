@@ -1,4 +1,4 @@
-import { useState, forwardRef } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import { useAppState } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -21,6 +21,19 @@ const DevStateToggles = forwardRef<HTMLDivElement>((_, ref) => {
     setIsJobPreferenceQuizDone,
     setIsPersonalityTestDone,
   } = useAppState();
+
+  // Ctrl+Shift+D to toggle panel
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        setIsOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
 
   const unlockAll = () => {
     setIsLoggedIn(true);
@@ -46,21 +59,7 @@ const DevStateToggles = forwardRef<HTMLDivElement>((_, ref) => {
     { label: 'isPersonalityTestDone', value: isPersonalityTestDone, setter: setIsPersonalityTestDone },
   ];
 
-  if (!isOpen) {
-    return (
-      <motion.button
-        className="fixed bottom-6 left-6 z-50 h-12 w-12 rounded-full bg-foreground/90 text-background shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-        onClick={() => setIsOpen(true)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        title="開發者調試面板"
-      >
-        <Settings className="h-5 w-5" />
-      </motion.button>
-    );
-  }
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>

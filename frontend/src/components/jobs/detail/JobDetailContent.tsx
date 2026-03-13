@@ -7,9 +7,20 @@ interface Props {
     job: RecommendedJobDetail;
 }
 
+const requirementTitles = [
+    '工作經歷',
+    '學歷要求',
+    '科系要求',
+    '語文條件',
+];
+
 const JobDetailContent = ({ job }: Props) => {
     const description = cleanDimensionText(job.description);
     const paragraphs = splitIntoParagraphs(description);
+
+    // Flatten requirements first, strip ads, then split into paragraphs
+    const rawReqText = job.requirements.join('\n').replace(/提升英文能力/g, '').replace(/提升專業能力/g, '');
+    const reqParagraphs = splitIntoParagraphs(cleanDimensionText(rawReqText));
 
     return (
         <div className="space-y-6">
@@ -28,28 +39,39 @@ const JobDetailContent = ({ job }: Props) => {
             </Card>
 
             {/* Requirements */}
-            {job.requirements.length > 0 && (
-                <Card className="border-border shadow-soft">
-                    <CardHeader>
-                        <CardTitle className="text-lg">條件要求</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ul className="space-y-2">
-                            {job.requirements.flatMap(req => 
-                                splitIntoParagraphs(cleanDimensionText(req)).map((para, index) => (
-                                    <li
-                                        key={`${req}-${index}`}
-                                        className="flex items-start gap-3 text-muted-foreground"
-                                    >
-                                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                                        <span>{para}</span>
-                                    </li>
-                                ))
-                            )}
-                        </ul>
-                    </CardContent>
-                </Card>
-            )}
+            <Card className="border-border shadow-soft">
+                <CardHeader>
+                    <CardTitle className="text-lg">條件要求</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <ul className="space-y-4">
+                        {reqParagraphs.map((para, index) => {
+                            if (!para || para.trim().length === 0) return null;
+
+                            const title = index < 4 ? requirementTitles[index] : null;
+
+                            return (
+                                <li
+                                    key={index}
+                                    className="flex items-start gap-3 text-muted-foreground"
+                                >
+                                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                                    <div className="flex flex-col sm:flex-row sm:gap-2 w-full">
+                                        {title && (
+                                            <span className="font-medium text-foreground min-w-[75px] flex-shrink-0">
+                                                {title}：
+                                            </span>
+                                        )}
+                                        <div className="flex flex-col space-y-1">
+                                            <span className="leading-relaxed">{para}</span>
+                                        </div>
+                                    </div>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </CardContent>
+            </Card>
         </div>
     );
 };

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Search, Code, Layers } from "lucide-react";
+import { Search, Code, Layers, MessageCircle, Lightbulb, FolderKanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,14 @@ import { motion } from "framer-motion";
 import type { SkillCard } from "@/types/job";
 import { JOB_CATEGORIES, ICON_NAME_MAP } from "@/mocks/jobs";
 
+// ── Soft-skill Lucide icon map ───────────────────────────────────
+
+const SOFT_SKILL_ICONS: Record<string, React.ReactNode> = {
+  'Communication': <MessageCircle className="h-8 w-8 text-primary" />,
+  'Problem Solving': <Lightbulb className="h-8 w-8 text-primary" />,
+  'Project Management': <FolderKanban className="h-8 w-8 text-primary" />,
+};
+
 // ── Icon helper ──────────────────────────────────────────────────
 
 const getIconFileName = (skillName: string): string => {
@@ -19,6 +27,9 @@ const getIconFileName = (skillName: string): string => {
 
 const SkillIcon = ({ skillName }: { skillName: string }) => {
   const [imgError, setImgError] = useState(false);
+
+  if (SOFT_SKILL_ICONS[skillName]) return <>{SOFT_SKILL_ICONS[skillName]}</>;
+
   const iconPath = `/icons/${getIconFileName(skillName)}_icon.png`;
 
   if (imgError) {

@@ -68,32 +68,19 @@ export const getMockJobDetail = (id: string): JobDetailData => ({
 
 // TODO: Replace with API call
 export const mockCoverLetter = (jobTitle?: string, company?: string) => ({
-  subject: `應徵 ${jobTitle} 職位 - [您的姓名]`,
-  body: `親愛的招聘經理：
+  subject: `${jobTitle ?? '應用軟體工程師'}職位申請 - 擁有微服務架構經驗的系統架構師`,
+  content:
+    `親愛的招聘團隊，您好，我是王俊傑，一名專注於構建可擴展系統的系統架構師，擁有八年的行業經驗。我對貴公司應用軟體工程師的職位非常感興趣，特別是貴公司在技術創新和工業
 
-您好！我是一位熱愛技術、追求卓越的軟體工程師，對貴公司「${company}」的「${jobTitle}」職位深感興趣。透過深入了解貴公司的企業文化與發展願景，我相信我的技術背景與專業經驗能為團隊帶來價值。
+應用方面的卓越表現深深吸引了我。在LINE
 
-【為什麼選擇我】
+Taiwan擔任系統架構師期間，我設計並實施了支持超過一千萬用戶的微服務架構，並成功將基礎設施成本降低了25%。這與貴公司對Windows程式開發及現場問題分析的需求高度契合。我相
 
-在過去的工作經歷中，我累積了豐富的專案經驗：
-• 主導開發並維護多個大型企業級應用程式
-• 成功優化系統效能，將頁面載入速度提升 40%
-• 帶領小型技術團隊完成關鍵專案，如期交付
+信，我在分布式系統和微服務方面的專業知識將為貴公司帶來實質的價值。此外，我在趨勢科技領導了由五人組成的團隊，專注於分布式系統的構建、Kafka事件流處理以及Kubernetes部
 
-【我能為貴公司帶來的價值】
+署。這些經驗使我能夠快速適應並解決機台程式的除錯問題，並提出有效的解決方案。我非常期待有機會進一步討論我如何能夠為貴公司帶來貢獻。感謝您考慮我的申請，期待您的回覆。
 
-• 紮實的技術基礎與持續學習的熱情
-• 良好的跨部門溝通與團隊協作能力
-• 注重程式碼品質與最佳實踐的工程師文化
-
-我期待有機會與您進一步討論，展示我如何能為「${company}」做出貢獻。感謝您撥冗審閱，靜候佳音。
-
-此致
-敬禮
-
-[您的姓名]
-[您的聯絡電話]
-[您的電子郵件]`,
+此致，王俊傑 tech_guru@outlook.com https://github.com/wang-tech-pro`
 });
 
 // TODO: Replace with API call
@@ -104,67 +91,91 @@ export const JOB_CATEGORIES: JobCategory[] = [
       {
         label: '前端工程師',
         skills: [
-          { name: 'React', tags: ['框架', '前端'], description: '構建互動式使用者介面的主流 JavaScript 函式庫' },
+          { name: 'JavaScript', tags: ['語言', '前端'], description: '網頁開發最核心的程式語言，幾乎所有前端互動皆仰賴它' },
+          { name: 'CSS', tags: ['樣式', '前端'], description: '負責網頁視覺呈現的樣式語言' },
+          { name: 'Git', tags: ['版本控制', '工具'], description: '分散式版本控制系統，團隊協作必備' },
+          { name: 'HTML', tags: ['標記語言', '前端'], description: '網頁結構的基礎標記語言' },
+          { name: 'React', tags: ['框架', '前端'], description: '由 Meta 開發的主流使用者介面函式庫' },
+          { name: 'Vue', tags: ['框架', '前端'], description: '漸進式 JavaScript 框架，易學易用' },
+          { name: 'Communication', tags: ['軟實力'], description: '有效表達與傾聽的溝通協作能力' },
           { name: 'TypeScript', tags: ['語言', '型別安全'], description: 'JavaScript 的超集，提供靜態型別檢查' },
-          { name: 'Vue.js', tags: ['框架', '前端'], description: '漸進式 JavaScript 框架，易於上手' },
-          { name: 'CSS/Tailwind', tags: ['樣式', '工具'], description: '現代 CSS 框架與工具鏈' },
-          { name: 'Next.js', tags: ['框架', 'SSR'], description: 'React 全端框架，支援伺服器端渲染' },
-          { name: 'Webpack/Vite', tags: ['建構工具'], description: '前端模組打包與建構工具' },
+          { name: 'Problem Solving', tags: ['軟實力'], description: '分析問題並提出解決方案的能力' },
+          { name: 'jQuery', tags: ['函式庫', '前端'], description: '簡化 DOM 操作的經典 JavaScript 函式庫' },
         ],
       },
       {
         label: '後端工程師',
         skills: [
-          { name: 'Node.js', tags: ['執行環境', '後端'], description: '高效能 JavaScript 伺服器端執行環境' },
+          { name: 'Git', tags: ['版本控制', '工具'], description: '分散式版本控制系統，團隊協作必備' },
+          { name: 'Linux', tags: ['作業系統', '伺服器'], description: '伺服器環境管理與命令列操作' },
           { name: 'Python', tags: ['語言', '通用'], description: '廣泛用於後端、資料科學的通用語言' },
-          { name: 'Java/Spring', tags: ['語言', '框架'], description: '企業級後端開發的首選技術棧' },
-          { name: 'PostgreSQL', tags: ['資料庫', 'SQL'], description: '功能強大的開源關聯式資料庫' },
-          { name: 'Redis', tags: ['快取', 'NoSQL'], description: '高效能鍵值存儲與快取系統' },
-          { name: 'GraphQL', tags: ['API', '查詢語言'], description: '靈活的 API 查詢語言與規範' },
+          { name: 'C#', tags: ['語言', '.NET'], description: '微軟開發的物件導向語言，常用於企業應用' },
+          { name: 'C++', tags: ['語言', '系統'], description: '高效能系統與底層開發語言' },
+          { name: 'Communication', tags: ['軟實力'], description: '有效表達與傾聽的溝通協作能力' },
+          { name: 'JavaScript', tags: ['語言', '全端'], description: '可用於前後端的通用腳本語言' },
+          { name: 'Java', tags: ['語言', '企業級'], description: '企業級後端開發的主流語言' },
+          { name: 'MySQL', tags: ['資料庫', 'SQL'], description: '最受歡迎的開源關聯式資料庫' },
+          { name: 'Problem Solving', tags: ['軟實力'], description: '分析問題並提出解決方案的能力' },
         ],
       },
       {
         label: '全端工程師',
         skills: [
-          { name: 'React + Node.js', tags: ['全端', 'JS'], description: '最熱門的 JavaScript 全端技術組合' },
-          { name: 'Docker', tags: ['容器化', 'DevOps'], description: '容器化部署與環境一致性管理' },
-          { name: 'REST API 設計', tags: ['API', '架構'], description: '設計可擴展的 RESTful 服務介面' },
-          { name: 'CI/CD', tags: ['自動化', 'DevOps'], description: '持續整合與持續部署流程' },
-          { name: 'MongoDB', tags: ['資料庫', 'NoSQL'], description: '文件導向的 NoSQL 資料庫' },
-          { name: 'AWS/GCP', tags: ['雲端', '基礎設施'], description: '主流雲端平台服務與架構' },
+          { name: 'JavaScript', tags: ['語言', '全端'], description: '前後端皆通用的核心程式語言' },
+          { name: 'HTML', tags: ['標記語言', '前端'], description: '網頁結構的基礎標記語言' },
+          { name: 'C#', tags: ['語言', '.NET'], description: '微軟開發的物件導向語言，常用於企業應用' },
+          { name: 'CSS', tags: ['樣式', '前端'], description: '負責網頁視覺呈現的樣式語言' },
+          { name: 'Git', tags: ['版本控制', '工具'], description: '分散式版本控制系統，團隊協作必備' },
+          { name: 'Python', tags: ['語言', '通用'], description: '廣泛用於後端與自動化的通用語言' },
+          { name: 'Vue', tags: ['框架', '前端'], description: '漸進式 JavaScript 框架，易學易用' },
+          { name: 'Java', tags: ['語言', '企業級'], description: '企業級後端開發的主流語言' },
+          { name: 'Communication', tags: ['軟實力'], description: '有效表達與傾聽的溝通協作能力' },
+          { name: 'jQuery', tags: ['函式庫', '前端'], description: '簡化 DOM 操作的經典 JavaScript 函式庫' },
         ],
       },
       {
-        label: '資料科學家',
+        label: '資料科學家/數據分析師',
         skills: [
-          { name: 'Python/Pandas', tags: ['語言', '資料處理'], description: '資料科學領域最主流的分析工具' },
-          { name: 'SQL 進階', tags: ['資料庫', '分析'], description: '複雜查詢、窗函式與效能調校' },
-          { name: 'Tableau/Power BI', tags: ['視覺化', '工具'], description: '商業智慧資料視覺化平台' },
-          { name: '統計與機率', tags: ['數學', '基礎'], description: '假說檢定、回歸分析等統計方法' },
-          { name: 'Spark', tags: ['大數據', '分散式'], description: '大規模資料分散式運算框架' },
-          { name: 'ETL Pipeline', tags: ['資料工程'], description: '資料擷取、轉換與載入流程設計' },
+          { name: 'Python', tags: ['語言', '資料'], description: '資料科學領域最主流的分析語言' },
+          { name: 'Excel', tags: ['工具', '分析'], description: '數據整理與基礎分析的必備工具' },
+          { name: 'Communication', tags: ['軟實力'], description: '將分析結果轉化為商業洞察的溝通力' },
+          { name: 'Tableau', tags: ['視覺化', '工具'], description: '互動式商業智慧資料視覺化平台' },
+          { name: 'Power BI', tags: ['視覺化', '工具'], description: '微軟推出的商業分析與報表工具' },
+          { name: 'Problem Solving', tags: ['軟實力'], description: '分析問題並提出解決方案的能力' },
+          { name: 'ETL', tags: ['資料工程', '流程'], description: '資料擷取、轉換與載入流程' },
+          { name: 'Project Management', tags: ['軟實力', '管理'], description: '專案規劃、執行與進度管理能力' },
+          { name: 'MySQL', tags: ['資料庫', 'SQL'], description: '最受歡迎的開源關聯式資料庫' },
+          { name: 'Git', tags: ['版本控制', '工具'], description: '分散式版本控制系統，團隊協作必備' },
         ],
       },
       {
-        label: 'AI / 演算法工程師',
+        label: 'AI/演算法工程師',
         skills: [
-          { name: 'TensorFlow/PyTorch', tags: ['深度學習', '框架'], description: '主流深度學習模型訓練框架' },
+          { name: 'Python', tags: ['語言', 'AI'], description: 'AI 與機器學習開發的首選語言' },
+          { name: 'C++', tags: ['語言', '效能'], description: '高效能運算與底層演算法實作' },
+          { name: 'PyTorch', tags: ['深度學習', '框架'], description: '靈活的深度學習研究與生產框架' },
+          { name: 'TensorFlow', tags: ['深度學習', '框架'], description: 'Google 開源的端到端機器學習平台' },
+          { name: 'LLM', tags: ['生成式AI', '模型'], description: '大型語言模型的訓練與應用' },
+          { name: 'Git', tags: ['版本控制', '工具'], description: '分散式版本控制系統，團隊協作必備' },
+          { name: 'Communication', tags: ['軟實力'], description: '有效表達與傾聽的溝通協作能力' },
+          { name: 'Linux', tags: ['作業系統', '伺服器'], description: '伺服器環境與 GPU 運算環境管理' },
           { name: 'NLP', tags: ['AI', '自然語言'], description: '自然語言處理與文本分析技術' },
-          { name: 'Computer Vision', tags: ['AI', '影像'], description: '影像辨識、物件偵測等電腦視覺應用' },
-          { name: 'MLOps', tags: ['部署', '維運'], description: '機器學習模型的部署與監控流程' },
-          { name: 'LLM/RAG', tags: ['生成式AI'], description: '大型語言模型與檢索增強生成技術' },
-          { name: '演算法與資料結構', tags: ['基礎', '面試'], description: '核心演算法設計與最佳化能力' },
+          { name: 'C#', tags: ['語言', '.NET'], description: '微軟開發的物件導向語言' },
         ],
       },
       {
-        label: 'DevOps / SRE',
+        label: 'DevOps/SRE工程師',
         skills: [
+          { name: 'Linux', tags: ['作業系統', '伺服器'], description: '伺服器環境管理與命令列操作' },
+          { name: 'Communication', tags: ['軟實力'], description: '跨團隊協調與事件溝通能力' },
+          { name: 'Excel', tags: ['工具', '報表'], description: '數據整理與營運報表工具' },
+          { name: 'Problem Solving', tags: ['軟實力'], description: '快速排除故障與解決問題的能力' },
+          { name: 'Python', tags: ['語言', '自動化'], description: '自動化腳本與工具開發' },
+          { name: 'AWS', tags: ['雲端', '基礎設施'], description: 'Amazon 雲端平台服務' },
+          { name: 'Shell', tags: ['腳本', '系統'], description: 'Shell 腳本撰寫與系統自動化' },
           { name: 'Kubernetes', tags: ['容器編排', '雲原生'], description: '容器化應用的自動部署與管理平台' },
-          { name: 'Terraform', tags: ['IaC', '自動化'], description: '基礎設施即程式碼工具' },
-          { name: '監控/Grafana', tags: ['可觀測性'], description: '系統監控、告警與儀表板建置' },
-          { name: 'Linux 系統管理', tags: ['作業系統'], description: '伺服器環境管理與疑難排解' },
-          { name: 'CI/CD Pipeline', tags: ['自動化', '部署'], description: 'Jenkins、GitHub Actions 等流程設計' },
-          { name: '資安基礎', tags: ['安全', '合規'], description: '網路安全、權限管理與合規實踐' },
+          { name: 'Azure', tags: ['雲端', '基礎設施'], description: '微軟雲端平台服務' },
+          { name: 'Git', tags: ['版本控制', '工具'], description: '分散式版本控制系統，團隊協作必備' },
         ],
       },
     ],
@@ -172,42 +183,35 @@ export const JOB_CATEGORIES: JobCategory[] = [
 ];
 
 export const ICON_NAME_MAP: Record<string, string> = {
+  'JavaScript': 'javascript',
+  'CSS': 'CSS',
+  'Git': 'Git',
+  'HTML': 'HTML',
   'React': 'React',
+  'Vue': 'Vue',
+  'Communication': 'Communication',
   'TypeScript': 'TypeScript',
-  'Vue.js': 'Vue',
-  'CSS/Tailwind': 'css_tailwind',
-  'Next.js': 'Nextjs',
-  'Webpack/Vite': 'webpack_vite',
-  'Node.js': 'Nodejs',
+  'Problem Solving': 'Problem_Solving',
+  'jQuery': 'jQuery',
+  'Linux': 'Linux',
   'Python': 'Python',
-  'Java/Spring': 'SpringBoot',
-  'PostgreSQL': 'PostgreSQL',
-  'Redis': 'Redis',
-  'GraphQL': 'graphql',
-  'React + Node.js': 'Nodejs',
-  'Docker': 'docker',
-  'REST API 設計': 'rest_api',
-  'CI/CD': 'Jenkins',
-  'MongoDB': 'MongoDB',
-  'AWS/GCP': 'AWS',
-  'Python/Pandas': 'Python',
-  'SQL 進階': 'MySQL',
-  'Tableau/Power BI': 'tableau_powerbi',
-  '統計與機率': 'statistics',
-  'Spark': 'spark',
-  'ETL Pipeline': 'etl_pipeline',
-  'TensorFlow/PyTorch': 'tensorflow_pytorch',
-  'NLP': 'nlp',
-  'Computer Vision': 'computer_vision',
-  'MLOps': 'mlops',
-  'LLM/RAG': 'llm_rag',
-  '演算法與資料結構': 'algorithm',
+  'C#': 'CSharp',
+  'C++': 'Cpp',
+  'Java': 'java',
+  'MySQL': 'MySQL',
+  'Excel': 'Excel',
+  'Tableau': 'Tableau',
+  'Power BI': 'PowerBI',
+  'ETL': 'ETL',
+  'Project Management': 'JIRA',
+  'PyTorch': 'PyTorch',
+  'TensorFlow': 'tensorflow',
+  'LLM': 'LLM',
+  'NLP': 'NLP',
+  'AWS': 'AWS',
+  'Shell': 'Shell',
   'Kubernetes': 'Kubernetes',
-  'Terraform': 'Terraform',
-  '監控/Grafana': 'grafana',
-  'Linux 系統管理': 'linux',
-  'CI/CD Pipeline': 'Jenkins',
-  '資安基礎': 'security',
+  'Azure': 'Azure',
 };
 
 /** Mock recommended jobs matching backend API shape */

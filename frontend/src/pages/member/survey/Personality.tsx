@@ -43,7 +43,7 @@ const clearProgress = () => {
 const RESULT_KEY = 'career-survey-done';
 
 const Personality = () => {
-  const { isPersonalityQuizDone, setIsPersonalityQuizDonee, isPersonalityTestDone, isResumeUploaded } = useAppState();
+  const { isPersonalityQuizDone, setIsPersonalityQuizDone, isPersonalityTestDone, isResumeUploaded } = useAppState();
   const navigate = useNavigate();
 
   const [progress, setProgress] = useState<SurveyProgress>(loadProgress);
@@ -376,12 +376,14 @@ const Personality = () => {
 
                 {/* Questions — one card per question */}
                 <div className="space-y-4">
-                  {currentModule?.questions.map((q) => (
+                  {currentModule?.questions.map((q, idx) => (
                     <Card
                       key={q.id}
-                      className={`transition-all ${invalidIds.has(q.id)
-                        ? 'border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.25)]'
-                        : ''
+                      className={`transition-all ${idx % 2 === 1 ? 'bg-[#FFFBF5]' : 'bg-white'
+                        } ${invalidIds.has(q.id)
+
+                          ? 'border-destructive shadow-[0_0_8px_hsl(var(--destructive)/0.25)]'
+                          : ''
                         }`}
                     >
                       <CardContent className="p-5 md:p-6">
