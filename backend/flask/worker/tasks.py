@@ -19,23 +19,15 @@ for p in [flask_dir, backend_dir]:
 # 🌟 把 llm_service 與 src 加入系統路徑
 llm_service_dir = os.path.join(backend_dir, "service", "llm_service")
 if os.path.exists(llm_service_dir):
-    if llm_service_dir not in sys.path:
-        sys.path.insert(0, llm_service_dir)
-    
     # 針對 CrewAI 的 src 目錄進行特別處理
     # 這裡加入多種可能的路徑嘗試，確保容器內外都能對齊
-    llm_src_dir = os.path.join(llm_service_dir, "src")
-    if os.path.exists(llm_src_dir) and llm_src_dir not in sys.path:
-        sys.path.insert(0, llm_src_dir)
+    if os.path.exists(llm_service_dir) and llm_service_dir not in sys.path:
+        # 加入 llm_service 目錄，這樣 'from src...' 才能運作
+        sys.path.append(llm_service_dir)
 
-# 嘗試處理從 src 開頭的絕對引入問題
-try:
-    import src.core.agent_engine.manager
-except ImportError:
-    # 如果失敗，嘗試將 llm_service/src 加入路徑的最前端
-    llm_src_dir = os.path.join(backend_dir, "service", "llm_service", "src")
-    if llm_src_dir not in sys.path:
-        sys.path.insert(0, llm_src_dir)
+# 確保 backend_dir 在最前面，以便正確引入核心模組 (如 core.supabase_client)
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
 
 from qdrant_client import QdrantClient
 from core.supabase_client import supabase
@@ -300,25 +292,125 @@ def process_course_recommendation(user_id: str, top_k: int = 5):
         return {"status": "error", "message": str(e)}
 
 
-@celery_app.task(name='analyze_resume_async', bind=True)
-def analyze_resume_async(self, file_path):
+@celery_app.task(name='analyze_resume_async')
+def analyze_resume_async(file_path, job_id=None):
     """
     執行履歷 OCR 分析任務
     """
+    from core.redis_client import redis_client
+    from datetime import datetime, timezone
+    
     try:
-        self.update_state(state='PROGRESS', meta={'msg': 'AI 正在分析履歷中...'})
+        # self.update_state(state='PROGRESS', meta={'msg': 'AI 正在分析履歷中...'})
 
         # 1. 實例化 Service 並傳入 supabase 實例
         ocr_service = ResumeOCRService(supabase_client=supabase)
 
         # 2. 執行處理邏輯
-        result = ocr_service.extract_text_from_image(file_path=file_path)
+        raw_ocr_result = ocr_service.extract_text_from_image(file_path=file_path)
 
-        return {"status": "success", "data": result}
+        # ==========================================
+        # 🌟 3. 數據映射 (Mapping) - 同步自原本 resume_processing.py 的邏輯
+        # ==========================================
+        if isinstance(raw_ocr_result, str):
+            try:
+                raw_ocr_result = json.loads(raw_ocr_result)
+            except:
+                raw_ocr_result = {}
+        
+        # 提取子結構
+        res_struct = raw_ocr_result.get("structured_data", raw_ocr_result)
+        norm = raw_ocr_result.get("normalized_data", raw_ocr_result)
+        contact = norm.get("contact", res_struct.get("contact", raw_ocr_result))
+
+        # 教育背景
+        raw_edu = res_struct.get("education", [])
+        if isinstance(raw_edu, list):
+            safe_edu = "\n".join([str(e.get("details", e.get("school", ""))) if isinstance(e, dict) else str(e) for e in raw_edu])
+        else:
+            safe_edu = str(raw_edu)
+
+        # 工作經歷
+        raw_exp = res_struct.get("experience", res_struct.get("work_experience", []))
+        if isinstance(raw_exp, list):
+            exp_list = []
+            for exp in raw_exp:
+                if isinstance(exp, dict):
+                    title = exp.get('title', exp.get('role', ''))
+                    comp = exp.get('company', '')
+                    desc = exp.get('responsibilities', exp.get('description', ''))
+                    exp_list.append(f"{title} - {comp}\n{desc}".strip(" -\n"))
+                else:
+                    exp_list.append(str(exp))
+            safe_exp = "\n\n".join(exp_list)
+        else:
+            safe_exp = str(raw_exp)
+
+        # 專案/作品集
+        raw_projects = res_struct.get("projects", res_struct.get("portfolio", []))
+        if isinstance(raw_projects, list):
+            proj_list = []
+            for p in raw_projects:
+                if isinstance(p, dict):
+                    title = p.get("title", p.get("name", ""))
+                    desc = p.get("description", p.get("details", ""))
+                    proj_list.append(f"{title}\n{desc}".strip(" -\n"))
+                else:
+                    proj_list.append(str(p))
+            safe_projects = "\n\n".join(proj_list)
+        else:
+            safe_projects = str(raw_projects)
+
+        # 技能
+        raw_skills = norm.get("skills", res_struct.get("skills", []))
+        safe_skills = ", ".join([str(s) for s in raw_skills]) if isinstance(raw_skills, list) else str(raw_skills)
+
+        # 自傳 / 關於我
+        safe_bio = res_struct.get("summary", res_struct.get("autobiography", res_struct.get("bio", res_struct.get("關於我", ""))))
+        if isinstance(safe_bio, list): 
+            safe_bio = "\n".join([str(b) for b in safe_bio])
+        else:
+            safe_bio = str(safe_bio)
+
+        # 最終對齊前端欄位
+        mapped_data = {
+            "name": contact.get("name", contact.get("full_name", "")),
+            "email": contact.get("email", ""),
+            "phone": contact.get("phone", ""),
+            "address": contact.get("location", contact.get("address", "")),
+            "education": safe_edu,
+            "experience": safe_exp,
+            "skills": safe_skills,
+            "portfolio": safe_projects,
+            "autobiography": safe_bio,
+            "languages": "中文(精通)", 
+            "certifications": "",
+            "other": res_struct.get("other", "")
+        }
+
+        # 🌟 如果有傳入 job_id，則回寫結果到 Redis
+        if job_id:
+            now = datetime.now(timezone.utc).isoformat()
+            redis_client.hset(f"job:{job_id}", mapping={
+                "status": "done",
+                "result": json.dumps(mapped_data),
+                "updated_at": now
+            })
+
+        return {"status": "success", "data": mapped_data}
 
     except Exception as e:
         print(f"Resume OCR Task Failed: {e}")
-        self.update_state(state='FAILURE', meta={'error': str(e)})
+        # self.update_state(state='FAILURE', meta={'error': str(e)})
+        
+        if job_id:
+            now = datetime.now(timezone.utc).isoformat()
+            redis_client.hset(f"job:{job_id}", mapping={
+                "status": "failed",
+                "error": str(e),
+                "updated_at": now
+            })
+            
         return {"status": "error", "message": str(e)}
 
 

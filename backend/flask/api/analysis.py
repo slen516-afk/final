@@ -15,31 +15,32 @@ analysis_bp = Blueprint("analysis", __name__)
 VALID_TASK_TYPES = {"resume_analysis", "resume_opt"}
 
 
-def _create_job(user_id: str, task_type: str = "resume_analysis") -> str:
-    # 建立job hash 在 Redis 並 XADD 到 stream
+def _create_celery_job(user_id: str, task_type: str = "resume_analysis") -> str:
+    """
+    將分析任務提交給 Celery 進行非同步處理。
+    """
+    from worker.tasks import process_resume_analysis, process_resume_optimization
+    
     job_id = f"job_{uuid.uuid4().hex[:12]}"
     now = datetime.now(timezone.utc).isoformat()
 
-    mapping = {
-        "status": "queued",
+    # 1. 在 Redis 紀錄 Job 初始狀態
+    redis_client.hset(f"job:{job_id}", mapping={
+        "status": "processing",
         "user_id": user_id,
         "task_type": task_type,
         "result": "",
         "suggestions": "",
         "error": "",
-        "retry_count": "0",
         "created_at": now,
         "updated_at": now,
-    }
-
-    redis_client.hset(f"job:{job_id}", mapping=mapping)
-
-    # XADD 到 cv_jobs stream
-    redis_client.xadd(STREAM_NAME, {
-        "job_id": job_id,
-        "task_type": task_type,
-        "retry_count": "0",
     })
+
+    # 2. 依據類型觸發對應的 Celery 任務
+    if task_type == "resume_opt":
+        process_resume_optimization.delay(user_id, job_id)
+    else:
+        process_resume_analysis.delay(user_id, job_id)
 
     return job_id
 
@@ -65,11 +66,11 @@ def start_analysis_task():
         if task_type not in VALID_TASK_TYPES:
             return jsonify({"error": f"Unsupported task_type: {task_type}. 支援: {', '.join(VALID_TASK_TYPES)}"}), 400
 
-        job_id = _create_job(db_user_id, task_type)
+        job_id = _create_celery_job(db_user_id, task_type)
 
         return jsonify({
             "job_id": job_id,
-            "status": "queued",
+            "status": "processing",
         }), 202
 
     except Exception as e:
@@ -92,12 +93,18 @@ def poll_job(job_id):
     }
 
     if job["status"] == "done":
-        resp["result"] = json.loads(job["result"]) if job.get("result") else None
-        resp["suggestions"] = json.loads(job["suggestions"]) if job.get("suggestions") else None
-    elif job["status"] == "dlq":
+        raw_result = job.get("result")
+        if raw_result:
+            try:
+                parsed = json.loads(raw_result)
+                resp["result"] = parsed
+                # 如果 suggestions 沒獨立存，嘗試從 result 裡面抓
+                resp["suggestions"] = json.loads(job.get("suggestions")) if job.get("suggestions") else parsed.get("suggestions", None)
+            except:
+                resp["result"] = raw_result
+        else:
+            resp["result"] = None
+    elif job["status"] == "failed" or job["status"] == "dlq":
         resp["error"] = job.get("error", "")
 
     return jsonify(resp), 200
-
-
-

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getJobDetailAPI, fetchUserResumesAPI, generateCoverLetterAPI } from '@/services/api';
+import { useAsyncTask } from '@/hooks/useAsyncTask';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppState } from '@/contexts/AppContext';
@@ -131,67 +132,66 @@ const JobDetail = () => {
       loadMyResumes();
     }
   }, [drawerOpen, isLoggedIn, realUserId]);
+  // 🌟 AI Cover Letter 任務監聽
+  const { runTask: runGenerateCoverLetter, status: genStatus, result: genResult, progress: genProgress } = useAsyncTask();
+
+  useEffect(() => {
+     if (genStatus === 'SUCCESS' && genResult) {
+          // 解析內容，後端回傳的是 Markdown 或純文字
+          const rawText = genResult;
+          let subject = `應徵 ${job?.company} - ${job?.title}`;
+          let body = rawText;
+
+          if (rawText.includes("主旨：") || rawText.includes("Subject:")) {
+            const parts = rawText.split(/\n/);
+            subject = parts[0].replace(/主旨：|Subject:/, "").trim();
+            body = parts.slice(1).join("\n").trim();
+          }
+
+          setLetterContent({ subject, body });
+          toast.success("推薦信生成完成！");
+          setIsGenerating(false);
+     } else if (genStatus === 'FAILURE') {
+          toast.error("推薦信生成失敗，請重試");
+          setIsGenerating(false);
+     }
+  }, [genStatus, genResult, job]);
 
   const handleStartGeneration = async () => {
     if (!selectedResumeId) {
       toast.error("請先選擇一份履歷");
       return;
     }
+    
+    // 🌟 依照是否為 mock 模式切換
+    if (isMockMode && isMockMode()) {
+        console.log("🛠️ [JobDetail] Mock 模式：產生模擬推薦信");
+        setIsGenerating(true);
+        setLetterContent(null);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setLetterContent(mockCoverLetter(job?.title, job?.company));
+        setIsGenerating(false);
+        return;
+    }
+
     setIsGenerating(true);
     setLetterContent(null);
     setIsCopied(false);
 
-    try {
-      // 🌟 依照是否為 mock 模式切換
-      if (isMockMode && isMockMode()) {
-        console.log("🛠️ [JobDetail] Mock 模式：產生模擬推薦信");
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setLetterContent(mockCoverLetter(job?.title, job?.company));
-      } else {
-        console.log("🚀 [JobDetail] 真實模式：呼叫後端 AI 生成推薦信", { 
-          job_id: id, 
-          resume_id: selectedResumeId 
-        });
+    console.log("🚀 [JobDetail] 真實模式：呼叫後端 AI 生成推薦信", { 
+        job_id: id, 
+        resume_id: selectedResumeId 
+    });
 
-        // 構建 Payload
-        // 依照先前 tools.py 的邏輯，如果 id 帶有 _opt_ 則是優化履歷
-        const payload: any = { job_id: id };
-        if (selectedResumeId.includes("_opt_")) {
-          payload.optimization_id = selectedResumeId;
-        } else {
-          payload.resume_id = selectedResumeId;
-        }
-
-        const res = await generateCoverLetterAPI(payload);
-        
-        if (res && res.status === "success" && res.data) {
-          // 解析內容，後端回傳的是 Markdown 或純文字
-          // 嘗試分割主旨與內容 (假設後端回傳格式包含 "主旨：" 或 "Subject:")
-          const rawText = res.data;
-          let subject = `應徵 ${job?.company} - ${job?.title}`;
-          let body = rawText;
-
-          // 簡單的分割邏輯
-          if (rawText.includes("主旨：")) {
-            const parts = rawText.split(/\n/);
-            subject = parts[0].replace("主旨：", "").trim();
-            body = parts.slice(1).join("\n").trim();
-          }
-
-          setLetterContent({ subject, body });
-          toast.success("推薦信生成完成！");
-        } else {
-          throw new Error(res?.message || "生成失敗");
-        }
-      }
-    } catch (error: any) {
-      console.error("生成推薦信失敗:", error);
-      toast.error(`生成失敗: ${error.message || "未知錯誤"}`);
-      // 失敗時給予 Mock 作為保險 (選用，或是保持錯誤狀態)
-      // setLetterContent(mockCoverLetter(job?.title, job?.company));
-    } finally {
-      setIsGenerating(false);
+    // 構建 Payload
+    const payload: any = { job_id: id };
+    if (selectedResumeId.includes("_opt_")) {
+        payload.optimization_id = selectedResumeId;
+    } else {
+        payload.resume_id = selectedResumeId;
     }
+
+    runGenerateCoverLetter('cover_letter', payload);
   };
 
   const handleGenerateLetterClick = () => {
@@ -326,7 +326,12 @@ const JobDetail = () => {
               </Button>
             </motion.div>
           ) : isGenerating ? (
-            <AILoadingSpinner message="正在撰寫個人化推薦信..." />
+            <div className="space-y-4">
+               <AILoadingSpinner message={`正在撰寫個人化推薦信... ${genProgress}%`} />
+               <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                   <motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${genProgress}%` }} />
+               </div>
+            </div>
           ) : letterContent ? (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
               <div className="bg-primary/5 border border-primary/10 rounded-lg p-3 text-[10px] text-primary flex items-center gap-2">

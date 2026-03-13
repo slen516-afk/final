@@ -27,127 +27,41 @@ def upload_resume():
         return jsonify({"error": "沒有選擇檔案", "code": 400}), 400
     
     try:
-        # ==========================================
-        # 🌟 1. 終極防呆存檔法：強制加上 .pdf
-        # ==========================================
+        from worker.tasks import analyze_resume_async
+        from core.redis_client import redis_client
+        import uuid
+
+        # 1. 儲存檔案
         current_timestamp = int(time.time() * 1000)
-        safe_filename = f"{current_timestamp}_{uuid.uuid4().hex[:8]}.pdf"
-        filepath = os.path.join(UPLOAD_FOLDER, safe_filename)
+        ext = os.path.splitext(file.filename)[1].lower() if file.filename else ".pdf"
+        safe_filename = f"{current_timestamp}_{uuid.uuid4().hex[:8]}{ext}"
+        filepath = os.path.abspath(os.path.join(UPLOAD_FOLDER, safe_filename))
         
         file.save(filepath)
-        print(f"✅ 檔案已暫存至: {filepath}")
         
-        # ==========================================
-        # 🌟 2. 呼叫 OCR 進行辨識
-        # ==========================================
-        ocr_handler = current_app.config.get("OCR_HANDLER")
-        if not ocr_handler:
-            return jsonify({"error": "OCR 服務尚未準備好或載入失敗", "code": 500}), 500
-        
-        print("[API] 呼叫已待命的 OCR 管家開始辨識...")
-        raw_ocr_result = ocr_handler(filepath)
-        
-        # --- 防呆機制：如果 OCR 失敗回傳 Error ---
-        if isinstance(raw_ocr_result, dict) and "error" in raw_ocr_result:
-            return jsonify({"error": raw_ocr_result["error"], "code": 500}), 500
+        # 2. 準備任務
+        job_id = f"ocr_{uuid.uuid4().hex[:12]}"
+        now = datetime.now(timezone.utc).isoformat()
 
-        # ==========================================
-        # 🌟 3. 無敵鐵金剛數據映射 (Mapping) + 型別防呆
-        # ==========================================
-        # 確保 raw_ocr_result 是字典，避免 .get() 報錯
-        if isinstance(raw_ocr_result, str):
-            try:
-                raw_ocr_result = json.loads(raw_ocr_result)
-            except:
-                raw_ocr_result = {}
-        if not isinstance(raw_ocr_result, dict):
-            raw_ocr_result = {}
+        # 在 Redis 紀錄 Job 初始狀態
+        redis_client.hset(f"job:{job_id}", mapping={
+            "status": "processing",
+            "user_id": str(g.db_user_id) if hasattr(g, 'db_user_id') else "guest",
+            "result": "",
+            "error": "",
+            "created_at": now,
+            "updated_at": now,
+        })
 
-        print("\n🔍 [Debug] AI 辨識出的原始結構:", raw_ocr_result, "\n")
-
-        # 容錯提取子結構
-        res_struct = raw_ocr_result.get("structured_data", {})
-        if not isinstance(res_struct, dict): res_struct = raw_ocr_result
-        
-        norm = raw_ocr_result.get("normalized_data", {})
-        if not isinstance(norm, dict): norm = raw_ocr_result
-        
-        contact = norm.get("contact", {})
-        if not isinstance(contact, dict): contact = raw_ocr_result
-
-        # 🛡️ 安全處理教育背景 (解決垂直文字「跑版」問題)
-        raw_edu = res_struct.get("education", [])
-        if isinstance(raw_edu, list):
-            safe_edu = "\n".join([str(e.get("details", e.get("school", ""))) if isinstance(e, dict) else str(e) for e in raw_edu])
-        else:
-            safe_edu = str(raw_edu) # 如果是單純字串，直接轉型，絕對不跑迴圈！
-
-        # 🛡️ 安全處理工作經歷 (Experience)
-        raw_exp = res_struct.get("experience", res_struct.get("work_experience", []))
-        if isinstance(raw_exp, list):
-            exp_list = []
-            for exp in raw_exp:
-                if isinstance(exp, dict):
-                    title = exp.get('title', exp.get('role', ''))
-                    comp = exp.get('company', '')
-                    desc = exp.get('responsibilities', exp.get('description', ''))
-                    exp_list.append(f"{title} - {comp}\n{desc}".strip(" -\n"))
-                else:
-                    exp_list.append(str(exp))
-            safe_exp = "\n\n".join(exp_list)
-        else:
-            safe_exp = str(raw_exp)
-
-        # 🛡️ 安全處理專案/作品集 (Portfolio)
-        raw_projects = res_struct.get("projects", res_struct.get("portfolio", []))
-        if isinstance(raw_projects, list):
-            proj_list = []
-            for p in raw_projects:
-                if isinstance(p, dict):
-                    title = p.get("title", p.get("name", ""))
-                    desc = p.get("description", p.get("details", ""))
-                    proj_list.append(f"{title}\n{desc}".strip(" -\n"))
-                else:
-                    proj_list.append(str(p))
-            safe_projects = "\n\n".join(proj_list)
-        else:
-            safe_projects = str(raw_projects)
-
-        # 🛡️ 安全處理技能
-        raw_skills = norm.get("skills", res_struct.get("skills", []))
-        safe_skills = ", ".join([str(s) for s in raw_skills]) if isinstance(raw_skills, list) else str(raw_skills)
-
-        # 🛡️ 安全處理自傳 / 關於我
-        safe_bio = res_struct.get("summary", res_struct.get("autobiography", res_struct.get("bio", res_struct.get("關於我", ""))))
-        if isinstance(safe_bio, list): 
-            safe_bio = "\n".join([str(b) for b in safe_bio])
-        else:
-            safe_bio = str(safe_bio)
-
-        # ==========================================
-        # 🌟 4. 嚴格對齊前端需要的欄位名稱 (非常重要！)
-        # ==========================================
-        mapped_data = {
-            "name": contact.get("name", contact.get("full_name", "")),
-            "email": contact.get("email", ""),
-            "phone": contact.get("phone", ""),
-            "address": contact.get("location", contact.get("address", "")), # 前端叫 address
-            
-            "education": safe_edu,
-            "experience": safe_exp,
-            "skills": safe_skills,
-            "portfolio": safe_projects, # 專案經驗會被填入這裡
-            "autobiography": safe_bio,  # 關於我會被填入這裡
-            
-            "languages": "中文(精通)", 
-            "certifications": "",
-            "other": res_struct.get("other", "")
-        }
+        # 3. 觸發 Celery 任務
+        analyze_resume_async.delay(file_path=filepath, job_id=job_id)
 
         return jsonify({
-            "message": "Resume analyzed successfully",
-            "data": raw_ocr_result,
-        }), 200
+            "status": "success",
+            "message": "Resume upload successful, analysis started",
+            "job_id": job_id,
+            "task_id": job_id
+        }), 202
 
     except Exception as e:
         print(f"❌ 發生致命錯誤: {str(e)}")
@@ -292,7 +206,6 @@ def save_processed_resume():
         except Exception as profile_e:
             print(f"⚠️ [System] 同步更新 user_profile 發生錯誤: {profile_e}")
 
-        # ⚠️ 這裡一定要有 return！
         return jsonify({
             "status": "success", 
             "message": "履歷儲存成功",
@@ -301,7 +214,6 @@ def save_processed_resume():
 
     except Exception as e:
         print(f"🚨 [Error] 履歷儲存失敗: {e}")
-        # ⚠️ 這裡也一定要有 return！(你剛才可能就是漏了這個單字)
         return jsonify({
             "status": "error", 
             "message": str(e)
@@ -310,41 +222,36 @@ def save_processed_resume():
 @resume_proc_bp.route('/analyze', methods=['POST'])
 def analyze_resume_with_ai():
     try:
+        from worker.tasks import process_resume_analysis
+        from core.redis_client import redis_client
+
         req_data = request.json
         user_id = req_data.get('user_id')
-        resume_data = req_data.get('resume_data')
 
-        if not user_id or not resume_data:
-            return jsonify({"status": "error", "message": "缺少 user_id 或 resume_data"}), 400
+        if not user_id:
+            return jsonify({"status": "error", "message": "缺少 user_id"}), 400
 
-        print(f"\n🚀 [API] 收到 User {user_id} 的履歷 AI 診斷請求！")
+        tracking_id = f"job_{uuid.uuid4().hex[:12]}"
+        now = datetime.now(timezone.utc).isoformat()
 
-        # 1. 召喚你的大腦總機！
-        # 💡 測試階段可以先保持 mock_mode=True，確定連線通了再改成 False 讓真 LLM 跑
-        manager = CareerAgentManager() 
-
-        # 2. 準備給 CrewAI 的輸入字典 (對應 manager.py 的 user_input)
-        # 把 JSON 轉成格式化字串，讓 LLM 比較好閱讀
-        user_input = {
+        # 1. 在 Redis 紀錄 Job 初始狀態
+        redis_client.hset(f"job:{tracking_id}", mapping={
+            "status": "processing",
             "user_id": user_id,
-            "resume_text": json.dumps(resume_data, ensure_ascii=False, indent=2) 
-        }
+            "result": "",
+            "error": "",
+            "created_at": now,
+            "updated_at": now,
+        })
 
-        # 3. 執行任務！告訴 Manager 我們要做 "resume_analysis"
-        print("🤖 [CrewAI] 開始執行履歷深度診斷任務...")
-        result = manager.run_task("resume_analysis", user_input)
+        # 2. 觸發 Celery 任務
+        process_resume_analysis.delay(user_id=user_id, job_id=tracking_id)
 
-        # 4. 錯誤處理 (如果 manager 回傳 status: error)
-        if isinstance(result, dict) and result.get("status") == "error":
-             print(f"❌ [CrewAI Error] {result.get('message')}")
-             return jsonify({"status": "error", "message": result.get("message")}), 500
-
-        # 5. 成功！把符合 Pydantic schema 的完美 JSON 丟回給前端
-        print("✅ [CrewAI] 診斷完成，準備回傳給前端 UI！")
         return jsonify({
             "status": "success",
-            "data": result  
-        }), 200
+            "job_id": tracking_id,
+            "task_id": tracking_id
+        }), 202
 
     except Exception as e:
         print(f"🚨 [Fatal Error] AI 履歷診斷發生致命錯誤: {str(e)}")
@@ -353,71 +260,39 @@ def analyze_resume_with_ai():
 @resume_proc_bp.route('/optimize/generate', methods=['POST'])
 def generate_optimized_resume():
     try:
+        from worker.tasks import process_resume_optimization
+        from core.redis_client import redis_client
+
         req_data = request.json
         user_id = req_data.get('user_id')
-        resume_data = req_data.get('resume_data')
-
-        if not user_id or not resume_data:
-            return jsonify({"status": "error", "message": "缺少 user_id 或 resume_data"}), 400
-
-        print(f"\n🚀 [API] 收到使用者 {user_id} 的 AI 全文履歷優化請求！")
-
-        # 🌟 【新需求】避免每次測試消耗 Token - 預先定義備份路徑
-        from pathlib import Path
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
-        test_dir = project_root / "frontend" / "src" / "test"
-        backup_file = test_dir / "optimized_resume_output.json"
         
-        # 檢查是否啟用 Mock 模式 (透過環境變數或請求參數)
-        is_mock = os.environ.get("MOCK_MODE", "").lower() == "true" or req_data.get("mock") == True
-        
-        if is_mock and backup_file.exists():
-            print(f"♻️ [System] 偵測到 Mock 模式，直接讀取備份檔回傳: {backup_file}")
-            try:
-                with open(backup_file, "r", encoding="utf-8") as f:
-                    cached_result = json.load(f)
-                return jsonify({
-                    "status": "success",
-                    "data": cached_result,
-                    "is_mock": True
-                }), 200
-            except Exception as e:
-                print(f"⚠️ [System] 讀取備份檔失敗，將繼續執行 AI 生成: {e}")
+        if not user_id:
+            return jsonify({"status": "error", "message": "缺少 user_id"}), 400
 
-        # 🌟 直接呼叫 Manager
-        manager = CareerAgentManager(mock_mode=False) 
+        tracking_id = f"job_{uuid.uuid4().hex[:12]}"
+        now = datetime.now(timezone.utc).isoformat()
 
-        # 準備給 CrewAI 的輸入資料
-        user_input = {
+        # 1. 在 Redis 紀錄 Job 初始狀態
+        redis_client.hset(f"job:{tracking_id}", mapping={
+            "status": "processing",
             "user_id": user_id,
-            "resume_text": json.dumps(resume_data, ensure_ascii=False, indent=2) 
-        }
+            "result": "",
+            "error": "",
+            "created_at": now,
+            "updated_at": now,
+        })
 
-        print("🤖 [CrewAI] 開始執行履歷全文重寫與優化任務 (resume_opt)...")
-        result = manager.run_task("resume_opt", user_input)
-
-        if isinstance(result, dict) and result.get("status") == "error":
-             print(f"❌ [CrewAI Error] {result.get('message')}")
-             return jsonify({"status": "error", "message": result.get("message")}), 500
-
-        print("✅ [CrewAI] 履歷生成完成，準備渲染至前端樣板！")
-
-        # 🌟 【新需求】將輸出寫成檔案，供測試與節省 Token 使用
-        try:
-            os.makedirs(test_dir, exist_ok=True)
-            with open(backup_file, "w", encoding="utf-8") as f:
-                json.dump(result, f, ensure_ascii=False, indent=2)
-            print(f"💾 [System] 已將最新優化結果備份至: {backup_file}")
-        except Exception as file_e:
-            print(f"⚠️ [System] 備份優化結果失敗 (但也許是因為 Docker 路徑限制): {file_e}")
+        # 2. 觸發 Celery 任務
+        process_resume_optimization.delay(user_id=user_id, job_id=tracking_id)
 
         return jsonify({
             "status": "success",
-            "data": result  
-        }), 200
+            "job_id": tracking_id,
+            "task_id": tracking_id
+        }), 202
 
     except Exception as e:
-        print(f"🚨 [Error] AI 履歷生成失敗: {e}")
+        print(f"🚨 [Fatal Error] AI 履歷優化發生致命錯誤: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 # ==========================================
 # 🌟 儲存/更新優化後的履歷到資料庫 (無 ID 報錯修復版)

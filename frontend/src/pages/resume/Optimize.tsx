@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAsyncTask } from '@/hooks/useAsyncTask';
 import { FileText, Download, Save, Palette, Briefcase, GraduationCap, Mail, Phone, User, Star, Sparkles, ChevronLeft, Target, Check, CheckCircle, AlertTriangle, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -187,6 +188,51 @@ const Optimize = () => {
     fetchRealDatabaseResume();
   }, [realUserId]);
 
+  const { runTask: runAnalyze, status: analyzeStatus, result: analyzeResult, progress: analyzeProgress } = useAsyncTask();
+  const { runTask: runOptimize, status: optimizeStatus, result: optimizeResult, progress: optimizeProgress } = useAsyncTask();
+
+  // 🌟 AI 評估結果監聽
+  useEffect(() => {
+    if (analyzeStatus === 'SUCCESS' && analyzeResult) {
+      console.log("✅ CrewAI 評估完成，收到真實報告:", analyzeResult);
+      setDiagnosticResult(analyzeResult);
+      setPhase('suggestions');
+    } else if (analyzeStatus === 'FAILURE') {
+       alert("AI 分析失敗，嘗試重試或稍後再試");
+       const fallbackReport = generateDynamicDiagnosis(originalData);
+       setDiagnosticResult(fallbackReport);
+       setPhase('suggestions');
+    }
+  }, [analyzeStatus, analyzeResult, originalData]); // Added originalData to dependencies
+
+  // 🌟 AI 優化結果監聽
+  useEffect(() => {
+    if (optimizeStatus === 'SUCCESS' && optimizeResult) {
+        console.log("✅ AI 全文優化完成，收到全新履歷:", optimizeResult);
+        setResumeData((prev: any) => ({
+          ...prev,
+          professional_summary: optimizeResult.professional_summary || '',
+          professional_experience: Array.isArray(optimizeResult.professional_experience)
+            ? optimizeResult.professional_experience.join('\n\n')
+            : optimizeResult.professional_experience || prev.professional_experience,
+          core_skills: Array.isArray(optimizeResult.core_skills)
+            ? optimizeResult.core_skills.join(', ')
+            : optimizeResult.core_skills || prev.core_skills,
+          projects: Array.isArray(optimizeResult.projects)
+            ? optimizeResult.projects.join('\n\n')
+            : optimizeResult.projects || prev.projects,
+          education: Array.isArray(optimizeResult.education)
+            ? optimizeResult.education.join('\n\n')
+            : optimizeResult.education || prev.education,
+          autobiography: optimizeResult.autobiography || prev.autobiography
+        }));
+        setPhase('result');
+    } else if (optimizeStatus === 'FAILURE') {
+         alert("AI 生成失敗，將使用原始資料渲染樣板！");
+         setPhase('result');
+    }
+  }, [optimizeStatus, optimizeResult]);
+
   const handleSaveOptimization = async () => {
     try {
       if (!realLatestResume?.resume_id) {
@@ -247,39 +293,11 @@ const Optimize = () => {
   // ==========================================
   const handleStartOptimize = async () => {
     setPhase('analyzing');
-
-    try {
-      const payload = {
+    // 使用通用任務中心介面
+    runAnalyze('resume_analysis', {
         user_id: realUserId,
         resume_data: originalData
-      };
-
-      console.log("🚀 準備發送給 CrewAI 評估的資料:", payload);
-
-      const response = await fetch('/api/resume_process/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-
-      if (response.ok && result.data) {
-        console.log("✅ CrewAI 評估完成，收到真實報告:", result.data);
-        setDiagnosticResult(result.data);
-      } else {
-        throw new Error(result.error || result.message || "AI 分析回傳格式錯誤");
-      }
-
-    } catch (error) {
-      console.error("🚨 AI 評估 API 呼叫失敗:", error);
-      alert("⚠️ 後端 AI 連線失敗，啟用本地動態備援模式！(請檢查終端機報錯)");
-
-      const fallbackReport = generateDynamicDiagnosis(originalData);
-      setDiagnosticResult(fallbackReport);
-    }
-
-    setPhase('suggestions');
+    });
   };
 
   // ==========================================
@@ -402,7 +420,11 @@ const Optimize = () => {
             {/* 階段 2：分析中動畫 */}
             {phase === 'analyzing' && (
               <motion.div key="analyzing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-10">
-                <AILoadingSpinner message="AI 正在深度診斷您的履歷中..." /><AnalysisSkeleton />
+                <AILoadingSpinner message={`AI 正在深度診斷您的履歷中... ${analyzeProgress}%`} />
+                <div className="max-w-md mx-auto mt-4 h-2 bg-muted rounded-full overflow-hidden">
+                   <motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${analyzeProgress}%` }} />
+                </div>
+                <AnalysisSkeleton />
               </motion.div>
             )}
 
@@ -575,7 +597,11 @@ const Optimize = () => {
             {/* 階段 5：優化結果與儲存 */}
             {phase === 'generating' && (
               <motion.div key="generating" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-10">
-                <AILoadingSpinner message="AI 正在將您的履歷套用至全新樣板中..." /><AnalysisSkeleton />
+                <AILoadingSpinner message={`AI 正在將您的履歷套用至全新樣板中... ${optimizeProgress}%`} />
+                 <div className="max-w-md mx-auto mt-4 h-2 bg-muted rounded-full overflow-hidden">
+                   <motion.div className="h-full bg-primary" initial={{ width: 0 }} animate={{ width: `${optimizeProgress}%` }} />
+                </div>
+                <AnalysisSkeleton />
               </motion.div>
             )}
 
