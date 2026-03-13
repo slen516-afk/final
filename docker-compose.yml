@@ -98,10 +98,12 @@ services:
     depends_on:
       - redis
     environment:
-      - PYTHONPATH=/app/flask:/app:/app/service/llm_service:/app/service/llm_service/src:/app/supabase_control
+      - PYTHONPATH=/app:/app/flask:/app/service/llm_service:/app/service/llm_service/src:/app/supabase_control
       - REDIS_URL=redis://redis:6379/0
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_KEY=${SUPABASE_KEY}
+    env_file:
+      - .env
     networks:
       - default
 

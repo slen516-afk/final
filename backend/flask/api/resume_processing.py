@@ -1,7 +1,7 @@
 # api/resume_processing.py
 import os
 import json
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, g
 from werkzeug.utils import secure_filename
 import uuid
 import time
@@ -26,7 +26,9 @@ def upload_resume():
     if file.filename == '':
         return jsonify({"error": "沒有選擇檔案", "code": 400}), 400
     
+    print("DEBUG: Entering upload_resume")
     try:
+        print("DEBUG: Importing tasks and redis")
         from worker.tasks import analyze_resume_async
         from core.redis_client import redis_client
         import uuid
@@ -38,6 +40,7 @@ def upload_resume():
         filepath = os.path.abspath(os.path.join(UPLOAD_FOLDER, safe_filename))
         
         file.save(filepath)
+        print(f"DEBUG: File saved to {filepath}")
         
         # 2. 準備任務
         job_id = f"ocr_{uuid.uuid4().hex[:12]}"
@@ -54,7 +57,10 @@ def upload_resume():
         })
 
         # 3. 觸發 Celery 任務
-        analyze_resume_async.delay(file_path=filepath, job_id=job_id)
+        print(f"DEBUG: Triggering analyze_resume_async for job {job_id}")
+        # 使用 apply_async 並指定 task_id，讓 Celery 的 ID 跟我們的 job_id 一致
+        analyze_resume_async.apply_async(kwargs={"file_path": filepath, "job_id": job_id}, task_id=job_id)
+        print("DEBUG: Task triggered successfully")
 
         return jsonify({
             "status": "success",
@@ -70,20 +76,37 @@ def upload_resume():
 
 @resume_proc_bp.route('/<id>/status', methods=['GET'])
 def check_ocr_status(id):
-    mock_parsed_data = {
-        "name": "王小明",
-        "email": "wang.test@example.com",
-        "skills": ["Python", "Flask", "Docker", "SQL", "React"],
-        "experience_years": 2,
-        "education": "國立科技大學 資訊工程系"
-    }
+    from core.redis_client import redis_client
+    
+    # 嘗試從 Redis 讀取狀態
+    job_data = redis_client.hgetall(f"job:{id}")
+    
+    if not job_data:
+        return jsonify({
+            "resume_id": id,
+            "status": "not_found",
+            "message": "找不到該任務資訊"
+        }), 404
+
+    status = job_data.get('status', 'processing')
+    result_str = job_data.get('result', '')
+    error_msg = job_data.get('error', '')
+    
+    # 解析結果 JSON
+    ocr_result = {}
+    if result_str:
+        try:
+            ocr_result = json.loads(result_str)
+        except:
+            ocr_result = {}
 
     return jsonify({
         "resume_id": id,
-        "status": "completed",  # 可能是 'processing', 'completed', 'failed'
-        "progress": 100,
-        "ocr_result": mock_parsed_data,
-        "generated_at": time.strftime('%Y-%m-%d %H:%M:%S')
+        "status": status,  # 'processing', 'done', 'failed'
+        "progress": 100 if status == 'done' else 50,
+        "ocr_result": ocr_result,
+        "error": error_msg,
+        "generated_at": job_data.get('updated_at', '')
     }), 200
 
 @resume_proc_bp.route('/list/<int:user_id>', methods=['GET'])
@@ -244,8 +267,8 @@ def analyze_resume_with_ai():
             "updated_at": now,
         })
 
-        # 2. 觸發 Celery 任務
-        process_resume_analysis.delay(user_id=user_id, job_id=tracking_id)
+        # 2. 觸發 Celery 任務 (使用 apply_async 並指定 task_id)
+        process_resume_analysis.apply_async(kwargs={"user_id": user_id, "job_id": tracking_id}, task_id=tracking_id)
 
         return jsonify({
             "status": "success",
@@ -282,8 +305,8 @@ def generate_optimized_resume():
             "updated_at": now,
         })
 
-        # 2. 觸發 Celery 任務
-        process_resume_optimization.delay(user_id=user_id, job_id=tracking_id)
+        # 2. 觸發 Celery 任務 (使用 apply_async 並指定 task_id)
+        process_resume_optimization.apply_async(kwargs={"user_id": user_id, "job_id": tracking_id}, task_id=tracking_id)
 
         return jsonify({
             "status": "success",
@@ -340,8 +363,7 @@ def save_optimized_resume():
             "core_skills": to_jsonb(optimized_data.get("core_skills")),
             "projects": to_jsonb(optimized_data.get("projects")),
             "education": to_jsonb(optimized_data.get("education")),
-            "template_color": {"template_id": template_id},
-            "is_published": True
+            "template_color": {"template_id": template_id}
         }
 
         # ==========================================
@@ -369,8 +391,6 @@ def save_optimized_resume():
             update_data["user_id"] = user_id
             update_data["resume_id"] = resume_id
             update_data["optimization_version"] = "1"
-            update_data["llm_model_used"] = "gpt-4o"
-            update_data["is_embedded"] = False
             response = supabase.table('resume_optimization').insert(update_data).execute()
 
         return jsonify({

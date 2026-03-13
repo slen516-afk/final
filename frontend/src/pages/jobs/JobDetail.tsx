@@ -137,15 +137,22 @@ const JobDetail = () => {
 
   useEffect(() => {
      if (genStatus === 'SUCCESS' && genResult) {
-          // 解析內容，後端回傳的是 Markdown 或純文字
-          const rawText = genResult;
+          // 解析內容，後端可能回傳物件 (結構化) 或純文字
           let subject = `應徵 ${job?.company} - ${job?.title}`;
-          let body = rawText;
+          let body = "";
 
-          if (rawText.includes("主旨：") || rawText.includes("Subject:")) {
-            const parts = rawText.split(/\n/);
-            subject = parts[0].replace(/主旨：|Subject:/, "").trim();
-            body = parts.slice(1).join("\n").trim();
+          if (typeof genResult === 'object' && genResult !== null) {
+            // 如果是物件，直接取值
+            subject = genResult.subject || subject;
+            body = genResult.content || genResult.body || "";
+          } else if (typeof genResult === 'string') {
+            // 如果是純文字，嘗試解析
+            body = genResult;
+            if (genResult.includes("主旨：") || genResult.includes("Subject:")) {
+              const parts = genResult.split(/\n/);
+              subject = parts[0].replace(/主旨：|Subject:/, "").trim();
+              body = parts.slice(1).join("\n").trim();
+            }
           }
 
           setLetterContent({ subject, body });

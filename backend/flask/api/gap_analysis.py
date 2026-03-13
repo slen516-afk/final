@@ -24,9 +24,9 @@ def _create_gap_analysis_job(user_id: str, survey_data: dict) -> str:
         "updated_at": now,
     })
 
-    # 呼叫 Celery（worker/ 已整合至 flask/worker/，直接 import 即可）
+    # 呼叫 Celery (使用 apply_async 並指定 task_id)
     from worker.tasks import process_career_analysis
-    process_career_analysis.delay(user_id, json.dumps(survey_data), job_id)
+    process_career_analysis.apply_async(args=[user_id, json.dumps(survey_data), job_id], task_id=job_id)
 
     return job_id
 

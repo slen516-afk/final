@@ -51,13 +51,16 @@ def generate_cover_letter():
             "updated_at": now,
         })
 
-        # 2. 觸發 Celery 任務
-        process_cover_letter.delay(
-            user_id=user_id, 
-            job_id=str(job_id), 
-            optimization_id=str(optimization_id or ""), 
-            resume_id=str(resume_id or ""),
-            tracking_id=tracking_id
+        # 2. 觸發 Celery 任務 (使用 apply_async 並指定 task_id)
+        process_cover_letter.apply_async(
+            kwargs={
+                "user_id": user_id, 
+                "job_id": str(job_id), 
+                "optimization_id": str(optimization_id or ""), 
+                "resume_id": str(resume_id or ""),
+                "tracking_id": tracking_id
+            },
+            task_id=tracking_id
         )
 
         return jsonify({

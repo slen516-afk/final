@@ -205,7 +205,7 @@ const Optimize = () => {
     }
   }, [analyzeStatus, analyzeResult, originalData]); // Added originalData to dependencies
 
-  // 🌟 AI 優化結果監聽
+  // 🌟 AI 優化結果監聽 (調整：支援提早觸發與條件跳轉)
   useEffect(() => {
     if (optimizeStatus === 'SUCCESS' && optimizeResult) {
         console.log("✅ AI 全文優化完成，收到全新履歷:", optimizeResult);
@@ -226,12 +226,18 @@ const Optimize = () => {
             : optimizeResult.education || prev.education,
           autobiography: optimizeResult.autobiography || prev.autobiography
         }));
-        setPhase('result');
+        
+        // 🌟 只有正在「生成中」畫面等待的人，才自動推送到結果頁
+        if (phase === 'generating') {
+          setPhase('result');
+        }
     } else if (optimizeStatus === 'FAILURE') {
-         alert("AI 生成失敗，將使用原始資料渲染樣板！");
-         setPhase('result');
+         if (phase === 'generating') {
+           alert("AI 生成失敗，將使用原始資料渲染樣板！");
+           setPhase('result');
+         }
     }
-  }, [optimizeStatus, optimizeResult]);
+  }, [optimizeStatus, optimizeResult, phase]);
 
   const handleSaveOptimization = async () => {
     try {
@@ -301,57 +307,36 @@ const Optimize = () => {
   };
 
   // ==========================================
-  // 🌟 真・AI 履歷優化生成串接 (呼叫 resume_opt)
+  // 🌟 進入樣板選擇階段 (調整：提早觸發優化生成)
   // ==========================================
-  const handleGenerateOptimizedResume = async (templateId: string) => {
-    setSelectedTemplate(templateId);
-    setPhase('generating');
-
-    try {
-      const payload = {
+  const handleEnterTemplatesPhase = () => {
+    setPhase('templates');
+    
+    // 如果優化任務還沒開始跑 (或是上次失敗了)，就主動觸發它
+    // 這樣在使用者挑選樣板的同時，後端就已經在忙碌了！
+    if (optimizeStatus === 'IDLE' || optimizeStatus === 'FAILURE') {
+      console.log("🚀 [提早觸發] 開始 AI 全文優化任務...");
+      runOptimize('resume_opt', { 
         user_id: realUserId,
-        resume_data: originalData
-      };
-
-      console.log("🚀 準備發送給 AI 進行全文優化的資料:", payload);
-
-      const response = await fetch('/api/resume_process/optimize/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        resume_data: originalData 
       });
-
-      const result = await response.json();
-
-      if (response.ok && result.data) {
-        console.log("✅ AI 全文優化完成，收到全新履歷:", result.data);
-
-        setResumeData((prev: any) => ({
-          ...prev,
-          professional_summary: result.data.professional_summary || '',
-          professional_experience: Array.isArray(result.data.professional_experience)
-            ? result.data.professional_experience.join('\n\n')
-            : result.data.professional_experience || prev.professional_experience,
-          core_skills: Array.isArray(result.data.core_skills)
-            ? result.data.core_skills.join(', ')
-            : result.data.core_skills || prev.core_skills,
-          projects: Array.isArray(result.data.projects)
-            ? result.data.projects.join('\n\n')
-            : result.data.projects || prev.projects,
-          education: Array.isArray(result.data.education)
-            ? result.data.education.join('\n\n')
-            : result.data.education || prev.education,
-          autobiography: result.data.autobiography || prev.autobiography
-        }));
-      } else {
-        throw new Error(result.error || "AI 優化生成失敗");
-      }
-    } catch (error) {
-      console.error("🚨 AI 生成履歷 API 呼叫失敗:", error);
-      alert("AI 生成失敗，將使用原始資料渲染樣板！");
     }
+  };
 
-    setPhase('result');
+  // ==========================================
+  // 🌟 選擇樣板邏輯 (調整：檢查優化結果是否已存在)
+  // ==========================================
+  const handleGenerateOptimizedResume = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    
+    // 🌟 檢查優化資料是否已經由背景任務跑完了
+    if (optimizeStatus === 'SUCCESS') {
+      console.log("✨ 檢查到優化資料已就緒，直接套用樣板！");
+      setPhase('result');
+    } else {
+      console.log("⏳ 優化資料還在生成中，顯示讀取動畫...");
+      setPhase('generating');
+    }
   };
 
   if (isLoadingDB) {
@@ -524,7 +509,7 @@ const Optimize = () => {
 
                 <div className="flex gap-4 pt-4">
                   <Button variant="outline" className="flex-1 h-12"><Download className="mr-2 h-4 w-4" /> 下載建議報告</Button>
-                  <Button className="flex-[2] h-12 gradient-primary text-lg" onClick={() => setPhase('templates')}><Palette className="mr-2 h-5 w-5" /> 選擇樣板並生成優化履歷</Button>
+                  <Button className="flex-[2] h-12 gradient-primary text-lg" onClick={handleEnterTemplatesPhase}><Palette className="mr-2 h-5 w-5" /> 選擇樣板並生成優化履歷</Button>
                 </div>
               </motion.div>
             )}

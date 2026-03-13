@@ -378,13 +378,18 @@ def analyze_resume_async(file_path, job_id=None):
             "email": contact.get("email", ""),
             "phone": contact.get("phone", ""),
             "address": contact.get("location", contact.get("address", "")),
+            "addressCity": contact.get("addressCity", ""),
+            "addressDistrict": contact.get("addressDistrict", ""),
+            "addressDetail": contact.get("addressDetail", ""),
             "education": safe_edu,
             "experience": safe_exp,
             "skills": safe_skills,
             "portfolio": safe_projects,
+            "projects": safe_projects,
             "autobiography": safe_bio,
-            "languages": "中文(精通)", 
-            "certifications": "",
+            "bio": safe_bio,
+            "languages": res_struct.get("languages", "中文(精通)"), 
+            "certifications": res_struct.get("certifications", ""),
             "other": res_struct.get("other", "")
         }
 

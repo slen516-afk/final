@@ -42,7 +42,8 @@ export const useAsyncTask = (pollingInterval = 2000) => {
         try {
             // 1. 觸發非同步任務
             const res = await taskService.submit(taskType, payload);
-            const { task_id } = res.data;
+            // 🌟 修正：apiClient 已經回傳 json 內容，不需再存取 .data
+            const { task_id } = res;
 
             // 2. 開始輪詢
             timerRef.current = setInterval(async () => {
@@ -58,7 +59,8 @@ export const useAsyncTask = (pollingInterval = 2000) => {
 
                 try {
                     const statusRes = await taskService.getStatus(task_id);
-                    const { state, result: taskResult, message } = statusRes.data;
+                    // 🌟 修正：apiClient 已經回傳 json 內容，不需再存取 .data
+                    const { state, result: taskResult, message } = statusRes;
 
                     // 更新進度訊息，如果有
                     if (message) setProgressMessage(message);
@@ -82,7 +84,7 @@ export const useAsyncTask = (pollingInterval = 2000) => {
 
         } catch (err) {
             setStatus('FAILURE');
-            setError(err.response?.data?.message || err.response?.data?.error || '無法啟動任務');
+            setError(err.response?.data?.message || err.response?.data?.error || err.message || '無法啟動任務');
         }
     }, [pollingInterval, stopPolling]);
 
