@@ -85,6 +85,21 @@
 | **存儲** | OpenAI 回傳向量 | Qdrant `job_vectors` | `vector` (1536 維), `payload` (含薪資範圍) |
 | **回寫** | Qdrant `point.id` | Supabase `job_posting.vector_id` | UUID 字串 + `is_embedded=TRUE` |
 
+### 向量維度選擇：為何用 1536 維而非 3072 維？
+
+本專案使用 **OpenAI text-embedding-3-large**，並在呼叫 API 時傳入 **dimensions=1536**。該模型預設為 **3072 維**，可透過 `dimensions` 參數取得較低維度輸出。
+
+**選擇 1536 維的考量：**
+
+| 考量 | 說明 |
+|------|------|
+| **儲存與運算** | 維度減半（1536 vs 3072）→ Qdrant 儲存與記憶體約減半，相似度搜尋與索引較省資源。 |
+| **語意保留** | OpenAI 的降維是在模型內部完成，多數任務下 1536 維仍能保留足夠語意表現，職缺／履歷匹配不需用到 3072 的細微差異。 |
+| **相容性** | 1536 與 text-embedding-ada-002、text-embedding-3-small 預設維度一致，日後若要混用或遷移較容易。 |
+| **成本與延遲** | 向量變小有利於批次寫入與查詢延遲，在「語意檢索 + 硬篩選」的場景下，1536 已能滿足需求。 |
+
+若未來有**極高精度語意比對**（例如細粒度標籤、少樣本分類）需求，可改為 3072 維並重建 collection；目前職缺／履歷語意搜尋以 **1536 維** 為預設平衡點。
+
 ---
 
 ## 環境準備
@@ -920,21 +935,26 @@ python vectorize_jobs.py
 
 ## FAQ
 
-### Q1: 為什麼薪資欄位也要放入 Payload？
+### Q1: 為何選擇 1536 維而不是 3000 多（3072）維？
+
+**text-embedding-3-large** 預設輸出 **3072 維**。專案在 API 呼叫時傳入 `dimensions=1536`，取得降維後的向量。  
+**考量**：儲存與運算約減半、語意在多數任務下仍足夠、與 ada-002／3-small 維度一致便於相容、職缺／履歷語意搜尋不需用到 3072 的極高維。詳見上方「向量維度選擇：為何用 1536 維而非 3072 維？」。
+
+### Q2: 為什麼薪資欄位也要放入 Payload？
 
 **答**：
 - 薪資是重要的硬篩選條件，使用者期望只看到薪資範圍符合的職缺
 - 若不放入 Payload，需要先從 Qdrant 取得所有相似職缺，再回 Supabase 過濾薪資
 - 這會導致**浪費向量運算**且**結果不可控**（過濾後可能剩不到 10 筆）
 
-### Q2: 薪資為 NULL 的職缺如何處理？
+### Q3: 薪資為 NULL 的職缺如何處理？
 
 **答**：
 - Payload 中保持 `salary_min: None`、`salary_max: None`
 - 搜尋時若使用者指定期望薪資，這些職缺會被**自動排除**
 - 若使用者未指定期望薪資，則不套用薪資篩選條件，保留所有職缺
 
-### Q3: 如何支援「薪資面議」的職缺？
+### Q4: 如何支援「薪資面議」的職缺？
 
 **方案 A**：在 Supabase 新增欄位 `is_negotiable: BOOLEAN`
 
@@ -954,7 +974,7 @@ if expected_salary and not include_negotiable:
 
 **方案 B**：使用特殊值表示（如 `-1` 或 `999999999`）
 
-### Q4: 向量化失敗如何重試單筆資料？
+### Q5: 向量化失敗如何重試單筆資料？
 
 ```python
 # 手動重試指定 job_id
@@ -969,14 +989,14 @@ def retry_single_job(job_id: int):
     vectorize_batch(offset=0, limit=1)
 ```
 
-### Q5: 如何監控 OpenAI API 用量？
+### Q6: 如何監控 OpenAI API 用量？
 
 前往 [OpenAI Usage Dashboard](https://platform.openai.com/usage) 查看：
 - 當日已用金額
 - Token 消耗量
 - API 調用次數
 
-### Q6: 8000 筆資料的實際成本？
+### Q7: 8000 筆資料的實際成本？
 
 **計算**：
 ```

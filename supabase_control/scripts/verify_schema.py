@@ -1,9 +1,12 @@
 """
-驗證 Supabase 資料表與說明文件對齊
+驗證 Supabase 資料表與 ERD 欄位對齊總表對齊
+
+比對依據：supabase_control/Erd/career_pilot_ERD_欄位對齊總表.md
+（與 career_pilot說明文件v4_with_chinese.md 一致）
 
 比對項目：
-1. 欄位對齊：各表是否具備說明文件（career_pilot說明文件v4_with_chinese.md）中定義的欄位
-2. 關聯關係（可選）：若有 DATABASE_URL，會檢查 FK 是否與說明文件一致
+1. 欄位對齊：各表是否具備 ERD 總表中定義的欄位
+2. 關聯關係（可選）：若有 DATABASE_URL，會檢查 FK 是否與 ERD 一致
 
 使用方式：
   # 僅用 Supabase API 檢查欄位（不需直接連 DB）
@@ -16,8 +19,8 @@
   python scripts/verify_schema.py --api-only
 
 說明：
-- 表名以「說明文件英文表名」轉成小寫、底線對應（如 USER_PROFILE → user_profile）
-- 若實際表名不同（例如 DB 用 users 而文件用 user），可在 .env 同目錄下改腳本內 TABLE_ALIAS
+- 表名以 ERD 英文表名轉成小寫、底線對應（如 USER_PROFILE → user_profile）
+- 若實際表名不同，可在腳本內改 TABLE_ALIAS
 - DATABASE_URL：Supabase 專案 → Settings → Database → Connection string（Session mode 即可）
 """
 
@@ -35,32 +38,30 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # 若 DB 表名與說明文件不同，可設對照：{ "文件表名": "實際表名" }
 TABLE_ALIAS = {}  # 例: {"user": "users"}
 
+# 對齊 career_pilot_ERD_欄位對齊總表.md（與 career_pilot說明文件v4_with_chinese.md 一致）
 EXPECTED_SCHEMA = {
     "user": [
-        "user_id", "email", "password_hash", "auth_provider",
-        "created_at", "last_login", "is_active",
+        "user_id", "auth_uid", "email", "password_hash", "auth_provider",
+        "created_at", "last_login", "is_active", "optimization_quota_per_month",
     ],
     "user_profile": [
-        "profile_id", "user_id", "github_repo", "full_name", "location",
+        "profile_id", "user_id", "github_repo", "full_name", "avatar_url", "location",
         "years_of_experience", "current_position", "education_background",
         "privacy_settings", "updated_at",
     ],
     "career_survey": [
         "survey_id", "user_id", "career_preference", "skill_self_assessment",
         "salary_min", "salary_max", "location_preference", "remote_preference",
-        "career_motivation", "questionnaire_response", "completed_at", "updated_at",
+        "career_motivation", "personality", "questionnaire_response", "completed_at", "updated_at",
     ],
     "resume": [
-        "resume_id", "user_id", "template_id", "resume_type", "structured_data",
+        "resume_id", "user_id", "resume_type", "resume_name", "structured_data",
         "normalized_data", "vector_id", "is_embedded", "is_primary",
         "created_at", "updated_at",
     ],
     "resume_version": [
         "version_id", "resume_id", "version_number", "file_path", "content",
         "optimization_target", "created_at",
-    ],
-    "resume_template": [
-        "template_id", "template_name", "template_type", "template_structure", "created_at",
     ],
     "resume_analysis": [
         "analysis_id", "resume_id", "user_id", "candidate_positioning",
@@ -69,9 +70,10 @@ EXPECTED_SCHEMA = {
         "target_job_id", "llm_model_used", "analysis_version", "generated_at", "critical_issues",
     ],
     "resume_optimization": [
-        "optimization_id", "resume_id", "version_id", "user_id", "target_job_id",
+        "optimization_id", "resume_id", "version_id", "user_id", "resume_name",
         "professional_summary", "professional_experience", "core_skills", "projects",
-        "education", "autobiography", "llm_model_used", "optimization_version", "created_at",
+        "education", "autobiography", "llm_model_used", "optimization_version",
+        "template_color", "vector_id", "is_embedded", "created_at",
     ],
     "upload_event": [
         "event_id", "user_id", "file_name", "file_path", "upload_type",
@@ -88,7 +90,7 @@ EXPECTED_SCHEMA = {
     "job_posting": [
         "job_id", "company_id", "job_category", "role_type", "role_name",
         "d1_frontend", "d2_backend", "d3_devops", "d4_ai_data", "d5_quality", "d6_soft_skills",
-        "job_title", "job_description", "requirements", "vector_id", "is_embedded",
+        "job_title", "job_description", "requirements", "vector_id", "is_embedded", "is_labeled",
         "salary_min", "salary_max", "full_address", "city", "district", "remote_option",
         "job_details", "source_platform", "source_url", "posted_date", "scraped_at", "is_active",
     ],
@@ -98,14 +100,11 @@ EXPECTED_SCHEMA = {
     "job_skill_requirement": [
         "requirement_id", "job_id", "skill_id", "importance", "proficiency_level",
     ],
-    "user_skill": [
-        "user_skill_id", "user_id", "skill_id", "proficiency_level",
-        "years_of_experience", "verified", "created_at",
-    ],
     "course": [
         "course_id", "course_name", "url", "primary_skill_name", "primary_skill_id",
         "rating", "review_count", "level", "course_type", "course_information",
-        "duration_suggested", "skills", "source_platform", "created_at",
+        "duration_suggested", "skills", "role_type", "role_name", "source_platform",
+        "created_at", "is_active",
     ],
     "job_matching": [
         "matching_id", "resume_id", "job_id", "overall_match_score", "matching_algorithm",
@@ -116,7 +115,7 @@ EXPECTED_SCHEMA = {
         "salary_match_score", "location_match_score", "score_breakdown", "created_at",
     ],
     "cover_letter": [
-        "cover_letter_id", "user_id", "job_id", "resume_id", "agent_session_id",
+        "cover_letter_id", "user_id", "job_id", "resume_id", "optimization_id", "agent_session_id",
         "subject", "content", "llm_model_used", "is_sent", "sent_at", "created_at",
     ],
     "application_record": [
@@ -129,12 +128,8 @@ EXPECTED_SCHEMA = {
         "generated_at", "user_id", "report_version", "preliminary_summary",
         "radar_chart", "gap_analysis", "action_plan",
     ],
-    "skill_gap": [
-        "gap_id", "report_id", "skill_id", "current_level", "target_level",
-        "priority_rank", "time_investment_hours", "skill_roi_score",
-    ],
     "side_project_recommendation": [
-        "recommendation_id", "gap_id", "project_name", "tech_stack", "difficulty",
+        "recommendation_id", "report_id", "user_id", "project_name", "tech_stack", "difficulty",
         "capability_gaps_addressed", "project_phases", "overall_resume_impact", "created_at",
     ],
     "agent_session": [
@@ -147,12 +142,11 @@ EXPECTED_SCHEMA = {
     ],
 }
 
-# 說明文件中預期的 FK：(子表, 子表欄位, 父表, 父表欄位)
+# 說明文件／ERD 欄位對齊總表預期的 FK：(子表, 子表欄位, 父表, 父表欄位)
 EXPECTED_FKS = [
     ("user_profile", "user_id", "user", "user_id"),
     ("career_survey", "user_id", "user", "user_id"),
     ("resume", "user_id", "user", "user_id"),
-    ("resume", "template_id", "resume_template", "template_id"),
     ("resume_version", "resume_id", "resume", "resume_id"),
     ("resume_analysis", "resume_id", "resume", "resume_id"),
     ("resume_analysis", "user_id", "user", "user_id"),
@@ -160,15 +154,12 @@ EXPECTED_FKS = [
     ("resume_optimization", "resume_id", "resume", "resume_id"),
     ("resume_optimization", "version_id", "resume_version", "version_id"),
     ("resume_optimization", "user_id", "user", "user_id"),
-    ("resume_optimization", "target_job_id", "job_posting", "job_id"),
     ("upload_event", "user_id", "user", "user_id"),
     ("ocr_result", "event_id", "upload_event", "event_id"),
     ("ocr_result", "resume_id", "resume", "resume_id"),
     ("job_posting", "company_id", "company_info", "company_id"),
     ("job_skill_requirement", "job_id", "job_posting", "job_id"),
     ("job_skill_requirement", "skill_id", "skill_master", "skill_id"),
-    ("user_skill", "user_id", "user", "user_id"),
-    ("user_skill", "skill_id", "skill_master", "skill_id"),
     ("course", "primary_skill_id", "skill_master", "skill_id"),
     ("job_matching", "resume_id", "resume", "resume_id"),
     ("job_matching", "job_id", "job_posting", "job_id"),
@@ -176,6 +167,7 @@ EXPECTED_FKS = [
     ("cover_letter", "user_id", "user", "user_id"),
     ("cover_letter", "job_id", "job_posting", "job_id"),
     ("cover_letter", "resume_id", "resume", "resume_id"),
+    ("cover_letter", "optimization_id", "resume_optimization", "optimization_id"),
     ("cover_letter", "agent_session_id", "agent_session", "session_id"),
     ("application_record", "user_id", "user", "user_id"),
     ("application_record", "job_id", "job_posting", "job_id"),
@@ -183,9 +175,8 @@ EXPECTED_FKS = [
     ("career_analysis_report", "survey_id", "career_survey", "survey_id"),
     ("career_analysis_report", "resume_id", "resume", "resume_id"),
     ("career_analysis_report", "user_id", "user", "user_id"),
-    ("skill_gap", "report_id", "career_analysis_report", "report_id"),
-    ("skill_gap", "skill_id", "skill_master", "skill_id"),
-    ("side_project_recommendation", "gap_id", "skill_gap", "gap_id"),
+    ("side_project_recommendation", "report_id", "career_analysis_report", "report_id"),
+    ("side_project_recommendation", "user_id", "user", "user_id"),
     ("agent_session", "user_id", "user", "user_id"),
     ("agent_session", "resume_id", "resume", "resume_id"),
     ("agent_session", "analysis_id", "resume_analysis", "analysis_id"),
@@ -337,8 +328,8 @@ def main():
     db_url = os.getenv("DATABASE_URL")
 
     print("=" * 60)
-    print("Supabase 與說明文件對齊驗證")
-    print("  說明文件: career_pilot說明文件v4_with_chinese.md")
+    print("Supabase 與 ERD 欄位對齊總表驗證")
+    print("  依據: Erd/career_pilot_ERD_欄位對齊總表.md")
     print("=" * 60)
 
     # ----- 欄位檢查 -----
