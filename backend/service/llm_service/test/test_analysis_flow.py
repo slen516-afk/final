@@ -108,77 +108,76 @@ def get_entry_level_mock_data():
     """回傳無經驗者的問卷與特質假資料 (履歷將由 Manager 透過 user_id 從 DB 撈取)"""
     survey_data = {
     "module_a": {
-        "q5_devops": "ftp_git_pull",
-        "q8_domain": "無",
-        "q3_backend": "script_only",
-        "q6_ai_data": "api_only",
-        "q2_frontend": "no_experience",
-        "q4_database": [],
-        "q7_security": "framework_default",
-        "q1_languages": []
+    "q5_devops": "ftp_git_pull",
+    "q8_domain": "生命科學／生物醫學",
+    "q3_backend": "script_only",
+    "q6_ai_data": "api_only",
+    "q2_frontend": "no_experience",
+    "q4_database": [],
+    "q7_security": "framework_default",
+    "q1_languages": []
     },
     "module_b": {
-        "q14_process": "no_process",
-        "q15_english": "translate_dependent",
-        "q13_learning": "fixed_schedule",
-        "q10_tech_choice": "popular_stars",
-        "q12_code_review": "formalism",
-        "q9_troubleshoot": "log_search",
-        "q11_communication": "direct_reject"
+    "q14_process": "no_process",
+    "q15_english": "translate_dependent",
+    "q13_learning": "wait_for_project",
+    "q10_tech_choice": "just_learned",
+    "q12_code_review": "formalism",
+    "q9_troubleshoot": "restart",
+    "q11_communication": "passive_follow"
     },
     "module_c": {
-        "q18_industry": "software_house",
-        "q17_target_role": "backend",
-        "q16_current_level": "entry_level",
-        "q19_search_status": "student_training"
+    "q18_industry": "big_tech",
+    "q17_target_role": "data_scientist",
+    "q16_current_level": "entry_level",
+    "q19_search_status": "active_urgent"
     },
     "module_d": {
-        "q21_pressure": "accept_without_hesitation",
-        "q20_values_top3": [
-        "financial_reward",
-        "technical_growth",
-        "status"
-        ],
-        "q22_career_type": "specialist",
-        "q23_learning_style": [
-        "hands_on_projects",
-        "mentorship_community"
-        ]
+    "q21_pressure": "consider_short_term",
+    "q20_values_top3": [
+      "technical_growth",
+      "financial_reward",
+      "work_life_balance"
+    ],
+    "q22_career_type": "specialist",
+    "q23_learning_style": [
+      "video_courses",
+      "hands_on_projects"
+    ]
     }
     }
 
     trait_data = {
-    "trait_created_at": "2026-03-04T09:10:00Z",
+    "trait_created_at": "2026-03-04T09:00:00Z",
     "trait_raw_scores": {
-        "decision": 5,
-        "learning": 6,
-        "transfer": 2,
-        "ambiguity": 5,
-        "structure": 0
+    "decision": 2,
+    "learning": 3,
+    "transfer": 5,
+    "ambiguity": 0,
+    "structure": 10
     },
-    "primary_archetype": "AMBIGUITY_NAVIGATOR",
+    "primary_archetype": "STRUCTURE_ARCHITECT",
     "trait_raw_responses": {
-        "Q1": "B",
-        "Q2": "B",
-        "Q3": "A",
-        "Q4": "A",
-        "Q5": "B",
-        "Q6": "A",
-        "Q7": "A",
-        "Q8": "A",
-        "Q9": "B",
-        "Q10": "C"
+    "Q1": "C",
+    "Q2": "A",
+    "Q3": "C",
+    "Q4": "B",
+    "Q5": "A",
+    "Q6": "B",
+    "Q7": "B",
+    "Q8": "A",
+    "Q9": "A",
+    "Q10": "A"
     },
     "secondary_archetypes": [
-        "RAPID_DECISION_MAKER",
-        "LEARNING_ACCELERATOR"
+    "CROSS_DOMAIN_INTEGRATOR"
     ],
     "trait_normalized_scores": {
-        "decision": 86,
-        "learning": 80,
-        "transfer": 43,
-        "ambiguity": 100,
-        "structure": 0
+    "decision": 43,
+    "learning": 50,
+    "transfer": 86,
+    "ambiguity": 29,
+    "structure": 100
     }
     }
 
@@ -242,7 +241,7 @@ def test_experienced_analysis():
 def test_entry_level_analysis():
     """2. 帶入無經驗者假資料，並從 DB 撈取其履歷進行測試"""
     print("\n\n====== TEST CASE 2: ENTRY LEVEL ANALYSIS (Mock Data + DB Resume) ======")
-    user_id = "39" # 強迫 Agent 去撈資料庫裡的該 user_id 的履歷
+    user_id = "37" # 強迫 Agent 去撈資料庫裡的該 user_id 的履歷
     manager = CareerAgentManager()
     survey_data, trait_data = get_entry_level_mock_data()
     trait_data["user_id"] = user_id
@@ -317,5 +316,5 @@ if __name__ == "__main__":
     print("3: 測試從 DB 撈取問卷與履歷 (全真實資料 + DB 儲存)")
     
     # test_experienced_analysis()
-    # test_entry_level_analysis()
-    test_analysis_with_db_survey()
+    test_entry_level_analysis()
+    # test_analysis_with_db_survey()
