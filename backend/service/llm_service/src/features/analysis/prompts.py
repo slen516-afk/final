@@ -95,6 +95,7 @@ def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional
 
         # 初始化 Agent 零件
         mentor = create_discovery_mentor_agent(tools=mentor_tools)
+        psychologist = create_psychologist_agent()
         advisor = create_career_advisor_agent()
 
         # 初始化 Task 零件
@@ -103,7 +104,12 @@ def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional
         # [NEW] 注入問卷與使用者 ID 參數與特質參數
         transition_task.description = transition_task.description.format(
             user_id=inputs.get("user_id", "Unknown"),
-            survey_json=inputs.get("survey_json", "{}"),
+            survey_json=inputs.get("survey_json", "{}")
+        )
+
+        # 建立特質分析任務並注入參數
+        trait_task = create_trait_analysis_task(psychologist)
+        trait_task.description = trait_task.description.format(
             trait_json=inputs.get("trait_json", "{}")
         )
         
@@ -125,6 +131,10 @@ def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional
                     "tools": [], "step_callback": getattr(mentor, "step_callback", None)
                 },
                 {
+                    "role": psychologist.role, "goal": psychologist.goal, "backstory": psychologist.backstory, 
+                    "tools": [], "step_callback": getattr(psychologist, "step_callback", None)
+                },
+                {
                     "role": advisor.role, "goal": advisor.goal, "backstory": advisor.backstory, 
                     "tools": [], "step_callback": getattr(advisor, "step_callback", None)
                 }
@@ -135,6 +145,12 @@ def get_analysis_config(task_type: TaskType, inputs: Dict[str, Any]) -> Optional
                     "expected_output": transition_task.expected_output,
                     "callback": getattr(transition_task, "callback", None),
                     "tools": getattr(transition_task, "tools", [])
+                },
+                {
+                    "description": trait_task.description, 
+                    "expected_output": trait_task.expected_output,
+                    "callback": getattr(trait_task, "callback", None),
+                    "tools": getattr(trait_task, "tools", [])
                 },
                 {
                     "description": final_entry_task.description, 

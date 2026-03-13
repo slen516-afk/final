@@ -1,5 +1,5 @@
-from typing import List, Optional
-from pydantic import BaseModel, Field
+from typing import List, Optional, Literal
+from pydantic import BaseModel, Field, field_validator
 
 # ==========================================
 # 差距分析報告基礎元件
@@ -48,14 +48,15 @@ class CurrentStatus(BaseModel):
     cognitive_bias: str = Field(description="針對『硬實力』的認知落差分析與補強建議。請具體對比使用者的『自評職級』與『實際 D1-D6 技術分數』。指出落差在哪裡(例如：自評 Senior 但缺乏雲端維運經驗)，並提供具體該學什麼框架或工具的補強建議。字數約 100 字。")
 
 class TargetPosition(BaseModel):
-    role: str = Field(description=f"""
-    使用者的目標職位名稱。
-    1. **格式強制 (MANDATORY)**：
-        - 使用者指定之目標職位：直接填寫職位名稱 (如 '後端工程師')。
-
-    2. **標準化命名**：
+    role: Literal[
+        "前端工程師", "後端工程師", "全端工程師", 
+        "資料科學家/數據分析師", "AI 工程師", "DevOps/SRE 工程師"
+    ] = Field(description=f"""
+    使用者的目標職位名稱，必須與使用者[問卷資料] "q17_target_role" 一致，並正確轉換為{STANDARD_ROLES}清單中的字串。
+    1. **標準化命名**：
         - [職位名稱] 必須嚴格從此清單選取：{STANDARD_ROLES}。
         - 不可以使用 "後端軟體工程師" (多了軟體二字) 或 "Backend Engineer" (英文)。
+        - [CRITICAL] **注意：若職位名稱包含斜線 / (例如『資料科學家/數據分析師』)，請務必完整複製整個字串，絕對不可擅自拆分或縮寫。**
     """)
     match_score: str = Field(description="目標職位與目前能力的匹配百分比 (如 '75%')")
     gap_description: str = Field(description="""
@@ -66,6 +67,35 @@ class TargetPosition(BaseModel):
         【威脅 (Threats)】：該職位的競爭情況或技術快速迭代帶來的外部風險。
         【核心落差 (Gap)】：具體指出缺漏的技術棧（如缺乏 K8s、高併發經驗）或需轉譯的舊經驗。
         """)
+    
+    @field_validator('role', mode='before')
+    @classmethod
+    def correct_role_name(cls, v: str) -> str:
+        if not isinstance(v, str):
+            return v
+            
+        # 移除前後空白
+        v = v.strip()
+        
+        # 針對常見的縮寫進行防呆映射
+        mapping = {
+            "前端": "前端工程師",
+            "後端": "後端工程師",
+            "全端": "全端工程師",
+            "資料科學家": "資料科學家/數據分析師",
+            "數據分析師": "資料科學家/數據分析師",
+            "AI工程師": "AI 工程師",
+            "AI": "AI 工程師",
+            "DevOps": "DevOps/SRE 工程師",
+            "SRE": "DevOps/SRE 工程師",
+            "SRE工程師": "DevOps/SRE 工程師",
+            "DevOps工程師": "DevOps/SRE 工程師"
+        }
+        
+        if v in mapping:
+            return mapping[v]
+            
+        return v
 
 class GapAnalysis(BaseModel):
     current_status: CurrentStatus
@@ -82,7 +112,13 @@ class ActionPlan(BaseModel):
     long_term: str = Field(description="長期計畫 (6個月以上)：針對架構思維、產業領域知識 (Domain Knowledge) 或跨領域整合的長遠職涯發展建議。")
 
 class PreliminarySummary(BaseModel):
-    core_insight: str = Field(description="高階職涯顧問的深度洞察（約150-200字）。請採用結構化敘述：1. 【產業洞察】：簡單描繪目標職位的市場趨勢與技術演進。2. 【個人總結】：精闢點出使用者的核心潛力與潛在隱憂。")
+    core_insight: str = Field(description="""
+        高階職涯顧問的深度洞察（總文字約 150-200 字）。
+        請務必嚴格使用以下結構進行雙段落輸出，並且絕對要包含這兩個標籤：
+        
+        【產業洞察】：簡單描繪目標職位的市場趨勢與技術演進。
+        【個人總結】：精闢點出使用者的核心潛力與潛在隱憂。
+    """)
 
 # 最終輸出的完整報告結構
 class CareerReport(BaseModel):

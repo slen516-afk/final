@@ -1,6 +1,7 @@
 from crewai import Task
 from src.common.logger import setup_logger
 from src.common.crewai_callbacks import task_audit_callback
+from .schemas import STANDARD_ROLES
 
 logger = setup_logger()
 
@@ -8,7 +9,7 @@ logger = setup_logger()
 # Task 描述與規則常數
 # ==========================================
 
-STANDARD_ROLES_STR = "前端工程師, 後端工程師, 全端工程師, 資料科學家, AI 工程師, DevOps/SRE 工程師"
+STANDARD_ROLES_STR = ", ".join(STANDARD_ROLES)
 
 # --- 舊版指示 (保留以供切換) ---
 # MAPPING_INSTRUCTION = """
@@ -80,18 +81,24 @@ TECH_VERIFICATION_DESCRIPTION = """計算技術分數與目標職位匹配度，
 [使用者 ID]: {user_id}
 [問卷資料]: {survey_json}
 
-請依序執行：
-1. **獲取履歷**：使用 'Fetch Resume From Database' 工具並傳入 `user_id` 作為參數，獲取使用者最新的履歷資料。
-2. **算分**：呼叫 'Calculate Technical Vectors' 工具並傳入 `user_id` 作為參數，計算 D1-D6 技術分數 (系統已自動將問卷資料綁定至工具內)。
-3. **匹配**：根據算出的 D1-D6 分數與問卷中的目標職位 (target_role)，呼叫 'Calculate Job Match Score' 工具計算『匹配分數 (Match Score)』。
-4. **驗證**：對比「獲取到的履歷資料」內容進行真實性驗證，若履歷證據與問卷分數不符，請註明落差。
+【任務執行步驟 (請務必嚴格依序執行並使用對應工具)】：
+Step 1. 呼叫 'Calculate Technical Vectors' 工具 (傳入 user_id 作為參數)。
+   - 記錄下工具回傳的 D1 到 D6 的確切分數。
+   - **注意：無論工具回傳的英文維度為何，請將 D1~D6 視為以下固定維度進行後續驗證與評論：**
+     D1: 前端開發、D2: 後端開發、D3: 運維部署、D4: AI與數據、D5: 工程品質、D6: 軟實力。
+Step 2. 呼叫 'Calculate Job Match Score' 工具 (傳入 user_id 作為參數)。
+   - 記錄下工具回傳的「匹配分數 (Match Score)」。
+Step 3. 呼叫 'Fetch Resume From Database' 工具 (傳入 user_id 作為參數) 獲取最新履歷。
+Step 4. 驗證 (Fact Check)：對比「履歷內容」與「問卷填寫的分數/經驗」，指出潛力被低估或過度誇大的部分。
 
-**[輸出格式嚴格要求]**
-在你的「技術評估備忘錄」最開頭，必須使用以下格式標明你從工具拿到的分數：
+**【最終輸出格式強制要求 (CRITICAL)】**
+你的回覆「必須」是最終的技術評估備忘錄，且備忘錄的最開頭「必須、絕對」要包含以下精確格式，不可多加任何符號：
+
 --- RAW_SCORES_START ---
-D1={D1分}, D2={D2分}, D3={D3分}, D4={D4分}, D5={D5分}, D6={D6分}
+D1=[你在Step1拿到的D1分數], D2=[你在Step1拿到的D2分數], D3=[你在Step1拿到的D3分數], D4=[你在Step1拿到的D4分數], D5=[你在Step1拿到的D5分數], D6=[你在Step1拿到的D6分數]
 --- RAW_SCORES_END ---
-再繼續寫你後續的驗證評語。"""
+
+接著在下方撰寫你詳細的技術診斷與職缺匹配分析結果。"""
 
 TRAIT_ANALYSIS_DESCRIPTION = """分析人格特質。
 資料: {trait_json}
@@ -115,7 +122,7 @@ FINAL_REPORT_DESCRIPTION = f"""綜合技術與心理分析，生成最終的 Car
 {CAREER_STAGE_MAPPING}
 
 **寫作重點**:
-1. **Core Insight**: 以資深顧問口吻，給出具深度的職涯畫像與診斷。必須先講產業洞察，再論個人。
+1. **Core Insight**: 以資深顧問口吻，給出具深度、結構化的職涯畫像與診斷。必須嚴格按照【產業洞察】與【個人總結】兩大標題格式輸出，不可將其合併為單一段落散文。
 2. **Industry & SWOT**: 務必分析目標職位的產業趨勢，並採用 SWOT 模型嚴格劃分使用者的優勢、劣勢、機會與威脅。
 3. **Gap Analysis**: 必須嚴格按照 SWOT 五大標題輸出，並提出「具體技術缺口」(如缺什麼框架與工具)，不可含糊帶過。
 4. **Action Plan**: 短中長期計畫必須「極度具體可執行 (Actionable)」，例如推薦實作專案類型、特定技術框架。
@@ -140,9 +147,9 @@ ENTRY_LEVEL_TRANSITION_DESCRIPTION = f"""分析履歷中的非技術經驗，進
 1. **獲取履歷**：必須先使用 'Fetch Resume From Database' 工具獲取使用者 {{user_id}} 的最新履歷資料。
 2. **Skill Translation (技能轉譯)**: 針對獲取到的履歷內容，找出至少 3 個具體行為並對照程式概念。
 3. **Role Alignment (職位對齊)**: 請依照 [問卷資料] 中的目標職位 (target_role)，將上述的技能轉譯結果與該目標職位進行連結與說明。若使用者未指定，請從標準清單 [{STANDARD_ROLES_STR}] 中推薦一個最適合的並說明理由。
-4. **潛力維度評分 (Potential Scoring)**: 根據履歷中展現的做事嚴謹度/邏輯性，以及人格特質問卷的分數，評估使用者的【D5 工程品質潛力】與【D6 軟實力】，以 0.5 ~ 5.0 給分（建議轉職者最高不超過 3.5），並在備忘錄結尾獨立寫出：
+4. **潛力維度評分 (Potential Scoring)**: 根據履歷中展現的做事嚴謹度/邏輯性，以及人格特質問卷的分數，評估使用者的【D5 工程品質】與【D6 軟實力】潛力，以 0.5 ~ 5.0 給分（建議轉職者最高不超過 3.5），並在備忘錄結尾獨立寫出：
 --- RAW_SCORES_START ---
-D1=0.5, D2=0.5, D3=0.5, D4=0.5, D5={{{{你評估的D5分數}}}}, D6={{{{你評估的D6分數}}}}
+D1=0.5, D2=0.5, D3=0.5, D4=0.5, D5=[你評估的D5分數], D6=[你評估的D6分數]
 --- RAW_SCORES_END ---
 """
 
@@ -164,7 +171,7 @@ ENTRY_LEVEL_FINAL_DESCRIPTION = f"""根據轉譯結果與特質，推薦職位�
 {CAREER_STAGE_MAPPING}
 
 **寫作風格**:
-1. **Core Insight**: 150 字左右，結合特質與潛力。必須先講產業洞察，再論個人。
+1. **Core Insight**: 150 字左右，結合特質與潛力。必須嚴格按照【產業洞察】與【個人總結】兩大標題格式輸出，不可省略標籤。
 2. **Gap Analysis**: **必須完整擴寫『技能轉譯』內容**，且必須嚴格按照 SWOT 五大標題輸出。
 3. **Action Plan**: 具體的工具 (Python, SQL) 與實作建議。短中長期計畫必須「極度具體可執行 (Actionable)」。
 4. Target Role: 必須符合格式 "領航員分析您適合的職類為 - [職位名稱]"。
