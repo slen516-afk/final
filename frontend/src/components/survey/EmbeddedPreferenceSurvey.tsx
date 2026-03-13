@@ -41,13 +41,9 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
       if (isLoggedIn && realUserId) {
         setIsLoadingResumes(true);
         try {
-<<<<<<< HEAD
-          const response = await apiClient.get(`/resume_process/list/${realUserId}`);
-=======
           console.log("🚀 [偏好設定] 開始向後端請求 ID:", realUserId);
           // 💡 直接用 apiClient 呼叫，繞過舊的死板檢查
           const response: any = await apiClient.get(`/resume_process/list/${realUserId}`);
->>>>>>> 1f73bac (0311推薦信排版修改並且確認資料能顯示)
 
           let finalData: any[] = [];
           const rawData: any = response.data;
@@ -61,17 +57,13 @@ const EmbeddedPreferenceSurvey = ({ onComplete }: EmbeddedPreferenceSurveyProps)
           }
 
           // 💡 轉換格式給下拉選單使用 (加入 isOptimized 標記)
+          // 💡 轉換格式給下拉選單使用 (加入 isOptimized 標記)
           const formatted = finalData.map((r: any) => ({
             id: r.resume_id || r.id,
-<<<<<<< HEAD
-            title: r.resume_name || r.name || '未命名履歷',
-            sourceType: r.resume_type || 'RESUME',
-            isOptimized: r.is_optimized || false // 🌟 接住後端傳來的標記
-=======
             // 確保一定抓得到名字，否則顯示未命名
             title: r.resume_name || r.name || r.title || '未命名履歷',
-            sourceType: r.type || r.resume_type || 'RESUME'
->>>>>>> 1f73bac (0311推薦信排版修改並且確認資料能顯示)
+            sourceType: r.type || r.resume_type || 'RESUME',
+            isOptimized: r.is_optimized || false // 🌟 接住後端傳來的標記
           }));
 
           setResumeOptions(formatted);
