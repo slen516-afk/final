@@ -169,6 +169,7 @@ const Optimize = () => {
 
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [selectedThemeIndex, setSelectedThemeIndex] = useState<number>(0);
+  const [hasOptimizedContent, setHasOptimizedContent] = useState(false); // 🌟 新增：快取標記
 
   const [isLoadingDB, setIsLoadingDB] = useState(true);
   const [showAccessAlert, setShowAccessAlert] = useState(false);
@@ -311,6 +312,13 @@ const Optimize = () => {
   const handleGenerateOptimizedResume = async (templateId: string) => {
     setSelectedTemplate(templateId);
     setSelectedThemeIndex(0);
+
+    // 🌟 優化：如果已經有生成過內容，直接跳到結果頁，不再叫模型
+    if (hasOptimizedContent) {
+      setPhase('result');
+      return;
+    }
+
     setPhase('generating');
     try {
       const payload = { user_id: realUserId, resume_data: originalData };
@@ -321,24 +329,23 @@ const Optimize = () => {
       });
       const result = await response.json();
       if (response.ok && result.data) {
-        setResumeData((prev: any) => {
-          const optimized = {
-            professional_summary: result.data.professional_summary || result.data.autobiography || '',
-            professional_experience: Array.isArray(result.data.professional_experience) ? result.data.professional_experience.join('\n\n') : result.data.professional_experience || prev.professional_experience,
-            core_skills: Array.isArray(result.data.core_skills) ? result.data.core_skills.join(', ') : result.data.core_skills || prev.core_skills,
-            projects: Array.isArray(result.data.projects) ? result.data.projects.join('\n\n') : result.data.projects || prev.projects,
-            education: Array.isArray(result.data.education) ? result.data.education.join('\n\n') : result.data.education || prev.education,
-            autobiography: result.data.autobiography || result.data.professional_summary || prev.autobiography
-          };
+        const optimized = {
+          professional_summary: result.data.professional_summary || result.data.autobiography || '',
+          professional_experience: Array.isArray(result.data.professional_experience) ? result.data.professional_experience.join('\n\n') : result.data.professional_experience || resumeData.professional_experience,
+          core_skills: Array.isArray(result.data.core_skills) ? result.data.core_skills.join(', ') : result.data.core_skills || resumeData.core_skills,
+          projects: Array.isArray(result.data.projects) ? result.data.projects.join('\n\n') : result.data.projects || resumeData.projects,
+          education: Array.isArray(result.data.education) ? result.data.education.join('\n\n') : result.data.education || resumeData.education,
+          autobiography: result.data.autobiography || result.data.professional_summary || resumeData.autobiography
+        };
 
-          const newState = {
-            ...prev,
-            ...optimized
-          };
+        const newState = {
+          ...resumeData,
+          ...optimized
+        };
 
-          setEditedData(newState); // 同步更新編輯用的資料
-          return newState;
-        });
+        setResumeData(newState);
+        setEditedData(newState); // 同步更新編輯用的資料
+        setHasOptimizedContent(true); // 🌟 標記已生成
       } else {
         throw new Error(result.error || "AI優化生成失敗");
       }
@@ -384,10 +391,11 @@ const Optimize = () => {
 
   // UI 操作 Handlers
   const handleDownloadSuggestions = async () => {
+    if (!diagnosticResult) return;
     const { exportHtmlToPdf, buildSuggestionsReportHtml } = await import('@/utils/pdfExport');
     await exportHtmlToPdf({
       filename: '履歷優化建議報告.pdf',
-      htmlContent: buildSuggestionsReportHtml([]), // 若有需要可將 mockSuggestions 換成實際建議陣列
+      htmlContent: buildSuggestionsReportHtml(diagnosticResult),
     });
   };
 
@@ -431,6 +439,7 @@ const Optimize = () => {
     setIsEditSaved(false);
     setIsTemplateSaved(false);
     setDiagnosticResult(null);
+    setHasOptimizedContent(false); // 🌟 重設快取
   };
 
   const confirmSaveEdit = () => {
@@ -438,6 +447,7 @@ const Optimize = () => {
     setEditPhase('view');
     setIsEditSaved(true);
     setShowSaveConfirm(false);
+    setHasOptimizedContent(false); // 🌟 原始內容變動，強制下次重新生成
   };
 
   const formatDate = (dateStr: string) => dateStr ? dateStr.replace(/-/g, '') : '';
@@ -460,7 +470,7 @@ const Optimize = () => {
             <FileText className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-3xl font-bold mb-4">履歷優化</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">AI 智能分析您的履歷，提供專業優化建議並生成精美履歷</p>
+          <p className="text-muted-foreground max-w-2xl mx-auto">智能分析您的履歷，提供專業優化建議並生成精美履歷</p>
         </div>
 
         <div className="max-w-4xl mx-auto">
@@ -476,7 +486,7 @@ const Optimize = () => {
 
             {phase === 'analyzing' && (
               <motion.div key="analyzing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-10">
-                <AILoadingSpinner message="AI正在深度診斷您的履歷中..." />
+                <AILoadingSpinner message="正在深度診斷您的履歷中..." />
                 <AnalysisSkeleton />
               </motion.div>
             )}
@@ -517,7 +527,7 @@ const Optimize = () => {
 
             {phase === 'generating' && (
               <motion.div key="generating" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-10">
-                <AILoadingSpinner message="AI正在將您的履歷套用至全新樣板中..." />
+                <AILoadingSpinner message="正在生成優化履歷中..." />
                 <AnalysisSkeleton />
               </motion.div>
             )}
@@ -531,7 +541,7 @@ const Optimize = () => {
                 isDownloading={isDownloading}
                 resumeRef={resumeRef}
                 onEdit={() => { setEditedData(resumeData); setIsEditing(true); }}
-                onSave={() => setIsEditing(false)} // inline save
+                onSave={() => { setResumeData(editedData); setIsEditing(false); }} // 🌟 儲存時同步回主資料，換樣板才拿得到
                 onCancelEdit={() => setIsEditing(false)}
                 onDataChange={setEditedData}
                 onDownload={handleDownloadResume}
@@ -586,7 +596,7 @@ const InitialPhase = ({ originalData, onStartOptimize, latestResumeName, latestR
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><User className="h-5 w-5 text-primary" /> 您的履歷資料</CardTitle>
-        <CardDescription>以下是您目前的履歷內容，點擊開始優化進行 AI 分析</CardDescription>
+        <CardDescription>以下是您目前的履歷內容，點擊開始優化進行分析</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-start gap-6">
@@ -609,12 +619,12 @@ const InitialPhase = ({ originalData, onStartOptimize, latestResumeName, latestR
         </div>
       </CardContent>
     </Card>
-    <div className="flex justify-center"><Button size="lg" className="gradient-primary gap-2 h-14 px-8 text-lg" onClick={onStartOptimize}><Sparkles className="h-5 w-5" /> 開始 AI 分析優化</Button></div>
+    <div className="flex justify-center"><Button size="lg" className="gradient-primary gap-2 h-14 px-8 text-lg" onClick={onStartOptimize}><Sparkles className="h-5 w-5" /> 開始分析優化</Button></div>
   </motion.div>
 );
 
 const SuggestionsPhase = ({ diagnosticResult, originalData, onDownload, onGenerate, onEdit, onBack, isEditSaved }: any) => {
-  const severityColors: Record<string, string> = { '嚴重扣分': 'bg-red-100 text-red-800 border-red-200', '明顯扣分': 'bg-amber-100 text-amber-800 border-amber-200', '中度扣分': 'bg-orange-100 text-orange-800 border-orange-200', '輕微扣分': 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+  const severityColors: Record<string, string> = { '嚴重扣分': 'bg-red-100 text-red-800 border-red-200', '明顯扣分': 'bg-amber-100 text-amber-800 border-amber-200', '中度扣分': 'bg-orange-100 text-orange-800 border-orange-200', '輕微扣分': 'bg-yellow-100 text-yellow-800 border-yellow-200', '可優化': 'bg-[#502D03] text-white border-transparent' };
   return (
     <motion.div key="suggestions" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
       <div className="flex items-center justify-between">
@@ -638,7 +648,7 @@ const SuggestionsPhase = ({ diagnosticResult, originalData, onDownload, onGenera
           {diagnosticResult.recommended_next_actions.length > 0 && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}><Card className="bg-[#fbf1e8]/40 border-primary/15"><CardHeader><CardTitle className="flex items-center gap-2"><ListChecks className="h-5 w-5 text-primary" /> 後續行動計畫</CardTitle></CardHeader><CardContent><div className="space-y-3">{diagnosticResult.recommended_next_actions.map((action: string, i: number) => (<div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-background/80 border border-border/50"><div className="h-6 w-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">{i + 1}</div><p className="text-sm leading-relaxed">{action}</p></div>))}</div></CardContent></Card></motion.div>}
         </div>
       )}
-      <div className="flex gap-4"><Button variant="outline" className="flex-1 gap-2 h-12" onClick={onDownload}><Download className="h-4 w-4" /> 下載建議報告</Button><Button className="flex-[2] h-12 text-lg gradient-primary gap-2" onClick={onGenerate}><Palette className="h-5 w-5" /> 選擇樣板並生成優化履歷</Button></div>
+      <div className="flex gap-4"><Button variant="outline" className="flex-1 gap-2 h-12" onClick={onDownload}><Download className="h-4 w-4" /> 下載建議報告</Button><Button className="flex-[2] h-12 text-lg gradient-primary gap-2" onClick={onGenerate}><Palette className="h-5 w-5" /> 生成優化履歷</Button></div>
     </motion.div>
   );
 };
@@ -739,6 +749,100 @@ const EditableField = ({ value, onChange, isEditing, multiline = false, classNam
   return <Input value={value} onChange={(e) => onChange(e.target.value)} className={`${editClass} ${className}`} />;
 };
 
+// 🌟 FormattedSection 解析並渲染分段內容
+const FormattedSection = ({ value, className = '' }: { value: string; className?: string }) => {
+  if (!value) return null;
+
+  // 1. 將輸入字串依據雙換行切分為多個經歷/教育/專案區塊
+  const blocks = value.split(/\n\s*\n/).filter(Boolean);
+
+  return (
+    <div className={`space-y-5 ${className}`}>
+      {blocks.map((block, bIdx) => {
+        // 🌟 智慧識別資料類型
+        const isExp = block.includes('公司：') || block.includes('職位：');
+        const isEdu = block.includes('學校：') || block.includes('學系：');
+        const isProj = block.includes('專案：');
+
+        let header = '';
+        let bulletItems: string[] = [];
+
+        if (isEdu) {
+          // 學歷解析：移除標籤，串接成單行
+          const school = block.match(/學校：\s*([^，,。\s\n]+)/)?.[1] || '';
+          const dept = block.match(/學系：\s*([^，,。\s\n]+)/)?.[1] || '';
+          const degree = block.match(/學位：\s*([^，,。\s\n]+)/)?.[1] || '';
+          const time = block.match(/畢業時間：\s*([^，,。\s\n]+)/)?.[1] || '';
+          header = [school, dept, degree, time].filter(Boolean).join(' | ');
+        }
+        else if (isExp) {
+          // 經驗解析：標題(公司+職位+期間) + 描述轉為列表
+          const company = block.match(/公司：\s*([^，,。\s\n]+)/)?.[1] || '';
+          const title = block.match(/職位：\s*([^，,。\s\n]+)/)?.[1] || '';
+          const period = block.match(/期間：\s*([^，,。\s\n]+)/)?.[1] || '';
+          header = [company, title, period].filter(Boolean).join(' | ');
+
+          const descMatch = block.match(/描述：\s*([\s\S]+)/);
+          if (descMatch) {
+            // 依據標點號或「成果：」提示符拆分
+            bulletItems = descMatch[1].split(/(?=成果[:：])|[。；;\n]/).filter(s => s.trim().length > 0);
+          }
+        }
+        else if (isProj) {
+          // 專案解析：移除「專案：」標籤
+          const nameMatch = block.match(/專案：\s*([^，,。\s\n]+)/);
+          header = nameMatch ? nameMatch[1] : '';
+
+          const descMatch = block.match(/描述：\s*([\s\S]+)/);
+          if (descMatch) {
+            bulletItems = descMatch[1].split(/(?=成果[:：])|[。；;\n]/).filter(s => s.trim().length > 0);
+          }
+        }
+        else {
+          // 支援新格式 "標題: 內容" 或 fallback
+          const colonMatch = block.match(/^([^:：\n]+)[:：]/);
+          if (colonMatch) {
+            header = colonMatch[1].trim();
+            const body = block.substring(colonMatch[0].length).trim();
+            bulletItems = body.split(/(?=成果[:：])|[。；;\n]/).filter(s => s.trim().length > 0);
+          } else {
+            const lines = block.split('\n').filter(Boolean);
+            header = lines[0];
+            const body = lines.slice(1).join('\n');
+            bulletItems = body.split(/(?=成果[:：])|[。；;\n]/).filter(s => s.trim().length > 0);
+          }
+        }
+
+        // 🌟 最終處理：過濾掉 generic 的專案名稱 (如 Project 1234, 專案 123)
+        // 只有非 Education 且非 Experience 時才套用此規則
+        if (!isEdu && !isExp) {
+          header = header.replace(/^(Project|專案)\s*[-:\s\d]*\d*\b\s*[-:：]?\s*/i, '').trim();
+        }
+
+        return (
+          <div key={bIdx} className="avoid-break space-y-1.5">
+            {header && (
+              <div className="text-sm font-bold text-foreground/90">
+                {header}
+              </div>
+            )}
+            {bulletItems.length > 0 && (
+              <ul className="space-y-1">
+                {bulletItems.map((item, iIdx) => (
+                  <li key={iIdx} className="flex items-start gap-2 text-sm leading-relaxed text-foreground/70">
+                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary/30 shrink-0" />
+                    <span>{item.trim()}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 // ==========================================
 // 🌟 三大履歷樣板 (Corporate / Modern / Creative)
 // ==========================================
@@ -754,9 +858,9 @@ const CorporateTemplate = ({ data, isEditing, onChange, theme }: any) => (
       </div>
     </div>
     {data.professional_summary && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>專業摘要</h2><div className="text-sm"><EditableField value={data.professional_summary} onChange={(v: any) => onChange('professional_summary', v)} isEditing={isEditing} multiline /></div></div></div>}
-    {data.education && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>學歷</h2><div className="text-sm"><EditableField value={data.education} onChange={(v: any) => onChange('education', v)} isEditing={isEditing} multiline /></div></div></div>}
-    {data.professional_experience && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>工作經驗</h2><div className="text-sm"><EditableField value={data.professional_experience} onChange={(v: any) => onChange('professional_experience', v)} isEditing={isEditing} multiline /></div></div></div>}
-    {data.projects && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>專案成就</h2><div className="text-sm"><EditableField value={data.projects} onChange={(v: any) => onChange('projects', v)} isEditing={isEditing} multiline /></div></div></div>}
+    {data.education && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>學歷</h2><div className="text-sm">{isEditing ? <EditableField value={data.education} onChange={(v: any) => onChange('education', v)} isEditing={isEditing} multiline /> : <FormattedSection value={data.education} />}</div></div></div>}
+    {data.professional_experience && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>工作經驗</h2><div className="text-sm">{isEditing ? <EditableField value={data.professional_experience} onChange={(v: any) => onChange('professional_experience', v)} isEditing={isEditing} multiline /> : <FormattedSection value={data.professional_experience} />}</div></div></div>}
+    {data.projects && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>專案成就</h2><div className="text-sm">{isEditing ? <EditableField value={data.projects} onChange={(v: any) => onChange('projects', v)} isEditing={isEditing} multiline /> : <FormattedSection value={data.projects} />}</div></div></div>}
     {data.core_skills && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>技能專長</h2><div className="text-sm"><EditableField value={data.core_skills} onChange={(v: any) => onChange('core_skills', v)} isEditing={isEditing} /></div></div></div>}
     {data.certifications && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>證照資格</h2><div className="text-sm"><EditableField value={data.certifications} onChange={(v: any) => onChange('certifications', v)} isEditing={isEditing} multiline /></div></div></div>}
     {data.autobiography && <div className="avoid-break"><div><h2 className="text-lg font-bold pb-1 mb-3" style={{ color: theme.main, borderBottom: `1px solid ${theme.main}40` }}>自傳</h2><div className="text-sm"><EditableField value={data.autobiography} onChange={(v: any) => onChange('autobiography', v)} isEditing={isEditing} multiline /></div></div></div>}
@@ -777,15 +881,26 @@ const ModernTemplate = ({ data, isEditing, onChange, theme, avatarUrl }: any) =>
         </div>
         {skills.length > 0 && (
           <div className="space-y-3"><h3 className="font-semibold text-sm pb-1" style={{ borderBottom: `1px solid ${theme.main}30` }}>技能專長</h3>
-            {isEditing ? <EditableField value={data.core_skills} onChange={(v: any) => onChange('core_skills', v)} isEditing={isEditing} multiline /> : <div className="space-y-2">{skills.slice(0, 8).map((skill: string, i: number) => (<div key={i}><div className="flex justify-between text-xs mb-1"><span>{skill}</span><span>{95 - i * 5}%</span></div><div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: `${theme.secondary}30` }}><div className="h-full rounded-full transition-all" style={{ width: `${95 - i * 5}%`, backgroundColor: theme.main }} /></div></div>))}</div>}
+            {isEditing ? (
+              <EditableField value={data.core_skills} onChange={(v: any) => onChange('core_skills', v)} isEditing={isEditing} multiline />
+            ) : (
+              <div className="space-y-2">
+                {skills.slice(0, 8).map((skill: string, i: number) => (
+                  <div key={i} className="flex items-center gap-2 text-xs">
+                    <span className="h-1 w-1 rounded-full shrink-0" style={{ backgroundColor: theme.main }} />
+                    <span className="text-foreground/80">{skill}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
       <div className="space-y-6">
         <div className="avoid-break"><h1 className="text-3xl font-bold" style={{ color: theme.main }}><EditableField value={data.name} onChange={(v: any) => onChange('name', v)} isEditing={isEditing} /></h1>{data.professional_summary && <p className="mt-1" style={{ color: theme.text }}><EditableField value={data.professional_summary} onChange={(v: any) => onChange('professional_summary', v)} isEditing={isEditing} multiline /></p>}</div>
-        {data.professional_experience && <div className="space-y-4"><h3 className="font-semibold text-lg pb-1 flex items-center gap-2 avoid-break" style={{ borderBottom: `1px solid ${theme.main}30` }}><Briefcase className="h-4 w-4" style={{ color: theme.main }} />工作經驗</h3><EditableField value={data.professional_experience} onChange={(v: any) => onChange('professional_experience', v)} isEditing={isEditing} multiline className="text-sm" /></div>}
-        {data.projects && <div className="space-y-4"><h3 className="font-semibold text-lg pb-1 flex items-center gap-2 avoid-break" style={{ borderBottom: `1px solid ${theme.main}30` }}><Award className="h-4 w-4" style={{ color: theme.main }} />專案成就</h3><EditableField value={data.projects} onChange={(v: any) => onChange('projects', v)} isEditing={isEditing} multiline className="text-sm" /></div>}
-        {data.education && <div className="space-y-4"><h3 className="font-semibold text-lg pb-1 flex items-center gap-2 avoid-break" style={{ borderBottom: `1px solid ${theme.main}30` }}><GraduationCap className="h-4 w-4" style={{ color: theme.main }} />學歷</h3><EditableField value={data.education} onChange={(v: any) => onChange('education', v)} isEditing={isEditing} multiline className="text-sm" /></div>}
+        {data.professional_experience && <div className="space-y-4"><h3 className="font-semibold text-lg pb-1 flex items-center gap-2 avoid-break" style={{ borderBottom: `1px solid ${theme.main}30` }}><Briefcase className="h-4 w-4" style={{ color: theme.main }} />工作經驗</h3>{isEditing ? <EditableField value={data.professional_experience} onChange={(v: any) => onChange('professional_experience', v)} isEditing={isEditing} multiline className="text-sm" /> : <FormattedSection value={data.professional_experience} />}</div>}
+        {data.projects && <div className="space-y-4"><h3 className="font-semibold text-lg pb-1 flex items-center gap-2 avoid-break" style={{ borderBottom: `1px solid ${theme.main}30` }}><Award className="h-4 w-4" style={{ color: theme.main }} />專案成就</h3>{isEditing ? <EditableField value={data.projects} onChange={(v: any) => onChange('projects', v)} isEditing={isEditing} multiline className="text-sm" /> : <FormattedSection value={data.projects} />}</div>}
+        {data.education && <div className="space-y-4"><h3 className="font-semibold text-lg pb-1 flex items-center gap-2 avoid-break" style={{ borderBottom: `1px solid ${theme.main}30` }}><GraduationCap className="h-4 w-4" style={{ color: theme.main }} />學歷</h3>{isEditing ? <EditableField value={data.education} onChange={(v: any) => onChange('education', v)} isEditing={isEditing} multiline className="text-sm" /> : <FormattedSection value={data.education} />}</div>}
         {data.certifications && <div className="space-y-4"><h3 className="font-semibold text-lg pb-1 flex items-center gap-2 avoid-break" style={{ borderBottom: `1px solid ${theme.main}30` }}><ShieldCheck className="h-4 w-4" style={{ color: theme.main }} />證照資格</h3><EditableField value={data.certifications} onChange={(v: any) => onChange('certifications', v)} isEditing={isEditing} multiline className="text-sm" /></div>}
         {data.autobiography && <div className="space-y-4"><h3 className="font-semibold text-lg pb-1 flex items-center gap-2 avoid-break" style={{ borderBottom: `1px solid ${theme.main}30` }}><FileText className="h-4 w-4" style={{ color: theme.main }} />自傳</h3><EditableField value={data.autobiography} onChange={(v: any) => onChange('autobiography', v)} isEditing={isEditing} multiline className="text-sm" /></div>}
       </div>
@@ -812,10 +927,29 @@ const CreativeTemplate = ({ data, isEditing, onChange, theme, avatarUrl }: any) 
           </div>
         </div>
         <div className="grid md:grid-cols-2 gap-6">
-          {data.professional_experience && <div className="avoid-break"><div className="p-4 rounded-lg bg-white/50" style={{ borderLeft: `4px solid ${theme.main}` }}><h3 className="font-semibold mb-3" style={{ color: theme.main }}>工作經驗</h3><div className="text-sm"><EditableField value={data.professional_experience} onChange={(v: any) => onChange('professional_experience', v)} isEditing={isEditing} multiline /></div></div></div>}
-          {data.education && <div className="avoid-break"><div className="p-4 rounded-lg bg-white/50" style={{ borderLeft: `4px solid ${theme.secondary}` }}><h3 className="font-semibold mb-3" style={{ color: theme.secondary }}>學歷</h3><div className="text-sm"><EditableField value={data.education} onChange={(v: any) => onChange('education', v)} isEditing={isEditing} multiline /></div></div></div>}
-          {data.projects && <div className="avoid-break"><div className="p-4 rounded-lg bg-white/50" style={{ borderLeft: `4px solid ${theme.main}` }}><h3 className="font-semibold mb-3" style={{ color: theme.main }}>專案成就</h3><div className="text-sm"><EditableField value={data.projects} onChange={(v: any) => onChange('projects', v)} isEditing={isEditing} multiline /></div></div></div>}
-          {data.core_skills && <div className="avoid-break"><div className="p-4 rounded-lg bg-white/50" style={{ borderLeft: `4px solid ${theme.secondary}` }}><h3 className="font-semibold mb-3" style={{ color: theme.secondary }}>技能專長</h3><div className="text-sm"><EditableField value={data.core_skills} onChange={(v: any) => onChange('core_skills', v)} isEditing={isEditing} /></div></div></div>}
+          {data.professional_experience && <div className="avoid-break"><div className="p-4 rounded-lg bg-white/50" style={{ borderLeft: `4px solid ${theme.main}` }}><h3 className="font-semibold mb-3" style={{ color: theme.main }}>工作經驗</h3><div className="text-sm">{isEditing ? <EditableField value={data.professional_experience} onChange={(v: any) => onChange('professional_experience', v)} isEditing={isEditing} multiline /> : <FormattedSection value={data.professional_experience} />}</div></div></div>}
+          {data.education && <div className="avoid-break"><div className="p-4 rounded-lg bg-white/50" style={{ borderLeft: `4px solid ${theme.secondary}` }}><h3 className="font-semibold mb-3" style={{ color: theme.secondary }}>學歷</h3><div className="text-sm">{isEditing ? <EditableField value={data.education} onChange={(v: any) => onChange('education', v)} isEditing={isEditing} multiline /> : <FormattedSection value={data.education} />}</div></div></div>}
+          {data.projects && <div className="avoid-break"><div className="p-4 rounded-lg bg-white/50" style={{ borderLeft: `4px solid ${theme.main}` }}><h3 className="font-semibold mb-3" style={{ color: theme.main }}>專案成就</h3><div className="text-sm">{isEditing ? <EditableField value={data.projects} onChange={(v: any) => onChange('projects', v)} isEditing={isEditing} multiline /> : <FormattedSection value={data.projects} />}</div></div></div>}
+          {data.core_skills && (
+            <div className="avoid-break">
+              <div className="p-4 rounded-lg bg-white/50" style={{ borderLeft: `4px solid ${theme.secondary}` }}>
+                <h3 className="font-semibold mb-3" style={{ color: theme.secondary }}>技能專長</h3>
+                <div className="text-sm">
+                  {isEditing ? (
+                    <EditableField value={data.core_skills} onChange={(v: any) => onChange('core_skills', v)} isEditing={isEditing} />
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {(data.core_skills || '').split(/[,，\n]/).map((s: string) => s.trim()).filter(Boolean).map((skill: string, i: number) => (
+                        <span key={i} className="px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: `${theme.secondary}15`, color: theme.secondary }}>
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         {data.autobiography && <div className="avoid-break"><div className="p-4 rounded-lg bg-white/50" style={{ borderLeft: `4px solid ${theme.main}` }}><h3 className="font-semibold mb-3" style={{ color: theme.main }}>自傳</h3><div className="text-sm"><EditableField value={data.autobiography} onChange={(v: any) => onChange('autobiography', v)} isEditing={isEditing} multiline /></div></div></div>}
       </div>
