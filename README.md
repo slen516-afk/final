@@ -1,29 +1,81 @@
-# 專案簡介 :CareerPilot 【職星領航員】
-本專案建構了涵蓋「能力評估、缺口分析、技能補強、職缺媒合、履歷優化」的完整職涯支援閉環。
-旨在解決求職過程中缺乏量化依據的認知偏差，並針對「客製化履歷與求職信」的高耗時痛點，預計將申請準備時間大幅縮短 50%。
-本平台不只是求職工具，更致力於降低用戶在職涯選擇中的盲目性，支持用戶持續成長，具備「高實用價值」的智慧決策體系。
+# <img src="frontend/public/logo.png" width="40" height="40" valign="middle"> CareerPilot 【職星領航員】
+> **您的智慧職涯決策助手 —— 提供從能力評估到職務媒合的一站式智慧支持系統。**
 
-# 開發環境 Setup
-- git clone本專案後，透過VS Code Dev containers連線進個別容器內，如有追加套件應維護至requirements.txt
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Docker Support](https://img.shields.io/badge/Docker-Supported-blue.svg)](https://www.docker.com/)
+[![Built with CrewAI](https://img.shields.io/badge/Built%20with-CrewAI-red.svg)](https://www.crewai.com/)
 
-**Docker啟用方式：**
+---
 
-方式一:
-   * 1.確認Docker Desktop已下載並開啟。
-   * 2.在Visual Studio Code左邊Extension點開安裝Dev Container,安裝完成後重啟Visual Studio Code
-   * 3.點選 VS Code 左下角 `><`  -> 選擇 `Reopen in Container`。
-   * 4.於選單中選擇對應容器(Backend / Frontend)再開始開發，如果是初次啟動，Docker會在此時建置容器，因為內含torch等大型套件所以初次下載會比較久，建議電腦效能要達到一定程度且網路要穩定或甚至是快速。。
-    
-方式二:
-   * 1.Terminal輸入:`docker compose up -d`啟動Docker Compose。
-   * 2.按下F1選擇 `Attach to Running Container` -> 選擇想要進入的容器。
-   * 3.進入容器介面後選擇Open Folder , 如果路徑顯示`/root` , 點擊`..` , 將路徑重新選擇到 `/app`。
+## 📖 專案簡介
+CareerPilot 旨在解決求職過程中因缺乏量化依據而產生的認知偏差。
+透過 AI 驅動的決策體系，本專案建構了完整的職涯支援閉環，涵蓋「能力評估、缺口分析、技能補強、職缺媒合、履歷優化」，預計將申請準備時間大幅縮短 **50%**。
 
-**重要資訊：**
-* Erd圖位置: 在 資料夾內, 有含說明文件。
-* 連線 supabase 需 copy .env_example 成 .env 檔案
-    然後手動輸入 project_url =    - > 哪裡找 : SUPABASE首頁專案裡面 最左邊 project settings  -> Data API -> Project_URL
-                service_role_key =  - > 哪裡找 : SUPABASE首頁專案裡面 最左邊 project settings  -> API Keys -> Secret_keys
-* 前端啟用: 進入前端容器後輸入`npm run dev`開啟前端連線，輸入`ctrl + c`以關閉連線
-* API測試與開發: 開兩個視窗Visual Studio Code視窗分別進入前、後端容器，後端Flask必須維持開啟著前端才可以做測試，後端Flask開啟方式 : Terminal輸入`python main.py`
-* 後端入口: `main.py`
+---
+
+## 🏗️ 系統架構
+本專案採用分層架構設計，結合 **CrewAI 多代理人系統** 與 **Celery 非同步任務管線**，確保 LLM 分析任務的高效執行。
+
+
+### 技術棧 (Tech Stack)
+* **前端**: React 18 + Vite 5 + TypeScript + Tailwind CSS
+* **後端**: Flask API + **CrewAI (Multi-Agent System)**
+* **非同步管線**: **Redis** (Broker/Backend)
+* **AI 引擎**: 外部AI引擎
+* **資料庫**: **Supabase (PostgreSQL)** + **Qdrant (Vector DB)**
+* **基礎設施**: Docker + VS Code Dev Containers
+
+---
+
+## ✨ 技術亮點
+
+### ⚙️ 後端與 AI 決策引擎 (CrewAI & MAS)
+* **多代理人協作架構 (Multi-Agent System)**：正式版採用 **CrewAI** 框架，透過「任務 Agent」與「品質審核 Agent」雙重檢核機制，確保履歷優化建議具備高度專業性，降低單一 Agent 的邏輯幻覺。
+* **六維能力向量模型 (6-D Competency Vector)**：參考 IEEE SWEBOK、SFIA 與 Dreyfus 模型，將軟體工程能力量化為：前端、後端、雲端維運、AI 數據、品質架構、商業思維等六大維度。
+* **智慧課程推薦演算法**：
+    * **難度對齊**：將用戶匹配度 (0-100) 映射至課程等級 (Beginner/Intermediate/Advanced)。
+    * **權重增益**：針對能力缺口進行動態權重補償，確保最迫切需要的技能優先排序。
+
+### 💾 資料流水線與檢索 (Data Pipeline & Vector DB)
+* **自動化 E.T.L. 流水線**：
+    * **爬蟲引擎**：整合 **Requests / Selenium**，支持 104、Cake 等平台之動態渲染頁面抓取。
+    * **資料清整**：利用 **Pandas** 進行多階段清洗，包含文本去噪、薪資標準化及正則表達式 (Regex) 萃取技能元數據。
+* **語意相似度檢索 (RAG-based)**：
+    * 利用 **Qdrant** 向量資料庫進行語意檢索，採用歐幾里得距離與餘弦相似度 (Cosine Similarity) 混合算法，精準消除求職者與企業間的語意落差。
+* **高韌性非同步管線**：透過 **Redis** 實作長時任務解耦。前台提交後 `< 300ms` 即可回傳 Job ID，並具備自動重試 (Backoff) 與死信佇列 (DLQ) 機制。
+
+### 🎨 前端交互體驗
+* **數據可視化**：利用 **Recharts** 繪製六維技能雷達圖，直觀呈現能力落點與目標角色的匹配差距。
+* **高品質產出**：利用 **html2pdf.js** 提供一鍵匯出客製化優化履歷，解決使用者手動調整格式的痛點。
+* **效能優化**：使用 **TanStack Query (v5)** 管理非同步狀態與快取，大幅提升資料載入流暢度。
+
+---
+
+## 🚀 快速開始
+
+### 1. 環境配置
+複製 `.env_example` 並重新命名為 `.env`，填入以下必要資訊：
+* `SUPABASE_URL` / `SERVICE_ROLE_KEY`
+* `QDRANT_HOST` / `API_KEY`
+* `OPENAI_API_KEY` (用於 Embedding)
+* `REDIS_URL` (Broker 連結路徑)
+
+### 2. 啟動開發環境
+1.  啟動 **Docker Desktop**。
+2.  使用 VS Code **Dev Containers** 擴充套件，選擇 `Reopen in Container`。
+3.  **後端與 Worker 啟動**：
+    ```bash
+    python main.py             # 啟動 API 入口
+    celery -A tasks worker     # 啟動非同步任務處理器
+    ```
+4.  **前端啟動**：`npm run dev`
+
+---
+
+## 🤝 貢獻指南
+1.  Fork 本專案並建立功能分支 (`git checkout -b feature/AmazingFeature`)。
+2.  **套件維護**：若有新增套件請同步更新 `requirements.txt` (後端) 或 `package.json` (前端)。
+3.  **文件同步**：若涉及資料庫變動，請同步更新資料夾內的 **ERD 說明文件**。
+
+---
+Made with ❤️ by CareerPilot Team
