@@ -95,6 +95,77 @@ class CareerMatchingService:
             logger.info(f"✅ 成功載入六維能力分數: {user_6d_profile}")
 
             # ==========================================
+            # Phase 0.5: 從 Supabase 取得使用者履歷文字摘要 (RAG Context)
+            # ==========================================
+            logger.info(f"正在取得 User {user_id} 的履歷文字內容 (source_type: {source_type})...")
+            resume_summary = ""
+            try:
+                if source_type == "RESUME":
+                    # 從 resume 資料表取得 structured_data 欄位
+                    # 使用 maybe_single() 而非 single()：
+                    #   - single()       → 0 筆時拋出 PGRST116 錯誤
+                    #   - maybe_single() → 0 筆時回傳 data=None，安全降級
+                    resume_text_response = (
+                        self.supabase_client.table('resume')
+                        .select('structured_data')
+                        .eq('resume_id', document_id)
+                        .maybe_single()
+                        .execute()
+                    )
+                    if resume_text_response.data is None:
+                        logger.warning(f"⚠️ resume 表找不到 resume_id={document_id} 的資料，跳過履歷文字注入。")
+                    else:
+                        structured_data = resume_text_response.data.get('structured_data') or {}
+                        # 將 structured_data dict 轉成可讀文字塊（取各節標題與內容）
+                        if isinstance(structured_data, dict):
+                            parts = []
+                            for section_key, section_val in structured_data.items():
+                                if section_val:
+                                    parts.append(f"[{section_key}] {str(section_val)[:300]}")
+                            resume_summary = "\n".join(parts)[:1200]  # 避免 token 超出
+                        elif isinstance(structured_data, str):
+                            resume_summary = structured_data[:1200]
+
+                elif source_type == "OPTIMIZATION":
+                    # 從 resume_optimization 資料表取得多個欄位
+                    opt_text_response = (
+                        self.supabase_client.table('resume_optimization')
+                        .select('professional_summary, professional_experience, core_skills, projects, education, autobiography')
+                        .eq('optimization_id', document_id)
+                        .maybe_single()
+                        .execute()
+                    )
+                    if opt_text_response.data is None:
+                        logger.warning(f"⚠️ resume_optimization 表找不到 optimization_id={document_id} 的資料，跳過履歷文字注入。")
+                    else:
+                        opt_data = opt_text_response.data or {}
+                        # 拼接各欄位，形成完整的履歷摘要文字
+                        opt_parts = []
+                        field_labels = {
+                            'professional_summary':    '個人摘要',
+                            'core_skills':             '核心技能',
+                            'professional_experience': '工作經歷',
+                            'projects':                '專案經歷',
+                            'education':               '學歷',
+                            'autobiography':           '自傳',
+                        }
+                        for field, label in field_labels.items():
+                            val = opt_data.get(field)
+                            if val:
+                                opt_parts.append(f"[{label}] {str(val)[:250]}")
+                        resume_summary = "\n".join(opt_parts)[:1200]  # 避免 token 超出
+
+                if resume_summary:
+                    logger.info(f"✅ 成功取得履歷文字摘要 (字元數: {len(resume_summary)})")
+                else:
+                    logger.warning("⚠️ 查無履歷文字內容，AI 建議將退回純數字模式。")
+
+            except Exception as e:
+                # 查詢失敗不中斷主流程，降級為純數字模式
+                logger.warning(f"⚠️ 取得履歷文字失敗（降級為純分數模式）: {e}")
+                resume_summary = ""
+
+            # ==========================================
             # Phase 1: Qdrant 混合召回 (撈取 Top 50 候選名單)
             # ==========================================
             logger.info(f"正在提取 User {user_id} 的 {source_type} 履歷向量 (文件ID: {document_id})...")
@@ -195,12 +266,17 @@ class CareerMatchingService:
                     req_lines = list(dict.fromkeys(req_lines)) # 去重
                     clean_requirements = " | ".join(req_lines)
                     
-                    # 生成 AI 洞察
+                    # 生成 AI 洞察（4.1 傳入職缺文字 + 4.2 傳入履歷摘要）
                     ai_insights = self.llm_advisor.generate_job_insights(
                         job_title=details.get('job_title', '未知職缺'),
                         user_6d=user_6d_profile,
                         job_6d=details,
-                        match_score=f_final_pct
+                        match_score=f_final_pct,
+                        # [4.1] 傳入已查出的職缺文字（限制長度避免 token 超出）
+                        job_description=str(details.get('job_description', ''))[:500],
+                        job_requirements=clean_requirements[:300],
+                        # [4.2] 傳入 Phase 0.5 查出的履歷文字摘要
+                        resume_summary=resume_summary,
                     )
                     
                     # 🌟 新增：把薪水的數學邏輯搬過來，轉成前端愛看的字串
